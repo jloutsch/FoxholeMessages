@@ -169,13 +169,12 @@
         <receiver android:name=".receiver.DeleteMessagesReceiver" />
         <receiver android:name=".receiver.BlockThreadReceiver" />
         <receiver android:name=".receiver.MessageMarkReceiver" />
+        <!-- Not exported: it reads message contents (including codes) aloud and marks them seen,
+             so other apps must not be able to trigger it. Every caller (widget, notification
+             action, swipe) targets it explicitly from this app. -->
         <receiver
             android:name=".receiver.SpeakThreadsReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name=".action.ACTION_SPEAK_MESSAGES" />
-            </intent-filter>
-        </receiver>
+            android:exported="false" />
         <receiver android:name=".receiver.RemoteMessagingReceiver" />
         <receiver android:name=".receiver.NightModeReceiver" />
         <receiver

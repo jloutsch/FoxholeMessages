@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.interactor
 
+import android.content.Context
 import dev.octoshrimpy.quik.manager.ShortcutManager
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.model.Attachment
@@ -29,6 +30,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 class SendNewMessage @Inject constructor(
+    private val context: Context,
     private val conversationRepo: ConversationRepository,
     private val messageRepo: MessageRepository,
     private val updateBadge: UpdateBadge,
@@ -85,7 +87,7 @@ class SendNewMessage @Inject constructor(
             }
 
             // delete attachment local files, if any, because they're saved to mms db by now
-            params.attachments.forEach { it.removeCacheFile() }
+            params.attachments.forEach { it.removeCacheFile(context) }
         }
         .observeOn(AndroidSchedulers.mainThread())
         .flatMap { updateBadge.buildObservable(Unit) } // Update the widget

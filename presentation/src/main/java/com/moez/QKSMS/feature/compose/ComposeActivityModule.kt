@@ -24,8 +24,10 @@ import androidx.lifecycle.ViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoMap
+import dev.octoshrimpy.quik.extensions.isSafeToAttachFromOtherApp
 import dev.octoshrimpy.quik.injection.ViewModelKey
 import dev.octoshrimpy.quik.model.Attachment
+import timber.log.Timber
 import javax.inject.Named
 
 @Module
@@ -94,7 +96,9 @@ class ComposeActivityModule {
                 activity.intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.run(uris::addAll)
             }
         }
-        return uris.map { Attachment(activity, it) }
+        val (safe, refused) = uris.partition { it.isSafeToAttachFromOtherApp(activity) }
+        if (refused.isNotEmpty()) Timber.w("Refused ${refused.size} shared attachment(s) pointing at this app's private data")
+        return safe.map { Attachment(activity, it) }
     }
 
     @Provides

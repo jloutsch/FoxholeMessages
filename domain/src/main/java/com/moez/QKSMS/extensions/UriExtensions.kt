@@ -33,6 +33,22 @@ import androidx.core.net.toFile
 
 fun Uri.isEmpty() = this == Uri.EMPTY
 
+/**
+ * Whether a uri handed to us by another app (a share, or keyboard-inserted content) is safe to attach.
+ *
+ * The app reads attachments with its own permissions, so a uri pointing at its own private data
+ * would be read on the sender's behalf: a file:// path can name the app's database, and a content
+ * uri served by one of the app's own (non-exported) providers can expose other conversations'
+ * attachments. Only content uris served by some other app are accepted; real shares from modern
+ * apps always arrive that way, since file:// uris can't be shared between apps since Android 7.
+ */
+fun Uri.isSafeToAttachFromOtherApp(context: Context): Boolean {
+    if (scheme != ContentResolver.SCHEME_CONTENT) return false
+    val authority = authority ?: return false
+    val owner = context.packageManager.resolveContentProvider(authority, 0)?.packageName
+    return owner != context.packageName
+}
+
 fun Uri.isVCard(context: Context): Boolean = getType(context) == "text/x-vcard"
 
 fun Uri.isAudio(context: Context): Boolean = getType(context).startsWith("audio/")

@@ -21,6 +21,7 @@ package dev.octoshrimpy.quik.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.provider.Telephony
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.interactor.SyncMessage
 import javax.inject.Inject
@@ -43,9 +44,17 @@ class SmsProviderChangedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
 
+        // Exported, so only act on the real system broadcast (a protected action other apps can't
+        // send), not a fake one naming an arbitrary message.
+        if (intent.action != Telephony.Sms.Intents.ACTION_EXTERNAL_PROVIDER_CHANGE) return
+
+        // Check for the uri before goAsync(): returning after it would leave the broadcast
+        // unfinished, and the system eventually kills a process that holds one open.
+        val uri = intent.data ?: return
+
         // Sync the message to our realm
         val pendingResult = goAsync()
-        syncMessage.execute(SyncMessage.Params(intent.data ?: return)) {
+        syncMessage.execute(SyncMessage.Params(uri)) {
             pendingResult.finish()
         }
     }

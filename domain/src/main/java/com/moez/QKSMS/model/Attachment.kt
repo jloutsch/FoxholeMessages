@@ -34,6 +34,7 @@ import dev.octoshrimpy.quik.extensions.isContact
 import dev.octoshrimpy.quik.extensions.isImage
 import dev.octoshrimpy.quik.extensions.isVCard
 import dev.octoshrimpy.quik.extensions.isVideo
+import java.io.File
 
 
 class Attachment (
@@ -85,14 +86,22 @@ class Attachment (
         resourceBytes = null
     }
 
-    fun removeCacheFile(): Boolean {
-        // all file:// scheme files are local to the app cache dir, so can be deleted
-        if (uri.scheme == ContentResolver.SCHEME_FILE) {
-            return try { uri.toFile().delete() }
-            catch (e: Exception) { false }
-        }
+    /**
+     * Deletes the file behind this attachment if the app created it in its cache dir (camera
+     * captures, audio recordings, copies of attachments from a cancelled send). Anything else is
+     * left alone: a file:// uri can name any path the app can write, including its own database, so
+     * "it's a file:// uri" alone is not proof the app made it.
+     */
+    fun removeCacheFile(context: Context): Boolean {
+        if (uri.scheme != ContentResolver.SCHEME_FILE) return false
 
-        return false
+        return try {
+            val file = uri.toFile().canonicalFile
+            val cacheDir = context.cacheDir.canonicalFile
+            file.path.startsWith(cacheDir.path + File.separator) && file.delete()
+        } catch (e: Exception) {
+            false
+        }
     }
 }
 
