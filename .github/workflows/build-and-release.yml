@@ -26,8 +26,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Read-only: this job only checks out code and uploads build artifacts. Publishing the
+    # release (which needs write) happens in the separate publish job, which never sees the key.
     permissions:
-      contents: write
+      contents: read
 
     env:
       RELEASE_REF: ${{ inputs.release_ref || 'master' }}
@@ -42,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
           ref: ${{ env.RELEASE_REF }}
@@ -58,12 +60,15 @@ jobs:
           fi
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
 
+      # Only checks that the secrets exist. The signing key and its passwords are handed to the one
+      # step that needs them (the Gradle build below) and nowhere else: they used to be written to
+      # $GITHUB_ENV, which exposes them to every later step in the job, third-party actions included.
       - name: Validate signing configuration
         id: signing
         shell: bash
@@ -84,16 +89,6 @@ jobs:
           if [[ "$missing" -ne 0 ]]; then
             exit 1
           fi
-
-          mkdir -p presentation
-          echo "$KEYSTORE_B64" | base64 -d > presentation/my-release-key.keystore
-          chmod 600 presentation/my-release-key.keystore
-
-          {
-            echo "keystore_password=$KEYSTORE_PASSWORD"
-            echo "key_alias=$KEY_ALIAS"
-            echo "key_password=$KEY_PASSWORD"
-          } >> "$GITHUB_ENV"
 
       - name: Capture version metadata
         id: version
@@ -116,10 +111,28 @@ jobs:
           PY
 
       - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
 
+      # The keystore is written to disk here, after every third-party action in this job has
+      # already run, and removed by the next step whether or not the build succeeds.
       - name: Build signed release APK and app bundle
-        run: ./gradlew clean assembleRelease assembleFdroid bundleRelease
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          # Names presentation/build.gradle reads when CI=true.
+          keystore_password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          key_alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          key_password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p presentation
+          echo "$KEYSTORE_B64" | base64 -d > presentation/my-release-key.keystore
+          chmod 600 presentation/my-release-key.keystore
+          ./gradlew clean assembleRelease assembleFdroid bundleRelease
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f presentation/my-release-key.keystore
 
       - name: Report obfuscation coverage
         shell: bash
@@ -179,7 +192,7 @@ jobs:
           echo "checksums_path=checksums.txt" >> "$GITHUB_OUTPUT"
 
       - name: Upload all build outputs
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: build-artifacts
           path: |
@@ -224,13 +237,13 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: build-artifacts
           path: downloaded/
 
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ needs.build.outputs.tag_name }}
           name: Foxhole Messages v${{ needs.build.outputs.version_name }}
@@ -243,7 +256,3 @@ jobs:
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cleanup signing key
-        if: always()
-        run: rm -f presentation/my-release-key.keystore
