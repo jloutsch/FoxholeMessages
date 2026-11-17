@@ -33,7 +33,8 @@ interface MessageRepository {
     }
 
     sealed class DeduplicationResult {
-        object Success : DeduplicationResult()
+        /** Duplicates were moved to Trash (recoverable for 30 days), from the given conversations. */
+        data class Success(val trashedCount: Int, val threadIds: Set<Long>) : DeduplicationResult()
         object NoDuplicates : DeduplicationResult()
         data class Failure(val error: Throwable) : DeduplicationResult()
     }

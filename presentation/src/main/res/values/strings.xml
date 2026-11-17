@@ -444,11 +444,11 @@
 
     <string name="deduplicate_messages_category">Deduplicate Messages</string>
     <string name="deduplicate_messages_title">Remove Duplicate Messages</string>
-    <string name="deduplicate_messages_summary">Scans through message database and deletes all messages that exactly match original messages</string>
-    <string name="deduplicate_message_confirmation_dialog_message">Your message database will be scanned for duplicates, and then those duplicates will be removed.\nThis will automatically delete messages, only proceed if you understand the consequences.</string>
+    <string name="deduplicate_messages_summary">Scans your messages and moves exact duplicates to Trash</string>
+    <string name="deduplicate_message_confirmation_dialog_message">Your messages will be scanned for exact duplicates, and the extra copies moved to Trash.\nYou can restore anything moved by mistake from Trash for 30 days.</string>
     <string name="auto_deduplicate_messages_title">Automatically Deduplicate Messages</string>
-    <string name="auto_deduplicate_messages_summary">Deduplication will be performed during sync. Please note, this will automatically delete messages, and while the chance of there being a false duplicate is very low, it is still possible.\nPlease exercise caution.</string>
-    <string name="deduplicating_messages_finished">Finished deduplicating messages!</string>
+    <string name="auto_deduplicate_messages_summary">After each full sync, exact duplicates are moved to Trash. You can restore anything moved by mistake from Trash for 30 days.</string>
+    <string name="deduplicating_messages_finished">Duplicates moved to Trash</string>
     <string name="deduplicating_messages_no_messages">No duplicate messages found.</string>
     <string name="deduplicating_messages_failed">Deduplicating messages failed, please try again</string>
 
