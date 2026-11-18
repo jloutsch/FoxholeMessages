@@ -39,8 +39,6 @@ import dev.octoshrimpy.quik.common.util.FileLoggingTree
 import dev.octoshrimpy.quik.injection.AppComponentManager
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.interactor.SpeakThreads
-import dev.octoshrimpy.quik.manager.BillingManager
-import dev.octoshrimpy.quik.manager.ReferralManager
 import dev.octoshrimpy.quik.migration.QkMigration
 import dev.octoshrimpy.quik.migration.QkRealmMigration
 import dev.octoshrimpy.quik.service.PurgeTrashService
@@ -48,9 +46,6 @@ import dev.octoshrimpy.quik.util.NightModeManager
 import dev.octoshrimpy.quik.worker.HousekeepingWorker
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -62,14 +57,12 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
     @Suppress("unused")
     @Inject lateinit var qkMigration: QkMigration
 
-    @Inject lateinit var billingManager: BillingManager
     @Inject lateinit var dispatchingActivityInjector: DispatchingAndroidInjector<Activity>
     @Inject lateinit var dispatchingBroadcastReceiverInjector: DispatchingAndroidInjector<BroadcastReceiver>
     @Inject lateinit var dispatchingServiceInjector: DispatchingAndroidInjector<Service>
     @Inject lateinit var fileLoggingTree: FileLoggingTree
     @Inject lateinit var nightModeManager: NightModeManager
     @Inject lateinit var realmMigration: QkRealmMigration
-    @Inject lateinit var referralManager: ReferralManager
     @Inject lateinit var workerFactory: WorkerFactory
 
     override fun onCreate() {
@@ -93,12 +86,6 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
         // Trash retention isn't user-configurable (unlike OTP retention), so this job is
         // always scheduled rather than toggled from a settings screen
         PurgeTrashService.scheduleJob(this)
-
-        GlobalScope.launch(Dispatchers.IO) {
-            referralManager.trackReferrer()
-            billingManager.checkForPurchases()
-            billingManager.queryProducts()
-        }
 
         nightModeManager.updateCurrentTheme()
 

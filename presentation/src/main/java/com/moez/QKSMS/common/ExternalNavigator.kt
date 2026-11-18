@@ -29,7 +29,6 @@ import android.provider.ContactsContract
 import android.provider.Settings
 import android.provider.Telephony
 import androidx.core.net.toUri
-import dev.octoshrimpy.quik.manager.BillingManager
 import dev.octoshrimpy.quik.manager.PermissionManager
 import javax.inject.Inject
 import dev.octoshrimpy.quik.feature.notificationprefs.NotificationPrefsActivity
@@ -41,7 +40,6 @@ import dev.octoshrimpy.quik.manager.NotificationManager
  */
 class ExternalNavigator @Inject constructor(
     context: Context,
-    private val billingManager: BillingManager,
     private val permissions: PermissionManager,
     private val notificationManager: NotificationManager
 ) : QkNavigator(context) {

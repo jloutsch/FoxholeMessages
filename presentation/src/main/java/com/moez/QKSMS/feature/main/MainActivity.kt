@@ -84,7 +84,6 @@ class MainActivity : QkThemedActivity(), MainView {
     @Inject lateinit var disposables: CompositeDisposable
     @Inject lateinit var externalNavigator: ExternalNavigator
     @Inject lateinit var conversationsAdapter: ConversationsAdapter
-    @Inject lateinit var drawerBadgesExperiment: DrawerBadgesExperiment
     @Inject lateinit var searchAdapter: SearchAdapter
     @Inject lateinit var itemTouchCallback: ConversationItemTouchCallback
     @Inject lateinit var conversationsAdapterProvider: Provider<ConversationsAdapter>
@@ -116,12 +115,9 @@ class MainActivity : QkThemedActivity(), MainView {
                 binding.drawer.messageUtils.clicks().map { NavItem.MESSAGE_UTILS },
                 binding.drawer.settings.clicks().map { NavItem.SETTINGS },
                 binding.drawer.about.clicks().map { NavItem.ABOUT },
-//                plus.clicks().map { NavItem.PLUS },
-//                help.clicks().map { NavItem.HELP },
                 binding.drawer.invite.clicks().map { NavItem.INVITE }))
     }
     override val optionsItemIntent: Subject<Int> = PublishSubject.create()
-//    override val plusBannerIntent by lazy { plusBanner.clicks() }
     override val dismissRatingIntent by lazy { binding.drawer.rateDismiss.clicks() }
     override val rateIntent by lazy { binding.drawer.rateOkay.clicks() }
     override val conversationsSelectedIntent by lazy {
@@ -239,13 +235,8 @@ class MainActivity : QkThemedActivity(), MainView {
                         }
 
                     // Miscellaneous views
-                    listOf(binding.drawer.plusBadge1, binding.drawer.plusBadge2).forEach { badge ->
-                        badge.setBackgroundTint(theme.theme)
-                        badge.setTextColor(theme.textPrimary)
-                    }
                     syncingBinding.syncingProgress.progressTintList = ColorStateList.valueOf(theme.theme)
                     syncingBinding.syncingProgress.indeterminateTintList = ColorStateList.valueOf(theme.theme)
-                    binding.drawer.plusIcon.setTint(theme.theme)
                     binding.drawer.rateIcon.setTint(theme.theme)
                     binding.compose.setBackgroundTint(theme.theme)
                     binding.tabStrip.setSelectedTabIndicatorColor(theme.theme)
@@ -368,11 +359,6 @@ class MainActivity : QkThemedActivity(), MainView {
             findItem(R.id.move_to)?.isVisible = state.page is Inbox && selectedConversations != 0
         }
 
-        listOf(binding.drawer.plusBadge1, binding.drawer.plusBadge2).forEach { badge ->
-            badge.isVisible = drawerBadgesExperiment.variant && !state.upgraded
-        }
-//        plus.isVisible = state.upgraded
-        binding.drawer.plusBanner.isVisible = !state.upgraded
         binding.drawer.rateLayout.setVisible(state.showRating)
 
         binding.compose.setVisible(state.page is Inbox || state.page is Archived)

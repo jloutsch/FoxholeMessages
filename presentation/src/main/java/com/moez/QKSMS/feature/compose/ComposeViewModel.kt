@@ -64,7 +64,6 @@ import dev.octoshrimpy.quik.interactor.SendExistingMessage
 import dev.octoshrimpy.quik.interactor.SaveImage
 import dev.octoshrimpy.quik.interactor.SendNewMessage
 import dev.octoshrimpy.quik.manager.ActiveConversationManager
-import dev.octoshrimpy.quik.manager.BillingManager
 import dev.octoshrimpy.quik.manager.PermissionManager
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.Conversation
@@ -115,7 +114,6 @@ class ComposeViewModel @Inject constructor(
     private val context: Context,
     private val activeConversationManager: ActiveConversationManager,
     private val addScheduledMessage: AddScheduledMessage,
-    private val billingManager: BillingManager,
     private val actionDelayedMessage: ActionDelayedMessage,
     private val conversationRepo: ConversationRepository,
     private val deleteMessages: DeleteMessages,
@@ -989,10 +987,6 @@ class ComposeViewModel @Inject constructor(
         // Choose a time to schedule the message
         view.scheduleIntent
                 .doOnNext { newState { copy(attaching = false) } }
-                .withLatestFrom(billingManager.upgradeStatus) { _, upgraded -> upgraded }
-                .filter { upgraded ->
-                    upgraded.also { if (!upgraded) view.showQksmsPlusSnackbar(R.string.compose_scheduled_plus) }
-                }
                 .autoDisposable(view.scope())
                 .subscribe { view.requestDatePicker() }
 
@@ -1403,11 +1397,6 @@ class ComposeViewModel @Inject constructor(
             }
             .autoDisposable(view.scope())
             .subscribe()
-
-        // View QKSMS+
-        view.viewQksmsPlusIntent
-                .autoDisposable(view.scope())
-                .subscribe { navigator.showQksmsPlusActivity("compose_schedule") }
 
         // Navigate back
         view.optionsItemIntent

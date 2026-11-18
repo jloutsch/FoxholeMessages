@@ -34,7 +34,6 @@ import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoActivity
 import dev.octoshrimpy.quik.feature.gallery.GalleryActivity
 import dev.octoshrimpy.quik.feature.main.MainActivity
 import dev.octoshrimpy.quik.feature.messageutils.MessageUtilsActivity
-import dev.octoshrimpy.quik.feature.plus.PlusActivity
 import dev.octoshrimpy.quik.feature.settings.messagesorting.notifications.CategoryNotificationActivity
 import dev.octoshrimpy.quik.feature.scheduled.ScheduledActivity
 import dev.octoshrimpy.quik.feature.settings.SettingsActivity
@@ -46,14 +45,6 @@ import javax.inject.Singleton
 class Navigator @Inject constructor(
     context: Context
 ) : QkNavigator(context) {
-    /**
-     * @param source String to indicate where this Plus screen was launched from. This should be
-     * one of [main_menu, compose_schedule, settings_night, settings_theme]
-     */
-    fun showQksmsPlusActivity(source: String) {
-        startActivity(Intent(context, PlusActivity::class.java))
-    }
-
     fun showMainActivity() {
         startActivity(Intent(context, MainActivity::class.java))
     }

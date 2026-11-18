@@ -39,12 +39,10 @@ import dev.octoshrimpy.quik.interactor.MarkRead
 import dev.octoshrimpy.quik.interactor.MarkUnarchived
 import dev.octoshrimpy.quik.interactor.MarkUnpinned
 import dev.octoshrimpy.quik.interactor.MarkUnread
-import dev.octoshrimpy.quik.interactor.MigratePreferences
 import dev.octoshrimpy.quik.interactor.SpeakThreads
 import dev.octoshrimpy.quik.interactor.SyncContacts
 import dev.octoshrimpy.quik.interactor.SyncMessages
 import dev.octoshrimpy.quik.listener.ContactAddedListener
-import dev.octoshrimpy.quik.manager.BillingManager
 import dev.octoshrimpy.quik.manager.ChangelogManager
 import dev.octoshrimpy.quik.manager.PermissionManager
 import dev.octoshrimpy.quik.manager.RatingManager
@@ -74,10 +72,8 @@ import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
     context: Context,
-    billingManager: BillingManager,
     contactAddedListener: ContactAddedListener,
     markAllSeen: MarkAllSeen,
-    migratePreferences: MigratePreferences,
     syncRepository: SyncRepository,
     private val changelogManager: ChangelogManager,
     private val conversationRepo: ConversationRepository,
@@ -120,7 +116,6 @@ class MainViewModel @Inject constructor(
         disposables += markAllSeen
         disposables += markArchived
         disposables += markUnarchived
-        disposables += migratePreferences
         disposables += syncContacts
         disposables += syncMessages
 
@@ -129,10 +124,6 @@ class MainViewModel @Inject constructor(
                 .sample(16, TimeUnit.MILLISECONDS)
                 .distinctUntilChanged()
                 .subscribe { syncing -> newState { copy(syncing = syncing) } }
-
-        // Update the upgraded status
-        disposables += billingManager.upgradeStatus
-                .subscribe { upgraded -> newState { copy(upgraded = upgraded) } }
 
         // Show the rating UI
         disposables += ratingManager.shouldShowRating
@@ -147,9 +138,6 @@ class MainViewModel @Inject constructor(
             .subscribe { ids ->
                 newState { copy(scheduledConversationIds = ids) }
             }
-
-        // Migrate the preferences from 2.7.3
-        migratePreferences.execute(Unit)
 
 
         // If we have all permissions and we've never run a sync, run a sync. This will be the case
@@ -402,8 +390,6 @@ class MainViewModel @Inject constructor(
                         NavItem.MESSAGE_UTILS -> navigator.showMessageUtils()
                         NavItem.SETTINGS -> navigator.showSettings()
                         NavItem.ABOUT -> navigator.showAbout()
-//                        NavItem.PLUS -> navigator.showQksmsPlusActivity("main_menu")
-//                        NavItem.HELP -> navigator.showSupport()
                         NavItem.INVITE -> externalNavigator.showInvite()
                         else -> Unit
                     }
@@ -531,13 +517,6 @@ class MainViewModel @Inject constructor(
             .mapNotNull { conversationId -> conversationRepo.getConversation(conversationId) }
             .autoDisposable(view.scope())
             .subscribe { conversation -> view.showRenameDialog(conversation.name) }
-
-//        view.plusBannerIntent
-//                .autoDisposable(view.scope())
-//                .subscribe {
-//                    newState { copy(drawerOpen = false) }
-//                    navigator.showQksmsPlusActivity("main_banner")
-//                }
 
         view.rateIntent
                 .autoDisposable(view.scope())

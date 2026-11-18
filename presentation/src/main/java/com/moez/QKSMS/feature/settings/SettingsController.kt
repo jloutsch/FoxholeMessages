@@ -28,7 +28,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import com.bluelinelabs.conductor.RouterTransaction
-import com.google.android.material.snackbar.Snackbar
 import com.jakewharton.rxbinding2.view.clicks
 import com.jakewharton.rxbinding2.view.longClicks
 import com.uber.autodispose.android.lifecycle.scope
@@ -77,7 +76,6 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
         TextInputDialog(activity!!, context.getString(R.string.settings_signature_title), signatureSubject::onNext)
     }
 
-    private val viewQksmsPlusSubject: Subject<Unit> = PublishSubject.create()
     private val startTimeSelectedSubject: Subject<Pair<Int, Int>> = PublishSubject.create()
     private val endTimeSelectedSubject: Subject<Pair<Int, Int>> = PublishSubject.create()
     private val signatureSubject: Subject<String> = PublishSubject.create()
@@ -125,7 +123,6 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
 
     override fun aboutLongClicks(): Observable<*> = binding.about.longClicks()
 
-    override fun viewQksmsPlusClicks(): Observable<*> = viewQksmsPlusSubject
 
     override fun nightModeSelected(): Observable<Int> = nightModeDialog.adapter.menuItemClicks
 
@@ -205,15 +202,6 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
         }
     }
 
-    override fun showQksmsPlusSnackbar() {
-        view?.run {
-            Snackbar.make(binding.contentView, R.string.toast_qksms_plus, Snackbar.LENGTH_LONG).run {
-                setAction(R.string.button_more) { viewQksmsPlusSubject.onNext(Unit) }
-                setActionTextColor(colors.theme().theme)
-                show()
-            }
-        }
-    }
 
     // TODO change this to a PopupWindow
     override fun showNightModeDialog() = nightModeDialog.show(activity!!)

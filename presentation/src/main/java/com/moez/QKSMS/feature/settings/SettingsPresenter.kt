@@ -23,13 +23,11 @@ import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
-import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.interactor.SyncMessages
-import dev.octoshrimpy.quik.manager.BillingManager
 import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.NightModeManager
 import dev.octoshrimpy.quik.util.Preferences
@@ -43,9 +41,7 @@ class SettingsPresenter @Inject constructor(
     colors: Colors,
     syncRepo: SyncRepository,
     private val context: Context,
-    private val billingManager: BillingManager,
     private val dateFormatter: DateFormatter,
-    private val navigator: Navigator,
     private val externalNavigator: ExternalNavigator,
     private val nightModeManager: NightModeManager,
     private val prefs: Preferences,
@@ -236,19 +232,8 @@ class SettingsPresenter @Inject constructor(
                 }
 
         view.nightModeSelected()
-                .withLatestFrom(billingManager.upgradeStatus) { mode, upgraded ->
-//                    if (!upgraded && mode == Preferences.NIGHT_MODE_AUTO) {
-//                        view.showQksmsPlusSnackbar()
-//                    } else {
-                        nightModeManager.updateNightMode(mode)
-//                    }
-                }
                 .autoDisposable(view.scope())
-                .subscribe()
-
-        view.viewQksmsPlusClicks()
-                .autoDisposable(view.scope())
-                .subscribe { navigator.showQksmsPlusActivity("settings_night") }
+                .subscribe(nightModeManager::updateNightMode)
 
         view.nightStartSelected()
                 .autoDisposable(view.scope())
@@ -263,15 +248,8 @@ class SettingsPresenter @Inject constructor(
                 .subscribe(prefs.textSize::set)
 
         view.sendDelaySelected()
-                .withLatestFrom(billingManager.upgradeStatus) { duration, upgraded ->
-//                    if (!upgraded && duration != 0) {
-//                        view.showQksmsPlusSnackbar()
-//                    } else {
-                        prefs.sendDelay.set(duration)
-//                    }
-                }
                 .autoDisposable(view.scope())
-                .subscribe()
+                .subscribe(prefs.sendDelay::set)
 
         view.signatureChanged()
                 .doOnNext(prefs.signature::set)
