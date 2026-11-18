@@ -221,6 +221,9 @@ dependencies {
     // this project's Kotlin 1.7.21 compiler can't read. 1.7.0 was built with Kotlin 1.7.10
     // (matches this project) and has the same simple Unfurler/UnfurlResult API.
     implementation "me.saket.unfurl:unfurl:1.7.0"
+    // unfurl brings in OkHttp, which asks for an okio this Kotlin version can't read. See
+    // okio_version in the root build.gradle.
+    implementation("com.squareup.okio:okio") { version { strictly okio_version } }
     implementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
     implementation "me.leolin:ShortcutBadger:1.1.22"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"

@@ -71,14 +71,3 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 
 }
-
-repositories {
-    google()
-    maven { url "https://jitpack.io" }
-    maven { url 'https://maven.google.com' }
-    maven {
-        name 'glide-snapshot'
-        url 'https://oss.sonatype.org/content/repositories/snapshots'
-    }
-    mavenCentral()
-}
