@@ -51,6 +51,7 @@ import dev.octoshrimpy.quik.compat.SubscriptionManagerCompat
 import dev.octoshrimpy.quik.extensions.asObservable
 import dev.octoshrimpy.quik.extensions.isAudio
 import dev.octoshrimpy.quik.extensions.isImage
+import dev.octoshrimpy.quik.extensions.isSafeToAttachFromOtherApp
 import dev.octoshrimpy.quik.extensions.isSmil
 import dev.octoshrimpy.quik.extensions.isText
 import dev.octoshrimpy.quik.extensions.isVideo
@@ -1004,7 +1005,10 @@ class ComposeViewModel @Inject constructor(
         // an attachment was picked by the user
         Observable.merge(
             view.attachAnyFileSelectedIntent.map { uri -> Attachment(context, uri) },
-            view.inputContentIntent.map { inputContent -> Attachment(context, inputContent = inputContent) }
+            // Keyboard-inserted content (GIFs, stickers) comes from another app too; see isSafeToAttachFromOtherApp.
+            view.inputContentIntent
+                .filter { inputContent -> inputContent.contentUri.isSafeToAttachFromOtherApp(context) }
+                .map { inputContent -> Attachment(context, inputContent = inputContent) }
         )
             .autoDisposable(view.scope())
             .subscribe {
@@ -1049,7 +1053,7 @@ class ComposeViewModel @Inject constructor(
                     newState { copy(attachments = attachments - it) }
 
                     // if the attachment is backed by a local file, delete the file
-                    it.removeCacheFile()
+                    it.removeCacheFile(context)
                 }
 
         conversation
@@ -1438,7 +1442,7 @@ class ComposeViewModel @Inject constructor(
             .withLatestFrom(state) { removeCacheFiles, state ->
                 // remove attachments cache files if they exist and flagged to do so
                 if (removeCacheFiles)
-                    state.attachments.forEach { it.removeCacheFile() }
+                    state.attachments.forEach { it.removeCacheFile(context) }
 
                 view.setDraft("")
                 newState {

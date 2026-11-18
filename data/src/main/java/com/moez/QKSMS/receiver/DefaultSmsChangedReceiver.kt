@@ -38,6 +38,11 @@ class DefaultSmsChangedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
 
+        // This receiver is exported, so any app can send it an explicit intent. Only act on the real
+        // system broadcast (a protected action other apps can't send); otherwise a fake one could
+        // trigger a full re-sync of every message whenever it liked.
+        if (intent.action != Telephony.Sms.Intents.ACTION_DEFAULT_SMS_PACKAGE_CHANGED) return
+
         if (intent.getBooleanExtra(Telephony.Sms.Intents.EXTRA_IS_DEFAULT_SMS_APP, false)) {
             val pendingResult = goAsync()
             syncMessages.execute(Unit) { pendingResult.finish() }
