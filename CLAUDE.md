@@ -17,13 +17,12 @@ Finalizing v1.0 (`versionCode 2239`, `versionName '1.0.0'`, bumped in
    PayPal button and the entire non-functional "upgrade"/paywall UI
    were removed (`BillingManagerImpl` was already a no-op stub that
    always reports everyone as upgraded, so there was no real paywall
-   to begin with — see `feature/plus/`). `PlusActivity` now just shows
-   a "Support the developer" Venmo button plus the always-unlocked
-   feature list; the About screen also links to
-   `ExternalNavigator.showVenmoDonation()` under a "Support the
-   developer" row. Other already-inert `!upgraded` dead code (drawer
-   badges, Backup/Scheduled FAB fallbacks, Settings gates) was left
-   untouched since it was already invisible to users.
+   to begin with). The "Support the developer" row (now in Settings)
+   opens `ExternalNavigator.showVenmoDonation()`. **Update
+   (2026-11-18):** `PlusActivity`, `BillingManager` and every
+   `upgraded` gate have since been deleted — nothing could open the
+   Plus screen any more, since every entry point required
+   `upgraded == false`.
 3. Link thumbnail previews in message bubbles — done, verified on
    device. Uses `me.saket.unfurl:unfurl:1.7.0` (Maven Central, Apache
    2.0) — pinned to 1.7.0 specifically because newer releases (2.x)
@@ -337,7 +336,9 @@ account), which this sandbox can't touch.
   with the same missing-exported-flag issue (`RateController`,
   `DownloadManager`, `TransactionService`, `MmsConfigManager` — the
   fifth, in `Transaction.java`, only runs on API ≤ 19 and was left
-  alone since it can't hit this on any real device). Root-caused this
+  alone since it can't hit this on any real device; `RateController`,
+  `TransactionService`, `MmsConfigManager` and `Transaction.java` were
+  later deleted as unreachable — see "Dead code removal" below). Root-caused this
   as the actual explanation for Erik's "pictures aren't being
   received" report: `DownloadManager.downloadMultimediaMessage()` —
   the method that downloads MMS attachment content after a WAP push
@@ -763,7 +764,7 @@ inline under each item as they're completed.
    headers+body constructors are package-private and only usable by
    the real `PduParser`. Parts are rebuilt into a fresh `PduBody` via
    the same part-building shape `Transaction.java`'s `buildPdu()`
-   already uses for composing outgoing MMS (content-type/name/
+   (since deleted) used for composing outgoing MMS (content-type/name/
    content-location/content-id/data per part), and a SMIL layout part
    is regenerated fresh from those parts on every restore rather than
    preserved from backup — SMIL is just a layout description derived
@@ -1561,6 +1562,25 @@ Fixed in the same pass:
   Not device-verified: needs a real failed picture download.
 - **Scheduled messages**: overdue ones are sent once (no alarm), and exact alarms fall back to
   inexact when "Alarms & reminders" is off. Not device-verified across a reboot.
+
+### Dead code removal (2026-11-18)
+
+About 28,000 lines removed (22,500 of them Kotlin/Java) after a whole-codebase review; each item was checked for callers
+across all modules, XML and tests first. Link-preview code was deliberately kept.
+
+- **`android-smsmms` is down to what the app reaches** (94 files gone). MMS download now has one
+  path: `PushReceiver` → `transaction.DownloadManager` → `SmsManager.downloadMultimediaMessage`. The
+  old built-in HTTP downloader (`TransactionService`, klinker `Transaction`, `MmsHttpClient`, APN
+  tables) only ran when the `system_mms_sending` pref was false, and nothing ever wrote that pref.
+  `MmsReceivedReceiver`/`MmsSentReceiver` are now constants-only holders (the app's own receivers
+  handle the broadcasts); `DownloadRequest` keeps only the static `persist()` that `ReceiveMmsWorker`
+  uses; `Utils` keeps four methods. The shadow `android.database.sqlite.SqliteWrapper` is gone, so
+  nothing can bind to the framework's hidden class of that name any more. **Not device-verified:
+  confirm a picture still sends and arrives.**
+- Plus/billing/`upgraded`, `ReferralManager`, `MigratePreferences` (QKSMS 2.7.3 prefs can't exist
+  under this app id), the third-party call-blocker hooks and `com.callcontrol:datashare`.
+- Unused resources were found by searching for `R.<type>.<name>`, `@<type>/<name>` and view-binding
+  class names, repeated until nothing new appeared. Translations were trimmed to match.
 
 ### Known gaps / open items
 
