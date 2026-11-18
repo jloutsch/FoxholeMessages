@@ -197,6 +197,7 @@ open class MessageRepositoryImpl @Inject constructor(
             realm.where(Message::class.java)
                 .equalTo("read", false)
                 .equalTo("threadId", threadId)
+                .isNull("deletedAt") // an unread message moved to Trash shouldn't keep the badge up
                 .count()
         }
 
@@ -210,6 +211,7 @@ open class MessageRepositoryImpl @Inject constructor(
         Realm.getDefaultInstance()
             .where(MmsPart::class.java)
             .equalTo("messages.threadId", threadId)
+            .isNull("messages.deletedAt") // pictures of trashed messages stay out of the gallery
             .beginGroup()
             .contains("type", "image/")
             .or()

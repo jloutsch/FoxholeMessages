@@ -118,6 +118,7 @@ class ConversationRepositoryImpl @Inject constructor(
                     .thenByDescending { conversation ->
                         realm.where(Message::class.java)
                             .equalTo("threadId", conversation.id)
+                            .isNull("deletedAt")
                             .greaterThan(
                                 "date",
                                 System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
@@ -154,6 +155,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
         val messagesByConversation = realm.copyFromRealm(realm
             .where(Message::class.java)
+            .isNull("deletedAt") // search shouldn't surface messages that are in Trash
             .beginGroup()
             .contains("body", searchQuery, Case.INSENSITIVE)
             .or()
