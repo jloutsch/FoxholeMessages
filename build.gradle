@@ -23,7 +23,13 @@ buildscript {
     ext.material_version = '1.6.1'
     ext.mockito_version = '2.18.3'
     ext.moshi_version = '1.8.0'
-    ext.okhttp3_version = '4.10.0'
+    ext.okhttp3_version = '4.12.0'
+    // okio is pinned below what OkHttp 4.12.0 asks for (3.6.0). 3.4.0 is the first release with
+    // the CVE-2023-3635 fix, and the last one built with Kotlin 1.8: 3.5.0+ are built with Kotlin
+    // 1.9, whose class files (and the kotlin-stdlib 1.9 they pull in) this project's Kotlin 1.7.21
+    // compiler can't read, so the build fails. Every okio class and method OkHttp 4.12.0 calls
+    // exists in 3.4.0 (checked against both jars). Applied with `strictly` in data/presentation.
+    ext.okio_version = '3.4.0'
     ext.realm_version = '10.19.0'
     ext.realm_adapters_version = '3.1.0'
     ext.rxandroid_version = '2.0.1'
@@ -37,14 +43,10 @@ buildscript {
 
     ext.abiCodes = ['armeabi-v7a': 1, 'arm64-v8a': 2]
 
+    // Build plugins (Android Gradle Plugin, Kotlin, Realm) all come from Google Maven or Maven
+    // Central, so JitPack isn't listed here.
     repositories {
         google()
-        maven { url "https://jitpack.io" }
-        maven { url 'https://maven.google.com' }
-        maven {
-            name 'glide-snapshot'
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
         mavenCentral()
     }
 
@@ -55,17 +57,21 @@ buildscript {
     }
 }
 
+// The one list of repositories for every module (the modules don't declare their own).
+// jcenter() is gone: it has been read-only since 2021 and is being shut down. The old Sonatype
+// snapshots repository (oss.sonatype.org) was shut down in June 2025.
 allprojects {
     repositories {
         google()
-        jcenter()
-        maven { url "https://jitpack.io" }
-        maven { url 'https://maven.google.com' }
-        maven {
-            name 'glide-snapshot'
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
         mavenCentral()
+        // JitPack builds artifacts from GitHub source on demand. Only a few libraries here are
+        // published nowhere else, so it is last and limited to com.github.* groups: it is never
+        // asked for anything else, so it can't substitute a different build of a library that
+        // Google or Maven Central already serve.
+        maven {
+            url "https://jitpack.io"
+            content { includeGroupByRegex "com\\.github\\..*" }
+        }
     }
 }
 

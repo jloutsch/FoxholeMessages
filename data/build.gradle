@@ -85,6 +85,8 @@ dependencies {
     implementation "com.squareup.moshi:moshi:$moshi_version"
     kapt "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
     implementation "com.squareup.okhttp3:okhttp:$okhttp3_version"
+    // See okio_version in the root build.gradle for why this is pinned.
+    implementation("com.squareup.okio:okio") { version { strictly okio_version } }
     implementation 'io.michaelrocks:libphonenumber-android:8.13.47'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
@@ -96,17 +98,6 @@ dependencies {
     implementation project(':common')
     implementation project(':domain')
 
-}
-
-repositories {
-    google()
-    maven { url "https://jitpack.io" }
-    maven { url 'https://maven.google.com' }
-    maven {
-        name 'glide-snapshot'
-        url 'https://oss.sonatype.org/content/repositories/snapshots'
-    }
-    mavenCentral()
 }
 
 // EmojiReactionPatternsTest reads the shipped pattern files; declare them so editing one re-runs
