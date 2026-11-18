@@ -26,8 +26,6 @@
     <string name="title_theme">Motiv vzhledu</string>
     <string name="title_conversations">Hledat…</string>
     <string name="title_compose">Zadejte jméno nebo číslo</string>
-    <string name="setup_skip">Přeskočit</string>
-    <string name="setup_next">Pokračovat</string>
     <string name="menu_add_person">Přidat osobu</string>
     <string name="menu_call">Volat</string>
     <string name="menu_info">Podrobnosti</string>
@@ -35,7 +33,6 @@
     <string name="compose_menu_share">Sdílet text</string>
     <string name="main_drawer_open_cd">Otevřít menu</string>
     <string name="main_title_selected">Vybráno: %d</string>
-    <string name="main_menu_clear">Vymazat</string>
     <string name="main_menu_archive">Archivovat</string>
     <string name="main_menu_unarchive">Obnovit z archivu</string>
     <string name="main_menu_delete">Smazat</string>
@@ -65,11 +62,8 @@
     <string name="drawer_archived">Archivováno</string>
     <string name="drawer_scheduled">Naplánováno</string>
     <string name="drawer_blocking">Blokování</string>
-    <string name="drawer_more">Více</string>
     <string name="drawer_settings">Nastavení</string>
-    <string name="drawer_help">Nápověda a zpětná vazba</string>
     <string name="drawer_invite">Pozvat přátele</string>
-    <string name="drawer_plus_banner_summary">Odemkněte úžasné nové funkce a podpořte vývoj</string>
     <string name="rate_title">Líbí se Vám Foxhole Messages?</string>
     <string name="rate_summary">Sdílejte trochu lásky a ohodnoťte nás na Google Play!</string>
     <string name="rate_okay">Tak určitě!</string>
@@ -81,11 +75,6 @@
         <item quantity="many">Opravdu chcete smazat %d konverzací?</item>
         <item quantity="other">Opravdu chcete smazat %d konverzací?</item>
     </plurals>
-    <string-array name="message_options">
-        <item>Kopírovat text</item>
-        <item>Přeposlat</item>
-        <item>Smazat</item>
-    </string-array>
     <string name="compose_number_picker_title">Vybrat telefonní číslo</string>
     <string name="compose_number_picker_default">%s ∙ Výchozí</string>
     <string name="compose_number_picker_once">Pouze jednou</string>
@@ -98,7 +87,6 @@
     <string name="compose_vcard_label">Karta kontaktu</string>
     <string name="compose_scheduled_for">Plánovaný čas:</string>
     <string name="compose_scheduled_future">Vybraný čas musí teprve nastat (musí být v budoucnu)!</string>
-    <string name="compose_scheduled_plus">Pro použití plánování zpráv je třeba povýšit na Foxhole Messages+</string>
     <string name="compose_scheduled_toast">Přidáno do naplánovaných zpráv</string>
     <string name="compose_hint">Napsat zprávu…</string>
     <string name="compose_menu_copy">Kopírovat text</string>
@@ -111,9 +99,6 @@
     <string name="compose_details_type">Typ: %s</string>
     <string name="compose_details_from">Od: %s</string>
     <string name="compose_details_to">Pro: %s</string>
-    <string name="compose_details_subject">Předmět: %s</string>
-    <string name="compose_details_priority">Priorita: %s</string>
-    <string name="compose_details_size">Velikost: %s</string>
     <string name="compose_details_sent">Odesláno: %s</string>
     <string name="compose_details_received">Přijato: %s</string>
     <string name="compose_details_delivered">Doručeno: %s</string>
@@ -135,7 +120,6 @@
     <string name="info_copied_address">Adresa zkopírována</string>
     <string name="info_name">Název konverzace</string>
     <string name="info_notifications">Oznámení</string>
-    <string name="info_theme">Motiv vzhledu</string>
     <string name="info_archive">Archivovat</string>
     <string name="info_unarchive">Obnovit z archivu</string>
     <string name="info_block">Blokovat</string>
@@ -146,16 +130,12 @@
     <string name="backup_title">Záloha a obnovení</string>
     <string name="backup_backing_up">Zálohování zpráv</string>
     <string name="backup_restoring">Obnovení ze zálohy</string>
-    <string name="backup_loading">Načítání…</string>
-    <string name="backup_never">Nikdy</string>
     <string name="backup_location_title">Umístění zálohy</string>
     <string name="backup_location_summary">Nastavit složku</string>
     <string name="backup_restore_title">Obnovit</string>
     <string name="backup_restore_summary">Vybrat zálohu</string>
-    <string name="backup_restore_error_plus">Odemkněte Foxhole Messages+ pro použití funkce zálohování a obnovení</string>
     <string name="backup_restore_error_backup">Zálohování…</string>
     <string name="backup_restore_error_restore">Probíhá obnova…</string>
-    <string name="backup_restore_confirm_title">Obnovit ze zálohy</string>
     <string name="backup_restore_stop_title">Zastavit obnovu</string>
     <string name="backup_restore_stop_message">Dříve obnovené zprávy zůstanou ve vašem zařízení</string>
     <string name="backup_select_location_rationale_title">Vyberte umístění zálohy</string>
@@ -164,8 +144,6 @@
     <string name="backup_selected_backup_error_title">Error</string>
     <string name="backup_selected_backup_error_message">Nelze přečíst záložní soubor</string>
     <string name="backup_selected_backup_details_title">Backup details</string>
-    <string name="backup_restore_dialog_title">Zálohy</string>
-    <string name="backup_restore_dialog_empty">Nenalezeny žádné zálohy</string>
     <string name="backup_disclaimer">Momentálně jsou pro zálohování a obnovení podporovány pouze SMS. MMS podpora a plánované zálohy budou přidány již brzy!</string>
     <string name="backup_now">Zálohovat nyní</string>
     <string name="backup_progress_parsing">Analyzování zálohy…</string>
@@ -182,7 +160,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Posíláno 23. prosince</string>
     <string name="scheduled_compose_cd">Naplánovat zprávu</string>
-    <string name="scheduled_options_title">Naplánovaná zpráva</string>
     <string-array name="scheduled_options">
         <item>Odeslat nyní</item>
         <item>Kopírovat text</item>
@@ -259,11 +236,9 @@
     <string name="settings_version">Verze %s</string>
     <string name="settings_logging_enabled">Ladící protokolování zapnuto</string>
     <string name="settings_logging_disabled">Ladící protokolování vypnuto</string>
-    <string name="settings_delay_duration_hint">Zadejte prodlevu (v sekundách)</string>
     <string name="blocking_title">Blokování</string>
     <string name="blocking_drop_title">Zahodit zprávy</string>
     <string name="blocking_drop_summary">Zahodit příchozí zprávy od blokovaných odesílatelů namísto jejich skrytí</string>
-    <string name="blocking_conversations">Blokované konverzace</string>
     <string name="blocking_manager_title">Správce blokování</string>
     <string name="blocking_manager_qksms_summary">Vestavěné blokování v Foxhole Messages</string>
     <string name="blocking_manager_call_blocker_summary">Blokujte spamové zprávy, čísla a neznámé hovory pomocí černé listiny a plánování</string>
@@ -301,38 +276,8 @@
     <string name="about_contact_title">Kontakt</string>
     <string name="about_license_title">Licence</string>
     <string name="about_copyright_title">Autorská práva</string>
-    <string name="qksms_plus_description_title">Podpoř vývoj, odemkni vše</string>
-    <string name="qksms_plus_description_summary">Můžete zachránit hladovějícího vývojáře jen za %s</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
-    <string name="qksms_plus_upgrade">Doživotní aktualizace za %1$s %2$s</string>
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
-    <string name="qksms_plus_upgrade_donate">Odemknout + darovat %1$s %2$s</string>
-    <string name="qksms_plus_thanks_title">Děkujeme za podporu Foxhole Messages!</string>
-    <string name="qksms_plus_thanks_summary">Nyní máte přístup ke všem funkcím Foxhole Messages+</string>
-    <string name="qksms_plus_error">Došlo k chybě, zkuste to prosím znovu</string>
-    <string name="qksms_plus_free_title">Foxhole Messages + je zdarma pro uživatele F-Droid! Pokud byste chtěli podpořit vývoj, neváhejte přispět.</string>
-    <string name="qksms_plus_donate">Darovat pomocí PayPal</string>
-    <string name="qksms_plus_coming_soon">Připravujeme</string>
-    <string name="qksms_plus_themes_title">Prémiové motivy vzhledu</string>
-    <string name="qksms_plus_themes_summary">Nádherné barvy, které nejsou na paletě Material designu</string>
-    <string name="qksms_plus_emoji_title">Vlastní automatické emoji</string>
-    <string name="qksms_plus_emoji_summary">Vytvořte si zkratky pro vlastní automatické emoji</string>
-    <string name="qksms_plus_backup_title">Zálohování zpráv</string>
-    <string name="qksms_plus_backup_summary">Zálohujte automaticky své zprávy. Už se nemusíte obávat ztráty historie zpráv při ztrátě nebo výměně telefonu</string>
-    <string name="qksms_plus_scheduled_title">Plánované zprávy</string>
-    <string name="qksms_plus_scheduled_summary">Plánované zprávy budou automaticky odeslány v určené datum a čas</string>
-    <string name="qksms_plus_delayed_title">Zpožděné odeslání</string>
-    <string name="qksms_plus_delayed_summary">Vyčkání několik sekund před odesláním zprávy</string>
-    <string name="qksms_plus_night_title">Automatický noční režim</string>
-    <string name="qksms_plus_night_summary">Zapnutí nočního režimu podle denní doby</string>
-    <string name="qksms_plus_blacklist_title">Pokročilé blokování</string>
-    <string name="qksms_plus_blacklist_summary">Blokování zpráv dle klíčových slov nebo vzorů</string>
-    <string name="qksms_plus_forward_title">Automatické přeposílání</string>
-    <string name="qksms_plus_forward_summary">Automatické přeposílání zpráv od určitých odesílatelů</string>
-    <string name="qksms_plus_respond_title">Automatická odpověď</string>
-    <string name="qksms_plus_respond_summary">Automatické odpovídání na příchozí zprávy přednastavenou odpovědí</string>
-    <string name="qksms_plus_more_title">Více</string>
-    <string name="qksms_plus_more_summary">Foxhole Messages je v aktivním vývoji a váš nákup bude obsahovat i všechny budoucí funkce Foxhole Messages+!</string>
     <string name="widget_loading">Načítání…</string>
     <string name="widget_more">Zobrazit další konverzace</string>
     <string name="qkreply_menu_read">Označit jako přečtené</string>
@@ -359,11 +304,7 @@
     <string name="button_delete">Smazat</string>
     <string name="button_save">Uložit</string>
     <string name="button_stop">Zastavit</string>
-    <string name="button_more">Více</string>
-    <string name="button_set">Nastavit</string>
     <string name="button_undo">Zpět</string>
-    <string name="toast_copied">Zkopírováno</string>
-    <string name="toast_qksms_plus">Pro použití musíte odemknout verzi Foxhole Messages +</string>
     <plurals name="notification_new_messages">
         <item quantity="one">Nová zpráva</item>
         <item quantity="few">%s nových zpráv</item>
@@ -424,7 +365,6 @@
     <string name="menu_mms_part_open">Otevřít externě</string>
     <string name="main_menu_select_all">Vybrat vše</string>
     <string name="main_menu_send_now">Odeslat nyní</string>
-    <string name="main_menu_edit_message">Upravit zprávu</string>
     <string name="main_menu_rename_conversation">Přejmenovat konverzaci</string>
     <string name="main_sender_draft">Koncept: %s</string>
     <string name="scheduled_menu_send_now">Odeslat nyní</string>
@@ -484,7 +424,6 @@
     <string name="messageLinkHandling_dialog_positive">Ano, otevřít odkaz</string>
     <string name="messageLinkHandling_dialog_negative">Zrušit</string>
     <string name="error_stt_toast">Omlouváme se, při načítání poskytovatele převodu řeči na text došlo k chybě.</string>
-    <string name="stt_toast_extra_prompt">Namluvte svou zprávu</string>
     <string name="messages_text_share_file_error">Jejda! Při sdílení se něco pokazilo</string>
     <string name="message_body_too_long_to_display">⚠ Zpráva je dlouhá. Zkopírujte nebo uložte pro zobrazení celého textu</string>
     <string name="clipboard_too_large_to_copy">Velikost dat překračuje limit schránky</string>

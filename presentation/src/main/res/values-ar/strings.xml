@@ -26,8 +26,6 @@
     <string name="title_theme">السمة</string>
     <string name="title_conversations">البحث في علبة الوارد…</string>
     <string name="title_compose">أكتب اسماً أو رقماً</string>
-    <string name="setup_skip">تخطي</string>
-    <string name="setup_next">متابعة</string>
     <string name="menu_add_person">اضافة شخص</string>
     <string name="menu_call">اتصال</string>
     <string name="menu_info">تفاصيل</string>
@@ -35,7 +33,6 @@
     <string name="compose_menu_share">مشاركة</string>
     <string name="main_drawer_open_cd">فتح درج التنقل</string>
     <string name="main_title_selected">%d محددة</string>
-    <string name="main_menu_clear">مسح</string>
     <string name="main_menu_archive">أرشفة</string>
     <string name="main_menu_unarchive">إلغاء الأرشفة</string>
     <string name="main_menu_delete">حذف</string>
@@ -65,11 +62,8 @@
     <string name="drawer_archived">المؤرشفة</string>
     <string name="drawer_scheduled">المجدولة</string>
     <string name="drawer_blocking">الحظر</string>
-    <string name="drawer_more">المزيد</string>
     <string name="drawer_settings">الإعدادات</string>
-    <string name="drawer_help">المساعدة والتواصل مع المبرمج</string>
     <string name="drawer_invite">دعوة الأصدقاء</string>
-    <string name="drawer_plus_banner_summary">فتح ميزات رائعة جديدة ، و دعم التطوير</string>
     <string name="rate_title">هل Foxhole Messages ممتع ؟</string>
     <string name="rate_summary">أظهر محبتك وقيّمنا على متجر Google Play!</string>
     <string name="rate_okay">حسناً!</string>
@@ -83,11 +77,6 @@
         <item quantity="many">هل أنت متأكد من رغبتك حذف %d محادثات؟</item>
         <item quantity="other">هل أنت متأكد من رغبتك حذف %d محادثات؟</item>
     </plurals>
-    <string-array name="message_options">
-        <item>نسخ النص</item>
-        <item>إعادة توجيه</item>
-        <item>حذف</item>
-    </string-array>
     <string name="compose_number_picker_title">اختر رقم الهاتف</string>
     <string name="compose_number_picker_default">%s ∙ افتراضي</string>
     <string name="compose_number_picker_once">فقط واحد</string>
@@ -100,7 +89,6 @@
     <string name="compose_vcard_label">بطاقة جهة الاتصال</string>
     <string name="compose_scheduled_for">الموعد المحدد:</string>
     <string name="compose_scheduled_future">الوقت المحدّد يجب أن يكون مستقبلاً!</string>
-    <string name="compose_scheduled_plus">يلزمك فك Foxhole Messages+ لاستخدام التراسل المجدول</string>
     <string name="compose_scheduled_toast">أضيفت إلى الرسائل المجدولة</string>
     <string name="compose_hint">كتابة رسالة…</string>
     <string name="compose_menu_copy">نسخ النص</string>
@@ -113,9 +101,6 @@
     <string name="compose_details_type">النوع: %s</string>
     <string name="compose_details_from">من: %s</string>
     <string name="compose_details_to">إلى: %s</string>
-    <string name="compose_details_subject">الموضوع: %s</string>
-    <string name="compose_details_priority">الأولوية: %s</string>
-    <string name="compose_details_size">الحجم: %s</string>
     <string name="compose_details_sent">أرسلت: %s</string>
     <string name="compose_details_received">استلمت: %s</string>
     <string name="compose_details_delivered">التسليم: %s</string>
@@ -137,7 +122,6 @@
     <string name="info_copied_address">تم نسخ العنوان</string>
     <string name="info_name">عنوان المحادثة</string>
     <string name="info_notifications">الإشعارات</string>
-    <string name="info_theme">السمة</string>
     <string name="info_archive">الأرشيف</string>
     <string name="info_unarchive">إلغاء الأرشفة</string>
     <string name="info_block">حظر</string>
@@ -148,16 +132,12 @@
     <string name="backup_title">النسخ الاحتياطي والاستعادة</string>
     <string name="backup_backing_up">النسخ الاحتياطي للرسائل</string>
     <string name="backup_restoring">استعادة من النسخة الاحتياطية</string>
-    <string name="backup_loading">تحميل…</string>
-    <string name="backup_never">أبداً</string>
     <string name="backup_location_title">موقع النسخ الاحتياطي</string>
     <string name="backup_location_summary">تعيين المجلد</string>
     <string name="backup_restore_title">استعادة</string>
     <string name="backup_restore_summary">اختر نسخة احتياطية</string>
-    <string name="backup_restore_error_plus">يرجى إلغاء تأمين Foxhole Messages+ للتمكن من استخدام النسخ الاحتياطي والاستعادة</string>
     <string name="backup_restore_error_backup">النسخ الاحتياطي قيد التقدم…</string>
     <string name="backup_restore_error_restore">الاستعادة قيد التقدُّم…</string>
-    <string name="backup_restore_confirm_title">الاستعادة من النسخ الاحتياطي</string>
     <string name="backup_restore_stop_title">إيقاف الاستعادة</string>
     <string name="backup_restore_stop_message">الرسائل التي تمت استعادتها ستبقى في جهازك</string>
     <string name="backup_select_location_rationale_title">حدد موقع النسخ الاحتياطي</string>
@@ -166,8 +146,6 @@
     <string name="backup_selected_backup_error_title">Error</string>
     <string name="backup_selected_backup_error_message">تعذر قراءة ملف النسخ الاحتياطي</string>
     <string name="backup_selected_backup_details_title">Backup details</string>
-    <string name="backup_restore_dialog_title">النسخ الاحتياطية</string>
-    <string name="backup_restore_dialog_empty">لا توجد أي نسخة احتياطية</string>
     <string name="backup_disclaimer">النسخ الاحتياطي والاستعادة متاحة الآن فقط للرسائل النصّية. دعم رسائل الوسائط والرسائل المجدولة قادم قريباً!</string>
     <string name="backup_now">النسخ الاحتياطي الآن</string>
     <string name="backup_progress_parsing">توزيع النسخ الاحتياطي…</string>
@@ -184,7 +162,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix its formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">الإرسال في 23 ديسمبر</string>
     <string name="scheduled_compose_cd">جدولة رسالة</string>
-    <string name="scheduled_options_title">الرسالة المجدولة</string>
     <string-array name="scheduled_options">
         <item>أرسل الآن</item>
         <item>نسخ النص</item>
@@ -263,11 +240,9 @@
     <string name="settings_version">النسخة %s</string>
     <string name="settings_logging_enabled">تسجيل التصحيح مفعَّل</string>
     <string name="settings_logging_disabled">تسجيل التصحيح معطَّل</string>
-    <string name="settings_delay_duration_hint">أدخل المدة (ثوان)</string>
     <string name="blocking_title">المحظورات</string>
     <string name="blocking_drop_title">مسح الرسائل</string>
     <string name="blocking_drop_summary">قم بحذف الرسائل الواردة من المرسلين المحظورين بدلاً من إخفائها</string>
-    <string name="blocking_conversations">المحادثات المحظورة</string>
     <string name="blocking_manager_title">مدير المحظورات</string>
     <string name="blocking_manager_qksms_summary">وظيفة حظر مدمجة في برنامج Foxhole Messages</string>
     <string name="blocking_manager_call_blocker_summary">حظر الرسائل المزعجة والأرقام والمكالمات غير المعروفة باستخدام القائمة السوداء وجدولة المكالمات</string>
@@ -309,39 +284,8 @@
     <string name="about_contact_title">للاتصال</string>
     <string name="about_license_title">الترخيص</string>
     <string name="about_copyright_title">حقوق النسخ</string>
-    <string name="qksms_plus_description_title">دعم التطوير و فتح جميع المزايا</string>
-    <string name="qksms_plus_description_summary">يمكنك إنقاذ المطوّر الجائع ب %s فقط</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
-    <string name="qksms_plus_upgrade">ترقية مدى الحياة ل %1$s%2$s</string>
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
-    <string name="qksms_plus_upgrade_donate">افتح + التبرع ل %1$s%2$s</string>
-    <string name="qksms_plus_thanks_title">شكراً لكم على دعم Foxhole Messages!</string>
-    <string name="qksms_plus_thanks_summary">جميع ميزات Foxhole Messages+ متاحة لك الآن</string>
-    <string name="qksms_plus_error">حدث خطا, يرجى اعادة المحاولة</string>
-    <string name="qksms_plus_free_title">Foxhole Messages+ مجاني لمستخدمي متجر ف-درويد! لا تتردد في التبرع إن كنت ترغب دعم تطوير هذا التطبيق.</string>
-    <string name="qksms_plus_donate">التبرع عن طريق بي بال</string>
-    <string name="qksms_plus_coming_soon">قريباً</string>
-    <string name="qksms_plus_themes_title">سمات فاخرة</string>
-    <string name="qksms_plus_themes_summary">استفد من ألوان رائعة للسمات لاتوجد في لوح ألوان Material Design</string>
-    <string name="qksms_plus_emoji_title">إيموجي تلقائية ومخصصة</string>
-    <string name="qksms_plus_emoji_summary">إنشاء اختصارات إيموجي تلقائية ومخصّصة</string>
-    <string name="qksms_plus_backup_title">النسخ الاحتياطي للرسائل</string>
-    <string name="qksms_plus_backup_summary">النسخ الاحتياطي التلقائي لرسائلك.
-لا تقلق ثانية من فقد سجلات رسائلك عندما تغير جوالك أو عند فقده</string>
-    <string name="qksms_plus_scheduled_title">الرسائل المجدولة</string>
-    <string name="qksms_plus_scheduled_summary">جدولة الرسائل ليتم إرسالها تلقائياً في وقت وتاريخ محدد</string>
-    <string name="qksms_plus_delayed_title">إرسال متأخر</string>
-    <string name="qksms_plus_delayed_summary">انتظر بضع ثوان قبل إرسال رسالتك</string>
-    <string name="qksms_plus_night_title">الوضع الليلي التلقائي</string>
-    <string name="qksms_plus_night_summary">تمكين الوضع الليلي استناداً على الوقت من اليوم</string>
-    <string name="qksms_plus_blacklist_title">الحظر المتقدم</string>
-    <string name="qksms_plus_blacklist_summary">حظر الرسائل التي تحوي كلمات أو تطابق أنماطاً</string>
-    <string name="qksms_plus_forward_title">إعادة التوجيه التلقائية</string>
-    <string name="qksms_plus_forward_summary">أعد التوجيه تلقائياً للرسائل من مرسلين معينين</string>
-    <string name="qksms_plus_respond_title">الرد التلقائي</string>
-    <string name="qksms_plus_respond_summary">الرد تلقائياً على الرسائل الواردة برسالة محددة مسبقاً</string>
-    <string name="qksms_plus_more_title">المزيد</string>
-    <string name="qksms_plus_more_summary">Foxhole Messages قيد التطوير النشط ، مشتراك سيتضمن كل ميزات Foxhole Messages+ المستقبلية!</string>
     <string name="widget_loading">تحميل…</string>
     <string name="widget_more">عرض المزيد من المحادثات</string>
     <string name="qkreply_menu_read">مقروء</string>
@@ -368,11 +312,7 @@
     <string name="button_delete">حذف</string>
     <string name="button_save">حفظ</string>
     <string name="button_stop">إيقاف</string>
-    <string name="button_more">المزيد</string>
-    <string name="button_set">تعيين</string>
     <string name="button_undo">تراجع</string>
-    <string name="toast_copied">تم النسخ</string>
-    <string name="toast_qksms_plus">استخدام هذه الميزة يتطلب فتح Foxhole Messages+</string>
     <plurals name="notification_new_messages">
         <item quantity="zero">لا رسائل جديدة</item>
         <item quantity="one">رسالة جديدة</item>
@@ -434,7 +374,6 @@
     <string name="menu_mms_part_forward">إعادة توجيه</string>
     <string name="main_menu_select_all">حدد الكل</string>
     <string name="main_menu_send_now">أرسل الآن</string>
-    <string name="main_menu_edit_message">تعديل الرسالة</string>
     <string name="main_menu_rename_conversation">إعادة تسمية المحادثة</string>
     <string name="main_sync_emojis">تحليل ردود فعل الرموز التعبيرية…</string>
     <string name="main_sender_draft">مسودة: %s</string>
@@ -541,7 +480,6 @@
     <string name="messageLinkHandling_dialog_positive">نعم، افتح الرابط</string>
     <string name="messageLinkHandling_dialog_negative">لا</string>
     <string name="error_stt_toast">عذراً، حدث خطأ أثناء تحميل موفر خدمة تحويل الكلام إلى نص.</string>
-    <string name="stt_toast_extra_prompt">تحدث رسالتك</string>
     <string name="messages_text_share_file_error">عذراً! حدث خطأ ما أثناء المشاركة</string>
     <string name="message_content_filters_dialog_case_switch">حساس لحالة الأحرف</string>
 </resources>

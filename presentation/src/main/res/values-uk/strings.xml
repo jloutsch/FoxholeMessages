@@ -26,8 +26,6 @@
     <string name="title_theme">Тема</string>
     <string name="title_conversations">Пошук у вхідних…</string>
     <string name="title_compose">Кому: ім\'я або номер</string>
-    <string name="setup_skip">Пропустити</string>
-    <string name="setup_next">Продовжити</string>
     <string name="menu_add_person">Додати контакт</string>
     <string name="menu_call">Зателефонувати</string>
     <string name="menu_info">Деталі</string>
@@ -35,7 +33,6 @@
     <string name="compose_menu_share">Поділитися</string>
     <string name="main_drawer_open_cd">Відкрити панель навігації</string>
     <string name="main_title_selected">Обрано: %d</string>
-    <string name="main_menu_clear">Очистити</string>
     <string name="main_menu_archive">Архівувати</string>
     <string name="main_menu_unarchive">Розархівувати</string>
     <string name="main_menu_delete">Видалити</string>
@@ -65,11 +62,8 @@
     <string name="drawer_archived">Архівні</string>
     <string name="drawer_scheduled">Заплановані</string>
     <string name="drawer_blocking">Блокування</string>
-    <string name="drawer_more">Більше</string>
     <string name="drawer_settings">Налаштування</string>
-    <string name="drawer_help">Допомога та зворотній зв\'язок</string>
     <string name="drawer_invite">Запросити друзів</string>
-    <string name="drawer_plus_banner_summary">Розблокувати нові дивовижні можливості та підтримати розробку</string>
     <string name="rate_title">Подобається Foxhole Messages?</string>
     <string name="rate_summary">Поділись любов\'ю та оціни нас на Google Play!</string>
     <string name="rate_okay">Гаразд!</string>
@@ -81,11 +75,6 @@
         <item quantity="many">Ви впевнені, що хочете видалити %d бесід?</item>
         <item quantity="other">Ви впевнені, що хочете видалити %d бесіди?</item>
     </plurals>
-    <string-array name="message_options">
-        <item>Скопіювати текст</item>
-        <item>Переслати</item>
-        <item>Видалити</item>
-    </string-array>
     <string name="compose_number_picker_title">Виберіть номер телефону</string>
     <string name="compose_number_picker_default">%s ∙ початково</string>
     <string name="compose_number_picker_once">Один раз</string>
@@ -98,7 +87,6 @@
     <string name="compose_vcard_label">Картка контакту</string>
     <string name="compose_scheduled_for">Заплановано на</string>
     <string name="compose_scheduled_future">Обраний час повинен бути в майбутньому!</string>
-    <string name="compose_scheduled_plus">Для використання запланованих повідомлень ви повинні розблокувати Foxhole Messages+</string>
     <string name="compose_scheduled_toast">Додано до запланованих повідомлень</string>
     <string name="compose_hint">Написати повідомлення…</string>
     <string name="compose_menu_copy">Скопіювати текст</string>
@@ -111,9 +99,6 @@
     <string name="compose_details_type">Тип: %s</string>
     <string name="compose_details_from">Від: %s</string>
     <string name="compose_details_to">Кому: %s</string>
-    <string name="compose_details_subject">Тема: %s</string>
-    <string name="compose_details_priority">Пріоритет: %s</string>
-    <string name="compose_details_size">Розмір: %s</string>
     <string name="compose_details_sent">Надіслано: %s</string>
     <string name="compose_details_received">Отримано: %s</string>
     <string name="compose_details_delivered">Доставлено: %s</string>
@@ -135,7 +120,6 @@
     <string name="info_copied_address">Адреса скопійована</string>
     <string name="info_name">Заголовок бесіди</string>
     <string name="info_notifications">Сповіщення</string>
-    <string name="info_theme">Тема</string>
     <string name="info_archive">Архівувати</string>
     <string name="info_unarchive">Розархівувати</string>
     <string name="info_block">Заблокувати</string>
@@ -146,16 +130,12 @@
     <string name="backup_title">Резервне копіювання</string>
     <string name="backup_backing_up">Резервне копіювання повідомлень</string>
     <string name="backup_restoring">Відновити з резервної копії</string>
-    <string name="backup_loading">Завантаження…</string>
-    <string name="backup_never">Ніколи</string>
     <string name="backup_location_title">Шлях до резервної копії</string>
     <string name="backup_location_summary">Обрати теку</string>
     <string name="backup_restore_title">Відновити</string>
     <string name="backup_restore_summary">Оберіть резервну копію</string>
-    <string name="backup_restore_error_plus">Для використання резервного копіювання та відновлення розблокуйте Foxhole Messages+</string>
     <string name="backup_restore_error_backup">Триває створення резервної копії…</string>
     <string name="backup_restore_error_restore">Триває відновлення…</string>
-    <string name="backup_restore_confirm_title">Відновити з резервної копії</string>
     <string name="backup_restore_stop_title">Зупинити відновлення</string>
     <string name="backup_restore_stop_message">Повідомлення, які були відновлені залишатимуться на пристрої</string>
     <string name="backup_select_location_rationale_title">Вибір теки резервної копії</string>
@@ -164,8 +144,6 @@
     <string name="backup_selected_backup_error_title">Помилка</string>
     <string name="backup_selected_backup_error_message">Не вдалося прочитати файл резервної копії</string>
     <string name="backup_selected_backup_details_title">Деталі резервної копії</string>
-    <string name="backup_restore_dialog_title">Резервні копії</string>
-    <string name="backup_restore_dialog_empty">Резервних копій не знайдено</string>
     <string name="backup_disclaimer">На даний момент підтримуються лише SMS-повідомлення. Підтримка MMS-повідомлень та створення резервних копій за розкладом буде реалізована незабаром!</string>
     <string name="backup_now">Створити резервну копію</string>
     <string name="backup_progress_parsing">Аналіз резервної копії…</string>
@@ -182,7 +160,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Надіслано: 23 грудня </string>
     <string name="scheduled_compose_cd">Запланувати повідомлення</string>
-    <string name="scheduled_options_title">Заплановане повідомлення</string>
     <string-array name="scheduled_options">
         <item>Надіслати зараз</item>
         <item>Копіювати текст</item>
@@ -259,11 +236,9 @@
     <string name="settings_version">Версія %s</string>
     <string name="settings_logging_enabled">Ведення журналу зневаження увімкнуте</string>
     <string name="settings_logging_disabled">Ведення журналу зневаження вимкнуте</string>
-    <string name="settings_delay_duration_hint">Введіть тривалість (у секундах)</string>
     <string name="blocking_title">Блокування</string>
     <string name="blocking_drop_title">Видалити повідомлення</string>
     <string name="blocking_drop_summary">Видаляти вхідні повідомлення від заблокованих відправників, а не приховувати їх</string>
-    <string name="blocking_conversations">Заблоковані бесіди</string>
     <string name="blocking_manager_title">Керування блокуванням</string>
     <string name="blocking_manager_qksms_summary">Вбудована функція блокування Foxhole Messages</string>
     <string name="blocking_manager_call_blocker_summary">Блокуйте спам-повідомлення, невідомі номери та дзвінки за допомогою чорного списку та за розкладом</string>
@@ -301,38 +276,8 @@
     <string name="about_contact_title">Контакт</string>
     <string name="about_license_title">Ліцензія</string>
     <string name="about_copyright_title">Авторське право</string>
-    <string name="qksms_plus_description_title">Підтримати подальший розвиток, розблокувати все</string>
-    <string name="qksms_plus_description_summary">Ви можете врятувати голодуючого розробника всього за %s</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
-    <string name="qksms_plus_upgrade">Довічне оновлення %1$s %2$s</string>
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
-    <string name="qksms_plus_upgrade_donate">Розблокувати + пожертвувати %1$s %2$s</string>
-    <string name="qksms_plus_thanks_title">Дякуємо вам за підтримку Foxhole Messages!</string>
-    <string name="qksms_plus_thanks_summary">Тепер у вас є доступ до всіх функцій Foxhole Messages+</string>
-    <string name="qksms_plus_error">Сталася помилка, спробуйте ще раз</string>
-    <string name="qksms_plus_free_title">Foxhole Messages+ є безкоштовним для користувачів F-Droid! Якщо ви хочете підтримати подальший розвиток програми, зробіть пожертву.</string>
-    <string name="qksms_plus_donate">Пожертвування через PayPal</string>
-    <string name="qksms_plus_coming_soon">Незабаром</string>
-    <string name="qksms_plus_themes_title">Преміум теми</string>
-    <string name="qksms_plus_themes_summary">Розблокуйте гарні кольори теми, недоступні в палітрі Material Design</string>
-    <string name="qksms_plus_emoji_title">Власні авто-emoji</string>
-    <string name="qksms_plus_emoji_summary">Створюйте ярлик власних авто-emoji</string>
-    <string name="qksms_plus_backup_title">Резерв. копіювання</string>
-    <string name="qksms_plus_backup_summary">Автоматично створюйте резервні копії ваших повідомлень. Не переймайтеся, що втратите історію, якщо ви зміните або загубите телефон</string>
-    <string name="qksms_plus_scheduled_title">Заплановані повідомлення</string>
-    <string name="qksms_plus_scheduled_summary">Заплановані повідомлення для надсилання у визначений час та дату</string>
-    <string name="qksms_plus_delayed_title">Відкладене надсилання</string>
-    <string name="qksms_plus_delayed_summary">Зачекайте кілька секунд, перш ніж надсилати повідомлення</string>
-    <string name="qksms_plus_night_title">Автоматичний нічний режим</string>
-    <string name="qksms_plus_night_summary">Увімкнення нічного режиму на основі часу доби</string>
-    <string name="qksms_plus_blacklist_title">Розширене блокування</string>
-    <string name="qksms_plus_blacklist_summary">Блокувати повідомлення, які містять ключові слова або відповідають шаблонам</string>
-    <string name="qksms_plus_forward_title">Автоматичне пересилання</string>
-    <string name="qksms_plus_forward_summary">Автоматичне пересилання повідомлень від певних відправників</string>
-    <string name="qksms_plus_respond_title">Автоматична відповідь</string>
-    <string name="qksms_plus_respond_summary">Автоматично відповідати на вхідні повідомлення за допомогою попередньо налаштованих шаблонів</string>
-    <string name="qksms_plus_more_title">Ще</string>
-    <string name="qksms_plus_more_summary">Foxhole Messages перебуває у активній розробці, і Ваша покупка буде включати в себе всі майбутні можливості Foxhole Messages +!</string>
     <string name="widget_loading">Завантаження…</string>
     <string name="widget_more">Переглянути більше бесід</string>
     <string name="qkreply_menu_read">Позначити прочитаним</string>
@@ -359,11 +304,7 @@
     <string name="button_delete">Видалити</string>
     <string name="button_save">Зберегти</string>
     <string name="button_stop">Зупинити</string>
-    <string name="button_more">Більше</string>
-    <string name="button_set">Задати</string>
     <string name="button_undo">Скасувати</string>
-    <string name="toast_copied">Скопійовано</string>
-    <string name="toast_qksms_plus">Для використання ви повинні розблокувати Foxhole Messages+</string>
     <plurals name="notification_new_messages">
         <item quantity="one">Нове повідомлення</item>
         <item quantity="few">%s нових повідомлень</item>
@@ -424,7 +365,6 @@
     <string name="menu_mms_part_open">Відкрити зовні</string>
     <string name="main_menu_select_all">Вибрати все</string>
     <string name="main_menu_send_now">Надіслати зараз</string>
-    <string name="main_menu_edit_message">Редагувати повідомлення</string>
     <string name="main_menu_rename_conversation">Перейменувати розмову</string>
     <string name="main_sync_emojis">Розбір реакцій емодзі…</string>
     <string name="main_sender_draft">Чернетка: %s</string>
@@ -525,6 +465,5 @@
     <string name="messageLinkHandling_dialog_positive">Так, відкрити посилання</string>
     <string name="messageLinkHandling_dialog_negative">Ні</string>
     <string name="error_stt_toast">Вибачте, сталася помилка завантаження провайдера Speech-To-Text.</string>
-    <string name="stt_toast_extra_prompt">Проговорити ваше повідомлення</string>
     <string name="messages_text_share_file_error">Ой! Щось пішло не так під час обміну</string>
 </resources>

@@ -77,16 +77,6 @@
         <item name="textSize">secondary</item>
     </style>
 
-    <style name="CollapsingToolbarCollapsedText">
-        <item name="textSize">toolbar</item>
-        <item name="android:textStyle">bold</item>
-    </style>
-
-    <style name="CollapsingToolbarExpandedText">
-        <item name="android:textSize">44dp</item>
-        <item name="android:textStyle">bold</item>
-    </style>
-
     <style name="ScheduledSampleTextStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

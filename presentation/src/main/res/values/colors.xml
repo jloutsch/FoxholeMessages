@@ -24,8 +24,6 @@
     <color name="rippleLight">#1f000000</color>
     <color name="rippleDark">#33ffffff</color>
 
-    <color name="toolbarLight">#FFFFFF</color>
-    <color name="toolbarDark">#1d262b</color>
     <color name="toolbarTranslucent">#88000000</color>
 
     <color name="backgroundLight">#FFFFFF</color>

@@ -26,8 +26,6 @@
     <string name="title_theme">Téma</string>
     <string name="title_conversations">Keresés az üzenetek között…</string>
     <string name="title_compose">Adjon meg egy nevet vagy telefonszámot</string>
-    <string name="setup_skip">Kihagyás</string>
-    <string name="setup_next">Tovább</string>
     <string name="menu_add_person">Személy hozzáadása</string>
     <string name="menu_call">Hívás</string>
     <string name="menu_info">Részletek</string>
@@ -35,7 +33,6 @@
     <string name="compose_menu_share">Szöveg megosztása</string>
     <string name="main_drawer_open_cd">Navigációs menü megnyitása</string>
     <string name="main_title_selected">%d kijelölve</string>
-    <string name="main_menu_clear">Törlés</string>
     <string name="main_menu_archive">Archiválás</string>
     <string name="main_menu_unarchive">Archiválás visszavonása</string>
     <string name="main_menu_delete">Törlés</string>
@@ -65,11 +62,8 @@
     <string name="drawer_archived">Archivált</string>
     <string name="drawer_scheduled">Ütemezett</string>
     <string name="drawer_blocking">Tiltás</string>
-    <string name="drawer_more">Továbbiak</string>
     <string name="drawer_settings">Beállítások</string>
-    <string name="drawer_help">Súgó és visszajelzés</string>
     <string name="drawer_invite">Barátok meghívása</string>
-    <string name="drawer_plus_banner_summary">Jusson hozzá a fantasztikus új funkciókhoz, és támogassa a fejlesztést</string>
     <string name="rate_title">Tetszik a Foxhole Messages?</string>
     <string name="rate_summary">Mutassa ki támogatását, és hagyjon nekünk egy csillagot a GitHubon!</string>
     <string name="rate_okay">OK!</string>
@@ -79,11 +73,6 @@
         <item quantity="one">Biztosan törölni szeretné ezt a beszélgetést?</item>
         <item quantity="other">Biztosan törölni szeretné a(z) %d beszélgetést?</item>
     </plurals>
-    <string-array name="message_options">
-        <item>Szöveg másolása</item>
-        <item>Továbbítás</item>
-        <item>Törlés</item>
-    </string-array>
     <string name="compose_number_picker_title">Válasszon egy telefonszámot</string>
     <string name="compose_number_picker_default">%s · Alapértelmezett</string>
     <string name="compose_number_picker_once">Csak egyszer</string>
@@ -96,7 +85,6 @@
     <string name="compose_vcard_label">Névjegy</string>
     <string name="compose_scheduled_for">Ütemezett idő:</string>
     <string name="compose_scheduled_future">A kiválasztott időpontnak a jövőben kell lennie!</string>
-    <string name="compose_scheduled_plus">Az ütemezés szerinti üzenetküldés használatához fel kell oldania a Foxhole Messages+ szolgáltatást</string>
     <string name="compose_scheduled_toast">Hozzáadva az ütemezett üzenetekhez</string>
     <string name="compose_hint">Írjon egy üzenetet…</string>
     <string name="compose_menu_copy">Szöveg másolása</string>
@@ -109,9 +97,6 @@
     <string name="compose_details_type">Típus: %s</string>
     <string name="compose_details_from">Feladó: %s</string>
     <string name="compose_details_to">Címzett: %s</string>
-    <string name="compose_details_subject">Tárgy: %s</string>
-    <string name="compose_details_priority">Prioritás: %s</string>
-    <string name="compose_details_size">Méret: %s</string>
     <string name="compose_details_sent">Elküldve: %s</string>
     <string name="compose_details_received">Fogadva: %s</string>
     <string name="compose_details_delivered">Kézbesítve: %s</string>
@@ -133,7 +118,6 @@
     <string name="info_copied_address">Cím másolva</string>
     <string name="info_name">Beszélgetés témája</string>
     <string name="info_notifications">Értesítések</string>
-    <string name="info_theme">Téma</string>
     <string name="info_archive">Archiválás</string>
     <string name="info_unarchive">Archiválás visszavonása</string>
     <string name="info_block">Tiltás</string>
@@ -144,16 +128,12 @@
     <string name="backup_title">Biztonsági mentés és visszaállítás</string>
     <string name="backup_backing_up">Üzenetek mentése</string>
     <string name="backup_restoring">Üzenetek visszaállítása biztonsági mentésből</string>
-    <string name="backup_loading">Betöltés…</string>
-    <string name="backup_never">Soha</string>
     <string name="backup_location_title">Biztonsági mentés helye</string>
     <string name="backup_location_summary">Mappa megadása</string>
     <string name="backup_restore_title">Visszaállítás</string>
     <string name="backup_restore_summary">Válasszon egy mentést</string>
-    <string name="backup_restore_error_plus">Oldja fel a Foxhole Messages+-t a biztonsági mentés és visszaállítás használatához</string>
     <string name="backup_restore_error_backup">Mentés folyamatban…</string>
     <string name="backup_restore_error_restore">Visszaállítás folyamatban…</string>
-    <string name="backup_restore_confirm_title">Visszaállítás mentésből</string>
     <string name="backup_restore_stop_title">Visszaállítás megállítása</string>
     <string name="backup_restore_stop_message">A már visszaállított üzenetek az eszközén maradnak</string>
     <string name="backup_select_location_rationale_title">Válassza ki a biztonsági mentés helyét</string>
@@ -162,8 +142,6 @@
     <string name="backup_selected_backup_error_title">Hiba</string>
     <string name="backup_selected_backup_error_message">Nem sikerült beolvasni a biztonsági mentési fájlt</string>
     <string name="backup_selected_backup_details_title">Biztonsági mentés részletei</string>
-    <string name="backup_restore_dialog_title">Biztonsági mentések</string>
-    <string name="backup_restore_dialog_empty">Nincsenek mentések</string>
     <string name="backup_disclaimer">Jelenleg a biztonsági mentés és visszaállítás funkció csak SMS-eket támogat. Az MMS-ek támogatása és az ütemezett biztonsági mentések hamarosan elérhetőek lesznek!</string>
     <string name="backup_now">Mentés most</string>
     <string name="backup_progress_parsing">Mentés elemzése…</string>
@@ -180,7 +158,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Küldés december 23-án</string>
     <string name="scheduled_compose_cd">Üzenet ütemezése</string>
-    <string name="scheduled_options_title">Ütemezett üzenet</string>
     <string-array name="scheduled_options">
         <item>Küldés most</item>
         <item>Szöveg másolása</item>
@@ -255,11 +232,9 @@
     <string name="settings_version">%s verzió</string>
     <string name="settings_logging_enabled">Hibanaplózás engedélyezve</string>
     <string name="settings_logging_disabled">Hibanaplózás letiltva</string>
-    <string name="settings_delay_duration_hint">Nyomva tartás ideje (másodpercben)</string>
     <string name="blocking_title">Tiltás</string>
     <string name="blocking_drop_title">Üzenetek eldobása</string>
     <string name="blocking_drop_summary">Üzenetek eldobása a tiltott küldőktől az elrejtésük helyett</string>
-    <string name="blocking_conversations">Letiltott beszélgetések</string>
     <string name="blocking_manager_title">Tiltáskezelő</string>
     <string name="blocking_manager_qksms_summary">A Foxhole Messages beépített tiltási funkciója</string>
     <string name="blocking_manager_call_blocker_summary">Tiltja a kéretlen tartalmú üzeneteket, számokat és ismeretlen hívásokat a tiltólistával és az ütemezéssel</string>
@@ -293,38 +268,8 @@
     <string name="about_contact_title">Kapcsolat</string>
     <string name="about_license_title">Licenc</string>
     <string name="about_copyright_title">Copyright</string>
-    <string name="qksms_plus_description_title">Fejlesztés támogatása, minden funkció engedélyezése</string>
-    <string name="qksms_plus_description_summary">Egy éhező fejlesztőt már akár %s-ért is megmenthet</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
-    <string name="qksms_plus_upgrade">Élettartam-frissítések a következőhöz: %1$s %2$s-ért</string>
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
-    <string name="qksms_plus_upgrade_donate">Feloldás és adományozás: %1$s %2$s-ért</string>
-    <string name="qksms_plus_thanks_title">Köszönjük, hogy támogatja a Foxhole Messages-et!</string>
-    <string name="qksms_plus_thanks_summary">Most már hozzáférhet minden Foxhole Messages+ funkcióhoz</string>
-    <string name="qksms_plus_error">Hiba történt, próbálja meg újra</string>
-    <string name="qksms_plus_free_title">A Foxhole Messages+ ingyenes az F-Droid felhasználók számára. Ha szeretné támogatni a fejlesztést, a felajánlott adományát nagyra értékeljük.</string>
-    <string name="qksms_plus_donate">Adományozás PayPalon keresztül</string>
-    <string name="qksms_plus_coming_soon">Hamarosan</string>
-    <string name="qksms_plus_themes_title">Prémium témák</string>
-    <string name="qksms_plus_themes_summary">Feloldja a Material Design palettán nem elérhető gyönyörű témaszíneket</string>
-    <string name="qksms_plus_emoji_title">Egyéni automatikus emodzsi</string>
-    <string name="qksms_plus_emoji_summary">Egyéni automatikus emodzsi-gyorsbillentyűk létrehozása</string>
-    <string name="qksms_plus_backup_title">Üzenet biztonsági mentése</string>
-    <string name="qksms_plus_backup_summary">Az üzenetek automatikus biztonsági mentése. Soha többé nem kell aggódnia az előzmények elvesztése miatt, ha telefonját lecseréli vagy elveszíti</string>
-    <string name="qksms_plus_scheduled_title">Ütemezett üzenetek</string>
-    <string name="qksms_plus_scheduled_summary">Az ütemezett üzenetek automatikusan a megadott időpontban lesznek elküldve</string>
-    <string name="qksms_plus_delayed_title">Késleltetett küldés</string>
-    <string name="qksms_plus_delayed_summary">Küldés előtt várjon pár másodpercet</string>
-    <string name="qksms_plus_night_title">Automatikus éjszakai mód</string>
-    <string name="qksms_plus_night_summary">Éjszakai mód beállítása napszaktól függően</string>
-    <string name="qksms_plus_blacklist_title">Fejlett tiltás</string>
-    <string name="qksms_plus_blacklist_summary">Megadott kulcsszavakat vagy szövegrészleteket tartalmazó üzenetek tiltása</string>
-    <string name="qksms_plus_forward_title">Automatikus továbbítás</string>
-    <string name="qksms_plus_forward_summary">Adott küldőktől jövő üzenetek automatikus továbbítása</string>
-    <string name="qksms_plus_respond_title">Automatikus válasz</string>
-    <string name="qksms_plus_respond_summary">Előre megadott sablonok küldése bejövő üzenetekre</string>
-    <string name="qksms_plus_more_title">Tovább</string>
-    <string name="qksms_plus_more_summary">A Foxhole Messages aktív fejlesztés alatt áll, és a vásárlásával az összes jövőbeli Foxhole Messages+ funkciót megkapja!</string>
     <string name="widget_loading">Betöltés…</string>
     <string name="widget_more">További beszélgetések megtekintése</string>
     <string name="qkreply_menu_read">Megjelölés olvasottként</string>
@@ -351,11 +296,7 @@
     <string name="button_delete">Törlés</string>
     <string name="button_save">Mentés</string>
     <string name="button_stop">Megállítás</string>
-    <string name="button_more">Továbbiak</string>
-    <string name="button_set">Beállítás</string>
     <string name="button_undo">Visszavonás</string>
-    <string name="toast_copied">Másolva</string>
-    <string name="toast_qksms_plus">Ehhez fel kell oldania a Foxhole Messages+-t</string>
     <plurals name="notification_new_messages">
         <item quantity="one">Új üzenet</item>
         <item quantity="other">%s új üzenet</item>
@@ -414,7 +355,6 @@
     <string name="menu_mms_part_open">Megnyitás külső alkalmazásban</string>
     <string name="main_menu_select_all">Összes kijelölése</string>
     <string name="main_menu_send_now">Küldés most</string>
-    <string name="main_menu_edit_message">Üzenet szerkesztése</string>
     <string name="main_menu_rename_conversation">Beszélgetés átnevezése</string>
     <string name="main_sender_draft">Vázlat: %s</string>
     <string name="scheduled_menu_send_now">Küldés most</string>
@@ -489,7 +429,6 @@
     <string name="messageLinkHandling_dialog_positive">Igen, hivatkozás megnyitása</string>
     <string name="messageLinkHandling_dialog_negative">Nem</string>
     <string name="error_stt_toast">Hiba történt a beszédfelismerési szolgáltató betöltésekor.</string>
-    <string name="stt_toast_extra_prompt">Mondja el üzenetét</string>
     <string name="messages_text_share_file_error">Valami probléma történt a megosztáskor</string>
     <string name="compose_send_group_summary_on">A címzettek és a válaszok mindenki számára láthatóak lesznek</string>
     <string name="compose_send_group_summary_off">Az üzenetek külön-külön lesznek elküldve minden címzettnek</string>

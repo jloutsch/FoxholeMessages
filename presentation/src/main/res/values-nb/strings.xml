@@ -26,8 +26,6 @@
     <string name="title_theme">Drakt</string>
     <string name="title_conversations">Søk i innboks …</string>
     <string name="title_compose">Skriv navn eller nummer</string>
-    <string name="setup_skip">Hopp over</string>
-    <string name="setup_next">Fortsett</string>
     <string name="menu_add_person">Legg til person</string>
     <string name="menu_call">Ring</string>
     <string name="menu_info">Detaljer</string>
@@ -35,7 +33,6 @@
     <string name="compose_menu_share">Share</string>
     <string name="main_drawer_open_cd">Åpne navigasjonsskuff</string>
     <string name="main_title_selected">%d valgt</string>
-    <string name="main_menu_clear">Tøm</string>
     <string name="main_menu_archive">Arkiv</string>
     <string name="main_menu_unarchive">Fjern fra arkiv</string>
     <string name="main_menu_delete">Slett</string>
@@ -65,11 +62,8 @@
     <string name="drawer_archived">Arkivert</string>
     <string name="drawer_scheduled">Planlagt</string>
     <string name="drawer_blocking">Blokkert</string>
-    <string name="drawer_more">Mer</string>
     <string name="drawer_settings">Innstillinger</string>
-    <string name="drawer_help">Hjelp og tilbakemelding</string>
     <string name="drawer_invite">Inviter venner</string>
-    <string name="drawer_plus_banner_summary">Aktiver fantastiske nye funksjoner og støtt utviklingen</string>
     <string name="rate_title">Liker du Foxhole Messages?</string>
     <string name="rate_summary">Del litt kjærlighet og vurder oss på Google Play!</string>
     <string name="rate_okay">Ok!</string>
@@ -79,11 +73,6 @@
         <item quantity="one">Er du sikker på at du vil slette samtalen?</item>
         <item quantity="other">Er du sikker på at du vil slette %d samtaler?</item>
     </plurals>
-    <string-array name="message_options">
-        <item>Kopier tekst</item>
-        <item>Videresend</item>
-        <item>Slett</item>
-    </string-array>
     <string name="compose_number_picker_title">Velg et telefonnummer</string>
     <string name="compose_number_picker_default">%s ∙ Default</string>
     <string name="compose_number_picker_once">Bare en gang</string>
@@ -96,7 +85,6 @@
     <string name="compose_vcard_label">Kontakt</string>
     <string name="compose_scheduled_for">Planlagt tid:</string>
     <string name="compose_scheduled_future">Valgt tid må være i fremtiden!</string>
-    <string name="compose_scheduled_plus">Du må ha Foxhole Messages+ for å kunne bruke planlagte meldinger</string>
     <string name="compose_scheduled_toast">Lagt til planlagte meldinger</string>
     <string name="compose_hint">Skriv en melding…</string>
     <string name="compose_menu_copy">Kopier tekst</string>
@@ -109,9 +97,6 @@
     <string name="compose_details_type">Type: %s</string>
     <string name="compose_details_from">Fra: %s</string>
     <string name="compose_details_to">Til: %s</string>
-    <string name="compose_details_subject">Emne: %s</string>
-    <string name="compose_details_priority">Prioritet: %s</string>
-    <string name="compose_details_size">Størrelse: %s</string>
     <string name="compose_details_sent">Sendt: %s</string>
     <string name="compose_details_received">Mottatt: %s</string>
     <string name="compose_details_delivered">Levert: %s</string>
@@ -133,7 +118,6 @@
     <string name="info_copied_address">Adresse kopiert</string>
     <string name="info_name">Tittel på samtalen</string>
     <string name="info_notifications">Varsler</string>
-    <string name="info_theme">Drakt</string>
     <string name="info_archive">Arkiv</string>
     <string name="info_unarchive">Fjern fra arkiv</string>
     <string name="info_block">Blokker</string>
@@ -144,16 +128,12 @@
     <string name="backup_title">Sikret</string>
     <string name="backup_backing_up">Sikkerhetskopierer meldinger</string>
     <string name="backup_restoring">Gjenoppretter fra sikkerhetskopi</string>
-    <string name="backup_loading">Henter …</string>
-    <string name="backup_never">Aldri</string>
     <string name="backup_location_title">Sikkerhetskopi plassering</string>
     <string name="backup_location_summary">Angi mappe</string>
     <string name="backup_restore_title">Gjenopprett</string>
     <string name="backup_restore_summary">Velg en sikkerhetskopi</string>
-    <string name="backup_restore_error_plus">Vennligst aktiver Foxhole Messages+ for å bruke sikkerhetskopiering og gjenoppretting</string>
     <string name="backup_restore_error_backup">Sikkerhetskopiering pågår …</string>
     <string name="backup_restore_error_restore">Gjenoppretting pågår …</string>
-    <string name="backup_restore_confirm_title">Gjenopprett fra sikkerhetskopi</string>
     <string name="backup_restore_stop_title">Avbryt gjenoppretting</string>
     <string name="backup_restore_stop_message">Meldinger som allerede er gjenopprettet vil forbli på din enhet</string>
     <string name="backup_select_location_rationale_title">Velg sikkerhetskopi plassering</string>
@@ -162,8 +142,6 @@
     <string name="backup_selected_backup_error_title">Error</string>
     <string name="backup_selected_backup_error_message">Kunne ikke lese sikkerhetskopifilen</string>
     <string name="backup_selected_backup_details_title">Backup details</string>
-    <string name="backup_restore_dialog_title">Sikkerhetskopier</string>
-    <string name="backup_restore_dialog_empty">Fant ingen sikkerhetskopier</string>
     <string name="backup_disclaimer">Per idag er det bare mulig å sikkerhetskopiere SMS. MMS og planlagte sikkerhetskopiering kommer snart!</string>
     <string name="backup_now">Sikkerhetskopier nå</string>
     <string name="backup_progress_parsing">Ser gjennom sikkerhetskopien …</string>
@@ -180,7 +158,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Sender den 23. desember</string>
     <string name="scheduled_compose_cd">Planlegg en melding</string>
-    <string name="scheduled_options_title">Planlagt melding</string>
     <string-array name="scheduled_options">
         <item>Send nå</item>
         <item>Copy text</item>
@@ -255,11 +232,9 @@
     <string name="settings_version">Versjon %s</string>
     <string name="settings_logging_enabled">Feillogg aktivert</string>
     <string name="settings_logging_disabled">Feillogg deaktivert</string>
-    <string name="settings_delay_duration_hint">Legg inn forsinkelse (i sekunder)</string>
     <string name="blocking_title">Blokking</string>
     <string name="blocking_drop_title">Forkast meldinger</string>
     <string name="blocking_drop_summary">Forkast meldinger fra blokkerte sendere istedenfor å skjule dem</string>
-    <string name="blocking_conversations">Blokkerte samtaler</string>
     <string name="blocking_manager_title">Blokkeringer</string>
     <string name="blocking_manager_qksms_summary">Innebygd blokkeringsfunksjon i Foxhole Messages</string>
     <string name="blocking_manager_call_blocker_summary">Blokker spammeldinger, numre og ukjente anrop med svarteliste og planlegging</string>
@@ -293,38 +268,8 @@
     <string name="about_contact_title">Kontakt</string>
     <string name="about_license_title">Lisens</string>
     <string name="about_copyright_title">Opphavsrett</string>
-    <string name="qksms_plus_description_title">Støtt utviklingen, aktiver alle funksjoner</string>
-    <string name="qksms_plus_description_summary">Du kan redde en sultende programmerer for bare %s</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
-    <string name="qksms_plus_upgrade">Oppdateringer på livstid for %1$s %2$s</string>
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
-    <string name="qksms_plus_upgrade_donate">Aktiver + donér for %1$s %2$s</string>
-    <string name="qksms_plus_thanks_title">Takk for at du støtter Foxhole Messages!</string>
-    <string name="qksms_plus_thanks_summary">Du har nå tilgang til alle funksjoner i Foxhole Messages+</string>
-    <string name="qksms_plus_error">Det har oppstått en feil. Prøv på nytt.</string>
-    <string name="qksms_plus_free_title">Foxhole Messages+ er gratis for F-Droid-brukere. Om du ønsker å støtte utviklingen, kan du gjerne donere.</string>
-    <string name="qksms_plus_donate">Donér med PayPal</string>
-    <string name="qksms_plus_coming_soon">Kommer snart</string>
-    <string name="qksms_plus_themes_title">Premium drakter</string>
-    <string name="qksms_plus_themes_summary">Aktiver vakre draktfarger som ikke er tilgjengelig i Material-design-paletten</string>
-    <string name="qksms_plus_emoji_title">Egne auto-emoji</string>
-    <string name="qksms_plus_emoji_summary">Lag egne auto-emoji snarveier</string>
-    <string name="qksms_plus_backup_title">Sikkerhetskopi av meldinger</string>
-    <string name="qksms_plus_backup_summary">Automatisk sikkerhetskopiering av dine meldinger. Slutt på bekymringer om å miste dine meldinger når du bytter telefon eller mister den</string>
-    <string name="qksms_plus_scheduled_title">Planlagte meldinger</string>
-    <string name="qksms_plus_scheduled_summary">Planlegg at meldinger sendes automatisk ved en tid og dato</string>
-    <string name="qksms_plus_delayed_title">Forsinket sending</string>
-    <string name="qksms_plus_delayed_summary">Vent noen sekunder før meldingen sendes</string>
-    <string name="qksms_plus_night_title">Automatisk nattmodus</string>
-    <string name="qksms_plus_night_summary">Aktiver nattmodus basert på tid på døgnet</string>
-    <string name="qksms_plus_blacklist_title">Avansert blokkering</string>
-    <string name="qksms_plus_blacklist_summary">Blokker meldinger som inneholder visse stikkord eller mønstre</string>
-    <string name="qksms_plus_forward_title">Auto-videresend</string>
-    <string name="qksms_plus_forward_summary">Videresend meldinger fra gitte avsendere automatisk</string>
-    <string name="qksms_plus_respond_title">Auto-svar</string>
-    <string name="qksms_plus_respond_summary">Svar på innkommende meldinger automatisk med et forhåndsdefinert svar</string>
-    <string name="qksms_plus_more_title">Mer</string>
-    <string name="qksms_plus_more_summary">Foxhole Messages er i stadig utvikling og ditt kjøp inkluderer alle fremtidige Foxhole Messages+ funksjoner!</string>
     <string name="widget_loading">Laster inn …</string>
     <string name="widget_more">Last inn flere samtaler</string>
     <string name="qkreply_menu_read">Merk som lest</string>
@@ -351,11 +296,7 @@
     <string name="button_delete">Slett</string>
     <string name="button_save">Lagre</string>
     <string name="button_stop">Avbryt</string>
-    <string name="button_more">Mer</string>
-    <string name="button_set">Angi</string>
     <string name="button_undo">Angre</string>
-    <string name="toast_copied">Kopiert</string>
-    <string name="toast_qksms_plus">Du må aktivere Foxhole Messages+ for å bruke dette</string>
     <plurals name="notification_new_messages">
         <item quantity="one">Ny melding</item>
         <item quantity="other">%s nye meldinger</item>
@@ -414,7 +355,6 @@
     <string name="menu_mms_part_open">Åpne eksternt</string>
     <string name="main_menu_select_all">Velg alle</string>
     <string name="main_menu_send_now">Send nå</string>
-    <string name="main_menu_edit_message">Rediger melding</string>
     <string name="main_menu_rename_conversation">Omkall samtale</string>
     <string name="main_sender_draft">Utkast: %s</string>
     <string name="scheduled_menu_send_now">Send nå</string>
@@ -496,7 +436,6 @@
     <string name="messageLinkHandling_dialog_positive">Ja, åpen lenken</string>
     <string name="messageLinkHandling_dialog_negative">Nei</string>
     <string name="error_stt_toast">Beklager, det oppstod en feil ved å laste inn Tale-Til-Tekst leverandøren.</string>
-    <string name="stt_toast_extra_prompt">Snakk meldingen din</string>
     <string name="messages_text_share_file_error">Ups! Noe gikk galt under delingen</string>
     <string name="compose_send_group_summary_off">Meldinger vil bli sendt separat til alle mottakere</string>
     <string name="compose_schedule_cancel_cd">Avbryt planlegging av melding</string>

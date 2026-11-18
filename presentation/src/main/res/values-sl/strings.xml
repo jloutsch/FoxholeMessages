@@ -26,8 +26,6 @@
     <string name="title_theme">Tema</string>
     <string name="title_conversations">Išči po prejetih sporočilih…</string>
     <string name="title_compose">Vnesi ime ali številko</string>
-    <string name="setup_skip">Preskoči</string>
-    <string name="setup_next">Nadaljuj</string>
     <string name="menu_add_person">Dodaj osebo</string>
     <string name="menu_call">Klic</string>
     <string name="menu_info">Podrobnosti</string>
@@ -35,7 +33,6 @@
     <string name="compose_menu_share">Deli</string>
     <string name="main_drawer_open_cd">Odpri nacigacijski meni</string>
     <string name="main_title_selected">%d izbranih</string>
-    <string name="main_menu_clear">Počisti</string>
     <string name="main_menu_archive">Arhiv</string>
     <string name="main_menu_unarchive">Odstrani iz arhiva</string>
     <string name="main_menu_delete">Izbriši</string>
@@ -65,11 +62,8 @@
     <string name="drawer_archived">Arhiv</string>
     <string name="drawer_scheduled">Načrtovano</string>
     <string name="drawer_blocking">Blokiranje</string>
-    <string name="drawer_more">Več</string>
     <string name="drawer_settings">Nastavitve</string>
-    <string name="drawer_help">Pošlji povratne informacije</string>
     <string name="drawer_invite">Povabi prijatelje</string>
-    <string name="drawer_plus_banner_summary">Odkleni neverjetne nove funkcije in podpri razvoj</string>
     <string name="rate_title">Uživate v Foxhole Messages?</string>
     <string name="rate_summary">Deli nekaj ljubezni in nas oceni na Google Play!</string>
     <string name="rate_okay">V REDU!</string>
@@ -81,11 +75,6 @@
         <item quantity="few">Ali ste prepričani, da želite izbrisati %d pogovorov?</item>
         <item quantity="other">Ali ste prepričani, da želite izbrisati %d pogovorov?</item>
     </plurals>
-    <string-array name="message_options">
-        <item>Kopiraj besedilo</item>
-        <item>Posreduj</item>
-        <item>Izbriši</item>
-    </string-array>
     <string name="compose_number_picker_title">Izberi telefonsko številko</string>
     <string name="compose_number_picker_default">%s ∙ Privzeto</string>
     <string name="compose_number_picker_once">Samo enkrat</string>
@@ -98,7 +87,6 @@
     <string name="compose_vcard_label">Kontaktna kartica</string>
     <string name="compose_scheduled_for">Načrtovano za</string>
     <string name="compose_scheduled_future">Izbran čas mora biti v prihodnosti!</string>
-    <string name="compose_scheduled_plus">Da lahko uporabiš načrtovano sporočanje, moraš odkleniti Foxhole Messages+</string>
     <string name="compose_scheduled_toast">Dodano k načrtovanim sporočilom</string>
     <string name="compose_hint">Napiši sporočilo…</string>
     <string name="compose_menu_copy">Kopiraj besedilo</string>
@@ -111,9 +99,6 @@
     <string name="compose_details_type">Vnesi: %s</string>
     <string name="compose_details_from">Od: %s</string>
     <string name="compose_details_to">Za: %s</string>
-    <string name="compose_details_subject">Zadeva %s</string>
-    <string name="compose_details_priority">Prioriteta: %s</string>
-    <string name="compose_details_size">Velikost: %s</string>
     <string name="compose_details_sent">Poslano: %s</string>
     <string name="compose_details_received">Prejeto: %s</string>
     <string name="compose_details_delivered">Dostavljeno: %s</string>
@@ -135,7 +120,6 @@
     <string name="info_copied_address">Naslov kopiran</string>
     <string name="info_name">Naslov pogovora</string>
     <string name="info_notifications">Obvestila</string>
-    <string name="info_theme">Teme</string>
     <string name="info_archive">Arhiv</string>
     <string name="info_unarchive">Ostrani iz arhiva</string>
     <string name="info_block">Blokiraj</string>
@@ -146,16 +130,12 @@
     <string name="backup_title">Varnostna kopija in obnovitev</string>
     <string name="backup_backing_up">Ustvarjanje varnostne kopije sporočil</string>
     <string name="backup_restoring">Obnovitev varnostne kopije</string>
-    <string name="backup_loading">Nalaganje…</string>
-    <string name="backup_never">Nikoli</string>
     <string name="backup_location_title">Backup location</string>
     <string name="backup_location_summary">Set folder</string>
     <string name="backup_restore_title">Obnovi</string>
     <string name="backup_restore_summary">Izberi varnostno kopijo</string>
-    <string name="backup_restore_error_plus">Prosimo odklenite Foxhole Messages+ da omogočite uporabo varnostnih kopij in njihove obnove</string>
     <string name="backup_restore_error_backup">Varnostna kopija se izvaja…</string>
     <string name="backup_restore_error_restore">Obnavljanje varnostne kopije se izvaja…</string>
-    <string name="backup_restore_confirm_title">Obnovi iz varnotsne kopije</string>
     <string name="backup_restore_stop_title">Prekliči obnovitev varnostne kopije</string>
     <string name="backup_restore_stop_message">Sporočila, ki so že bila obnovljena, bodo ostala na vaši napravi</string>
     <string name="backup_select_location_rationale_title">Select backup location</string>
@@ -164,8 +144,6 @@
     <string name="backup_selected_backup_error_title">Error</string>
     <string name="backup_selected_backup_error_message">Couldn\'t read backup file</string>
     <string name="backup_selected_backup_details_title">Backup details</string>
-    <string name="backup_restore_dialog_title">Varnostne kopije</string>
-    <string name="backup_restore_dialog_empty">Ni najdenih varnostnih kopij</string>
     <string name="backup_disclaimer">Trenutno so za ustvarjanje in obnovo varnostnih kopij podprta le sporočila SMS. MMS podpora in varnostne kopije pridejo kmalu!</string>
     <string name="backup_now">Ustvari varnostno kopijo</string>
     <string name="backup_progress_parsing">Razčlenjevanje varnostne kopije…</string>
@@ -182,7 +160,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Pošiljanje na 23. December</string>
     <string name="scheduled_compose_cd">Načrtuj sporočilo</string>
-    <string name="scheduled_options_title">Načrtovano sporočilo</string>
     <string-array name="scheduled_options">
         <item>Pošlji sedaj</item>
         <item>Kopiraj besedilo</item>
@@ -259,11 +236,9 @@
     <string name="settings_version">Različica %s</string>
     <string name="settings_logging_enabled">Beleženje dnevnika za odpravljanje napak omogočeno</string>
     <string name="settings_logging_disabled">Beleženje dnevnika za odpravljanje napak onemogočeno</string>
-    <string name="settings_delay_duration_hint">Vnesi trajanje (v sekundah)</string>
     <string name="blocking_title">Blokiranje</string>
     <string name="blocking_drop_title">Opusti sporočila</string>
     <string name="blocking_drop_summary">Opusti prihajajoča sporočila blokiranih pošiljateljev, namesto da jih skriješ</string>
-    <string name="blocking_conversations">Blokirani pogovori</string>
     <string name="blocking_manager_title">Upravljalnik Blokiranja</string>
     <string name="blocking_manager_qksms_summary">Vgrajena sposobnost blokiranja v Foxhole Messages</string>
     <string name="blocking_manager_call_blocker_summary">Blokiraj neželena sporočila, številke &amp; neznane klice s črnim seznamom &amp; Urnik</string>
@@ -301,38 +276,8 @@
     <string name="about_contact_title">Stik</string>
     <string name="about_license_title">Licenca</string>
     <string name="about_copyright_title">Avtorske pravice</string>
-    <string name="qksms_plus_description_title">Podpri razvoj, odkleni vse</string>
-    <string name="qksms_plus_description_summary">Že s %s lahko rešiš stradajočega razvijalca</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
-    <string name="qksms_plus_upgrade">Doživljenjska nadgradnja za %1$s %2$s</string>
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
-    <string name="qksms_plus_upgrade_donate">Odkleni + doniraj za %1$s %2$s</string>
-    <string name="qksms_plus_thanks_title">Hvala da podpirate Foxhole Messages!</string>
-    <string name="qksms_plus_thanks_summary">Zdaj imate dostop do vseh Foxhole Messages+ funkcij</string>
-    <string name="qksms_plus_error">Pojavila se je napaka, prosimo poskusite znova</string>
-    <string name="qksms_plus_free_title">Foxhole Messages+ je brezplačen za F-Droid uporabnike! Če želite podpirati razvoj, so donacije zelo dobrodošle.</string>
-    <string name="qksms_plus_donate">Doniraj preko PayPal</string>
-    <string name="qksms_plus_coming_soon">Prihaja kmalu</string>
-    <string name="qksms_plus_themes_title">Premium teme</string>
-    <string name="qksms_plus_themes_summary">Odkleni čudovite barve tem, ki niso vidne na paleti materialnega dizajna</string>
-    <string name="qksms_plus_emoji_title">Auto-čustvenček po meri</string>
-    <string name="qksms_plus_emoji_summary">Ustvari avto-čustvenček bližnjico po meri</string>
-    <string name="qksms_plus_backup_title">Varnostna kopija sporočila</string>
-    <string name="qksms_plus_backup_summary">Samodejno varnostno kopiraj sporočila. Nikoli več ne skrbi za izgubljeno zgodovino, če zamenjaš ali izgubiš telefon</string>
-    <string name="qksms_plus_scheduled_title">Načrtovana sporočila</string>
-    <string name="qksms_plus_scheduled_summary">Načrtuj, da bodo sporočila poslana ob določenem datumu in času</string>
-    <string name="qksms_plus_delayed_title">Zakasnjeno pošiljanje</string>
-    <string name="qksms_plus_delayed_summary">Počakaj nekaj sekund, preden pošlješ svoje sporočilo</string>
-    <string name="qksms_plus_night_title">Samodejni temni način</string>
-    <string name="qksms_plus_night_summary">Omogoči temni način, glede na čas dneva</string>
-    <string name="qksms_plus_blacklist_title">Napredno blokiranje</string>
-    <string name="qksms_plus_blacklist_summary">Blokiraj sporočila, ki vsebujejo ključne besede ali se ujemajo z vzorci</string>
-    <string name="qksms_plus_forward_title">Samodejno-posreduj</string>
-    <string name="qksms_plus_forward_summary">Samodejno posreduj sporočila določenih pošiljateljev</string>
-    <string name="qksms_plus_respond_title">Samodejen odgovor</string>
-    <string name="qksms_plus_respond_summary">Samodejno odgovori na prihajajoča sporočila s prednastavljenim sporočilom</string>
-    <string name="qksms_plus_more_title">Več</string>
-    <string name="qksms_plus_more_summary">Foxhole Messages je pod aktivnim razvojem in vaš nakup Foxhole Messages+ bo vseboval vse prihodnje funkcije!</string>
     <string name="widget_loading">Nalaganje…</string>
     <string name="widget_more">Poglej več pogovorov</string>
     <string name="qkreply_menu_read">Označi kot prebrano</string>
@@ -359,11 +304,7 @@
     <string name="button_delete">Izbriši</string>
     <string name="button_save">Shrani</string>
     <string name="button_stop">Ustavi</string>
-    <string name="button_more">Več</string>
-    <string name="button_set">Nastavi</string>
     <string name="button_undo">Razveljavi</string>
-    <string name="toast_copied">Kopirano</string>
-    <string name="toast_qksms_plus">Da uporabiš to, moraš odkleniti Foxhole Messages+</string>
     <plurals name="notification_new_messages">
         <item quantity="one">Novo sporočilo</item>
         <item quantity="two">%s novi sporočili</item>

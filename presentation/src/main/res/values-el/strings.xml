@@ -26,8 +26,6 @@
     <string name="title_theme">Θέμα εμφάνισης</string>
     <string name="title_conversations">Αναζήτηση στα εισερχόμενα…</string>
     <string name="title_compose">Πληκτρολογήστε ένα όνομα ή αριθμό</string>
-    <string name="setup_skip">Παράλειψη</string>
-    <string name="setup_next">Συνέχεια</string>
     <string name="menu_add_person">Προσθήκη ατόμου</string>
     <string name="menu_call">Κλήση</string>
     <string name="menu_info">Λεπτομέρειες</string>
@@ -35,7 +33,6 @@
     <string name="compose_menu_share">Κοινή χρήση</string>
     <string name="main_drawer_open_cd">Άνοιγμα πλαισίου πλοήγησης</string>
     <string name="main_title_selected">Επιλεγμένα: %d</string>
-    <string name="main_menu_clear">Εκκαθάριση</string>
     <string name="main_menu_archive">Αρχειοθέτηση</string>
     <string name="main_menu_unarchive">Αναίρεση αρχειοθέτησης</string>
     <string name="main_menu_delete">Διαγραφή</string>
@@ -65,11 +62,8 @@
     <string name="drawer_archived">Αρχείο</string>
     <string name="drawer_scheduled">Προγραμματισμένα</string>
     <string name="drawer_blocking">Με φραγή</string>
-    <string name="drawer_more">Περισσότερα</string>
     <string name="drawer_settings">Ρυθμίσεις</string>
-    <string name="drawer_help">Βοήθεια &amp; αποστολή σχολίων</string>
     <string name="drawer_invite">Πρόσκληση φίλων</string>
-    <string name="drawer_plus_banner_summary">Ξεκλειδώστε φανταστικές νέες λειτουργίες και συμβάλετε στην ανάπτυξη</string>
     <string name="rate_title">Σας αρέσει το Foxhole Messages;</string>
     <string name="rate_summary">Δείξτε μας την αγάπη σας και βαθμολογήστε μας στο Google Play!</string>
     <string name="rate_okay">ΕΝΤΑΞΕΙ!</string>
@@ -79,11 +73,6 @@
         <item quantity="one">Σίγουρα επιθυμείτε να διαγράψετε αυτή τη συζήτηση;</item>
         <item quantity="other">Σίγουρα επιθυμείτε να διαγράψετε %d συζητήσεις;</item>
     </plurals>
-    <string-array name="message_options">
-        <item>Αντιγραφή κειμένου</item>
-        <item>Προώθηση</item>
-        <item>Διαγραφή</item>
-    </string-array>
     <string name="compose_number_picker_title">Επιλέξτε έναν αριθμό τηλεφώνου</string>
     <string name="compose_number_picker_default">%s ∙ Προεπιλεγμένος</string>
     <string name="compose_number_picker_once">Μόνο μια φορά</string>
@@ -96,7 +85,6 @@
     <string name="compose_vcard_label">Κάρτα επαφής</string>
     <string name="compose_scheduled_for">Προγραμματίστηκε για</string>
     <string name="compose_scheduled_future">Η χρονική στιγμή πρέπει να βρίσκεται στο μέλλον!</string>
-    <string name="compose_scheduled_plus">Πρέπει να ξεκλειδώσετε το Foxhole Messages+ για να αποκτήσετε τη δυνατότητα προγραμματισμού μηνυμάτων</string>
     <string name="compose_scheduled_toast">Προστέθηκε στα προγραμματισμένα μηνύματα</string>
     <string name="compose_hint">Γράψτε ένα μήνυμα…</string>
     <string name="compose_menu_copy">Αντιγραφή κειμένου</string>
@@ -109,9 +97,6 @@
     <string name="compose_details_type">Τύπος: %s</string>
     <string name="compose_details_from">Από: %s</string>
     <string name="compose_details_to">Προς: %s</string>
-    <string name="compose_details_subject">Θέμα: %s</string>
-    <string name="compose_details_priority">Προτεραιότητα: %s</string>
-    <string name="compose_details_size">Μέγεθος: %s</string>
     <string name="compose_details_sent">Εστάλη: %s</string>
     <string name="compose_details_received">Ελήφθη: %s</string>
     <string name="compose_details_delivered">Παραδόθηκε: %s</string>
@@ -133,7 +118,6 @@
     <string name="info_copied_address">Η διεύθυνση αντεγράφη</string>
     <string name="info_name">Τίτλος συζήτησης</string>
     <string name="info_notifications">Ειδοποιήσεις</string>
-    <string name="info_theme">Θέμα εμφάνισης</string>
     <string name="info_archive">Αρχειοθέτηση</string>
     <string name="info_unarchive">Αναίρεση αρχειοθέτησης</string>
     <string name="info_block">Φραγή</string>
@@ -144,16 +128,12 @@
     <string name="backup_title">Αντίγραφα ασφαλείας και επαναφορά</string>
     <string name="backup_backing_up">Δημιουργία αντιγράφου ασφαλείας μηνυμάτων</string>
     <string name="backup_restoring">Επαναφορά αντιγράφου ασφαλείας μηνυμάτων</string>
-    <string name="backup_loading">Φόρτωση…</string>
-    <string name="backup_never">Ποτέ</string>
     <string name="backup_location_title">Backup location</string>
     <string name="backup_location_summary">Set folder</string>
     <string name="backup_restore_title">Επαναφορά</string>
     <string name="backup_restore_summary">Επιλέξτε ένα αντίγραφο ασφαλείας</string>
-    <string name="backup_restore_error_plus">Παρακαλώ ξεκλειδώστε το Foxhole Messages+ για τη δημιουργία και επαναφορά αντιγράφων ασφαλείας</string>
     <string name="backup_restore_error_backup">Δημιουργία αντιγράφου ασφαλείας…</string>
     <string name="backup_restore_error_restore">Επαναφορά αντιγράφου ασφαλείας…</string>
-    <string name="backup_restore_confirm_title">Επαναφορά αντιγράφου ασφαλείας</string>
     <string name="backup_restore_stop_title">Διακοπή επαναφοράς</string>
     <string name="backup_restore_stop_message">Τα μηνύματα που έχουν ήδη ανακτηθεί θα παραμείνουν στη συσκευή σας</string>
     <string name="backup_select_location_rationale_title">Select backup location</string>
@@ -162,8 +142,6 @@
     <string name="backup_selected_backup_error_title">Error</string>
     <string name="backup_selected_backup_error_message">Couldn\'t read backup file</string>
     <string name="backup_selected_backup_details_title">Backup details</string>
-    <string name="backup_restore_dialog_title">Αντίγραφα ασφαλείας</string>
-    <string name="backup_restore_dialog_empty">Δεν βρέθηκαν αντίγραφα ασφαλείας</string>
     <string name="backup_disclaimer">Προς το παρόν, μπορούν να δημιουργηθούν αντίγραφα ασφαλείας μόνο για SMS. Η υποστήριξη MMS και ο προγραμματισμός αντιγράφων ασφαλείας θα προστεθούν σύντομα!</string>
     <string name="backup_now">Δημιουργία αντιγράφου τώρα</string>
     <string name="backup_progress_parsing">Ανάγνωση αντιγράφου ασφαλείας…</string>
@@ -180,7 +158,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Αποστολή στις 23 Δεκεμβρίου</string>
     <string name="scheduled_compose_cd">Προγραμματισμός μηνύματος</string>
-    <string name="scheduled_options_title">Προγραμματισμένο μήνυμα</string>
     <string-array name="scheduled_options">
         <item>Αποστολή τώρα</item>
         <item>Αντιγραφή κειμένου</item>
@@ -255,11 +232,9 @@
     <string name="settings_version">Έκδοση %s</string>
     <string name="settings_logging_enabled">Η καταγραφή σφαλμάτων ενεργοποιήθηκε</string>
     <string name="settings_logging_disabled">Η καταγραφή σφαλμάτων απενεργοποιήθηκε</string>
-    <string name="settings_delay_duration_hint">Εισάγετε τη διάρκεια (δευτερόλεπτα)</string>
     <string name="blocking_title">Φραγή</string>
     <string name="blocking_drop_title">Απόρριψη μηνυμάτων</string>
     <string name="blocking_drop_summary">Απόρριψη αντί για απόκρυψη μηνυμάτων από αποστολείς σε φραγή</string>
-    <string name="blocking_conversations">Συζητήσεις σε φραγή</string>
     <string name="blocking_manager_title">Διαχειριστής φραγής</string>
     <string name="blocking_manager_qksms_summary">Ενσωματωμένη λειτουργία φραγής του Foxhole Messages</string>
     <string name="blocking_manager_call_blocker_summary">Block spam messages, numbers &amp; unknown calls with blacklist &amp; Schedule</string>
@@ -293,38 +268,8 @@
     <string name="about_contact_title">Επικοινωνία</string>
     <string name="about_license_title">Άδεια χρήσης</string>
     <string name="about_copyright_title">Πνευματικά δικαιώματα</string>
-    <string name="qksms_plus_description_title">Support development, unlock everything</string>
-    <string name="qksms_plus_description_summary">You can save a starving developer for just %s</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
-    <string name="qksms_plus_upgrade">Lifetime upgrade for %1$s %2$s</string>
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
-    <string name="qksms_plus_upgrade_donate">Unlock + donate for %1$s %2$s</string>
-    <string name="qksms_plus_thanks_title">Thank you for supporting Foxhole Messages!</string>
-    <string name="qksms_plus_thanks_summary">You now have access to all Foxhole Messages+ features</string>
-    <string name="qksms_plus_error">An error has occurred, please try again</string>
-    <string name="qksms_plus_free_title">Foxhole Messages+ is free for F-Droid users! If you\'d like to support development, a donation would be highly appreciated.</string>
-    <string name="qksms_plus_donate">Δωρεά μέσω PayPal</string>
-    <string name="qksms_plus_coming_soon">Έρχεται σύντομα</string>
-    <string name="qksms_plus_themes_title">Premium themes</string>
-    <string name="qksms_plus_themes_summary">Unlock beautiful theme colors not available on the Material Design palette</string>
-    <string name="qksms_plus_emoji_title">Custom auto-emoji</string>
-    <string name="qksms_plus_emoji_summary">Create custom auto-emoji shortcuts</string>
-    <string name="qksms_plus_backup_title">Message backup</string>
-    <string name="qksms_plus_backup_summary">Automatically back up your messages. Never again worry about losing your history if you change phones or your phone gets lost</string>
-    <string name="qksms_plus_scheduled_title">Scheduled messages</string>
-    <string name="qksms_plus_scheduled_summary">Schedule messages to automatically be sent at a specific time and date</string>
-    <string name="qksms_plus_delayed_title">Delayed sending</string>
-    <string name="qksms_plus_delayed_summary">Wait a few seconds before sending your message</string>
-    <string name="qksms_plus_night_title">Automatic night mode</string>
-    <string name="qksms_plus_night_summary">Enable night mode based on the time of day</string>
-    <string name="qksms_plus_blacklist_title">Advanced blocking</string>
-    <string name="qksms_plus_blacklist_summary">Block messages that contain keywords or match patterns</string>
-    <string name="qksms_plus_forward_title">Auto-forward</string>
-    <string name="qksms_plus_forward_summary">Automatically forward messages from certain senders</string>
-    <string name="qksms_plus_respond_title">Auto-respond</string>
-    <string name="qksms_plus_respond_summary">Automatically respond to incoming messages with a preset response</string>
-    <string name="qksms_plus_more_title">More</string>
-    <string name="qksms_plus_more_summary">Foxhole Messages is under active development, and your purchase will include all future Foxhole Messages+ features!</string>
     <string name="widget_loading">Loading…</string>
     <string name="widget_more">View more conversations</string>
     <string name="qkreply_menu_read">Mark read</string>
@@ -351,11 +296,7 @@
     <string name="button_delete">Delete</string>
     <string name="button_save">Save</string>
     <string name="button_stop">Stop</string>
-    <string name="button_more">More</string>
-    <string name="button_set">Set</string>
     <string name="button_undo">Undo</string>
-    <string name="toast_copied">Copied</string>
-    <string name="toast_qksms_plus">You must unlock Foxhole Messages+ to use this</string>
     <plurals name="notification_new_messages">
         <item quantity="one">New message</item>
         <item quantity="other">%s new messages</item>
