@@ -194,6 +194,9 @@
 
     <string name="compose_record_audio_msg_abort_cd">Cancel audio message</string>
     <string name="compose_record_audio_msg_attach_cd">Attach audio message</string>
+    <string name="compose_speech_to_text_cd">Speak your message</string>
+    <string name="compose_audio_bluetooth_cd">Bluetooth microphone</string>
+    <string name="blocking_filter_remove_cd">Remove filter</string>
     <string name="compose_record_audio_msg_play_pause_cd">Play or pause audio message</string>
 
     <string name="compose_message_cancel">Cancel</string>

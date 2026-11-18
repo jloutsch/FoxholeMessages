@@ -66,6 +66,7 @@
 
         <ImageView
             android:id="@+id/speechToTextIcon"
+            android:contentDescription="@string/compose_speech_to_text_cd"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
@@ -820,6 +821,7 @@
 
                 <ImageView
                     android:id="@+id/audioMsgBluetooth"
+                    android:contentDescription="@string/compose_audio_bluetooth_cd"
                     android:layout_width="76dp"
                     android:layout_height="76dp"
                     android:layout_gravity="center"

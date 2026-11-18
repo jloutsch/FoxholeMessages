@@ -69,9 +69,13 @@ abstract class QkActivity : AppCompatActivity() {
     private fun applyEdgeToEdgeInsets() {
         val content = findViewById<View>(android.R.id.content) ?: return
         ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
+            // Left/right and the camera cutout matter in landscape: with 3-button navigation the nav
+            // bar sits on the side and used to cover the end of the compose bar, Send included.
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime()
+            )
             if (applyContentInsets) {
-                view.updatePadding(top = bars.top, bottom = bars.bottom)
+                view.updatePadding(left = bars.left, top = bars.top, right = bars.right, bottom = bars.bottom)
             } else {
                 toolbar?.updatePadding(top = bars.top)
             }
