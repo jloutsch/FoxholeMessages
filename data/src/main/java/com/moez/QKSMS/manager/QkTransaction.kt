@@ -315,9 +315,12 @@ object QkTransaction {
         )
 
         val deliveredPI =
+            // Mutable: Android puts the delivery report's PDU (the actual outcome) into this intent;
+            // an immutable one dropped it, so every report read as "Delivered". The intent is
+            // explicit (it names MessageDeliveredReceiver), as Android 14+ requires for mutable ones.
             if (deliveryIntent != null) PendingIntent.getBroadcast(
                 context, -id, deliveryIntent.setData(messageUri),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
             else null
 

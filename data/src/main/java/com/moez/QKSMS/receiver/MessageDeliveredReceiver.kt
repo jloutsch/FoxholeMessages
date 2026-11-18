@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.receiver
 
+import android.telephony.SmsMessage
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -47,9 +48,32 @@ class MessageDeliveredReceiver : BroadcastReceiver() {
 
                 Timber.v("resultcode: ${pendingResult.resultCode}")
 
-                when (pendingResult.resultCode) {
+                // Android sends every report with RESULT_OK; the outcome is in the report itself.
+                val pdu = intent.getByteArrayExtra("pdu")
+                val format = intent.getStringExtra("format")
+                val report = pdu?.let {
+                    try {
+                        SmsMessage.createFromPdu(it, format)?.status?.let { status -> status to DeliveryReportStatus.of(format, status) }
+                    } catch (e: Exception) {
+                        Timber.w(e, "unreadable delivery report")
+                        null
+                    }
+                }
+                Timber.v("delivery report status: ${report?.first} -> ${report?.second}")
+
+                when {
+                    report?.second == DeliveryReportStatus.PENDING -> {
+                        // the network is still trying; a final report follows
+                        pendingResult.finish()
+                    }
+
+                    report?.second == DeliveryReportStatus.FAILED ->
+                        markDeliveryFailed.execute(MarkDeliveryFailed.Params(messageId, report.first)) {
+                            pendingResult.finish()
+                        }
+
                     // TODO notify about delivery
-                    Activity.RESULT_OK -> markDelivered.execute(messageId) { pendingResult.finish() }
+                    pendingResult.resultCode == Activity.RESULT_OK -> markDelivered.execute(messageId) { pendingResult.finish() }
 
                     // TODO notify about delivery failure
                     else ->
