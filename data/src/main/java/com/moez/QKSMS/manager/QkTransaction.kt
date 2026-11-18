@@ -337,7 +337,9 @@ object QkTransaction {
                 address, null, parts, sPI, dPI.ifEmpty { null }
             )
         } catch (e: Exception) {
+            // Report it: returning true here left the message showing "Sending" forever.
             Timber.e(e, "send sms exception")
+            return false
         }
 
         return true

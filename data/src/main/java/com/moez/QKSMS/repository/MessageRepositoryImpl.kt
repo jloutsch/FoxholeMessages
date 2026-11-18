@@ -724,11 +724,14 @@ open class MessageRepositoryImpl @Inject constructor(
                 }
             }
 
-            // create alarm that will trigger sending the message
-            (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager)
-                .setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP, sendTime, getIntentForDelayedSms(message.id)
-                )
+            // create alarm that will trigger sending the message. Exact alarms need the "Alarms &
+            // reminders" permission on Android 12+; without it setExact throws and the delayed
+            // message never sends, so fall back to an inexact alarm.
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms())
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, sendTime, getIntentForDelayedSms(message.id))
+            else
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, sendTime, getIntentForDelayedSms(message.id))
 
             Timber.v("set ${delayMs}ms delay for message id ${message.id}")
 
@@ -776,8 +779,16 @@ open class MessageRepositoryImpl @Inject constructor(
                     else null
 
                 // use values from os provider to resend the message, except subId
-                if (!QkTransaction.sendMessage(context, message.getUri(), sentIntent, deliveryIntent))
+                if (!QkTransaction.sendMessage(context, message.getUri(), sentIntent, deliveryIntent)) {
                     Timber.e("message id ${message.id} not sent by smsmms")
+                    // Nothing was handed to the carrier, so no "sent" result will ever arrive. Report the
+                    // failure the way the system would, through MessageSentReceiver, so the message is
+                    // marked failed and the "failed to send" notification shows instead of it staying
+                    // on "Sending" forever.
+                    context.sendOrderedBroadcast(
+                        sentIntent, null, null, null, SmsManager.RESULT_ERROR_GENERIC_FAILURE, null, null
+                    )
+                }
             }
 
             retVal.add(message)
