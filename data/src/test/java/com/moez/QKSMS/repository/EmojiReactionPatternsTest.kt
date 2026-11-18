@@ -100,8 +100,17 @@ class EmojiReactionPatternsTest {
     @Test
     fun reactionsToAttachments() {
         assertEquals(ParsedEmojiReaction("❤️", "", targetsAttachment = true), parse("Loved an image"))
-        assertEquals(ParsedEmojiReaction("👍", "", targetsAttachment = true), parse("Liked a video"))
-        assertEquals(ParsedEmojiReaction("😂", "", targetsAttachment = true), parse("Laughed at a sticker"))
+        // Apple's own wording (IMSharedUtilities.loctable): a video is "a movie"
+        assertEquals(ParsedEmojiReaction("👍", "", targetsAttachment = true), parse("Liked a movie"))
+        assertEquals(ParsedEmojiReaction("😂", "", targetsAttachment = true), parse("Laughed at an audio message"))
+        listOf("an attachment", "a contact", "a location", "an event").forEach {
+            assertEquals(it, ParsedEmojiReaction("‼️", "", targetsAttachment = true), parse("Emphasized $it"))
+        }
+        assertEquals(ParsedEmojiReaction("🎉", "", targetsAttachment = true), parse("Reacted 🎉 to a movie"))
+        assertEquals(ParsedEmojiReaction("❓", "", isRemoval = true, targetsAttachment = true), parse("Removed a question mark from a movie"))
+        // Not Apple phrasing, so these are ordinary messages and must stay visible
+        assertNull(parse("Liked a video"))
+        assertNull(parse("Laughed at a sticker"))
         assertEquals(ParsedEmojiReaction("❤️", "", isRemoval = true, targetsAttachment = true), parse("Removed a heart from an image"))
     }
 

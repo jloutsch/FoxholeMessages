@@ -1404,9 +1404,13 @@ wrong: the commit landed *after* the v2.4.0 tag, so no user had it until
 notes deliberately do not mention it, since they'd be claiming a fix
 that was never confirmed:
 - `en.json` patterns accept either the quoted message **or** a closed set
-  of attachment phrases (`an image`, `a video`, `an audio message`,
-  `a sticker`). The quoted group then comes back empty, which sets
-  `ParsedEmojiReaction.targetsAttachment`.
+  of attachment phrases. Since 2026-11-18 that set is exactly Apple's, from
+  `IMSharedUtilities.loctable` (iOS 17–27, via applelocalization.com):
+  `an image`, `a movie`, `an audio message`, `an attachment`, `a contact`,
+  `a location`, `an event`. The original guesses `a video` and `a sticker`
+  were removed — Apple never sends them, and a person typing "Liked a video"
+  would have had their message hidden. The quoted group then comes back
+  empty, which sets `ParsedEmojiReaction.targetsAttachment`.
 - **A closed set, not a catch-all, on purpose.** A match sets
   `isEmojiReaction`, which *hides* the message — so a false positive
   silently disappears someone's real text. `Loved that movie!` and
@@ -1426,8 +1430,9 @@ image` message was still showing as text, but no log was captured, and
 he chose to keep the change and stop rather than chase it — reactions on
 text messages are the common case and those work. So treat this as
 plausible-but-unproven. The most likely explanation is that the real
-phrasing isn't in the closed set: only `an image` was ever
-evidence-backed, the other three are informed guesses. One log line
+phrasing isn't in the closed set — though `Loved an image` is confirmed as
+Apple's exact English text, so for that message the lookup step is the more
+likely culprit. One log line
 would settle it — `No reaction pattern matched` means the phrasing is
 wrong, `No attachment found in thread to attach reaction to` means
 parsing worked and only the lookup missed.
