@@ -104,4 +104,8 @@ dependencies {
 // the tests instead of Gradle reusing an earlier pass.
 tasks.withType(Test).configureEach {
     inputs.dir("src/main/assets/emojis")
+    // SilentFailureGuardsTest reads these sources
+    inputs.file("src/main/java/com/moez/QKSMS/manager/QkTransaction.kt")
+    inputs.file("../android-smsmms/src/main/java/com/android/mms/transaction/DownloadManager.java")
+    inputs.file("../android-smsmms/src/main/java/com/android/mms/transaction/PushReceiver.java")
 }

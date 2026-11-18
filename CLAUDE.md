@@ -224,7 +224,11 @@ broken version of the code it covers. What's covered, and the past failure each 
   streaming backup writer/reader (`BackupJsonTest`); duplicate
   removal and OTP retention rules; keyword/regex content filters (`ContentFilterMatcherTest`); reply
   categories and the sync data-saving list (`SortingAndSyncDataTest` — **fails if a new `Message`
-  field isn't classified**, enforcing the "app-only fields must survive sync" rule below).
+  field isn't classified**, enforcing the "app-only fields must survive sync" rule below); delivery
+  report outcomes (`DeliveryReportStatusTest`); restore skipping messages already on the phone
+  (`RestoreDuplicatesTest`); and `SilentFailureGuardsTest`, which reads the source to check settings
+  whose loss breaks a feature with no error — the delivery PendingIntent staying mutable, MMS download
+  results going to the manifest receiver, `PushReceiver` passing `goAsync()`.
 - `presentation`: blocking-rules file import/export; R8 keep rules every release-only outage depended
   on (`ProguardRulesTest`); release consistency — `versionName` is X.Y.Z, `changelog.json` parses and
   its newest entry is this version, Play release notes exist and fit 500 characters, F-Droid metadata
@@ -235,7 +239,10 @@ broken version of the code it covers. What's covered, and the past failure each 
 Tests that read files (proguard rules, changelogs, emoji assets) declare them as Gradle test inputs,
 so editing those files re-runs the tests locally rather than reusing a stale pass.
 
-On-device tests (`data/src/androidTest`, phone-number matching) need a phone and aren't run by CI.
+On-device tests (`data/src/androidTest`) need a phone and aren't run by CI: phone-number matching
+(`PhoneNumberUtilsTest`) and `TrashFiltersTest`, which runs the real repository queries against an
+in-memory database to check that unread badges, search, the media gallery and shortcut ranking leave
+out messages in Trash (the database library doesn't run in plain JVM tests).
 **Don't use `connectedAndroidTest`** — it uninstalls the app afterwards, wiping its data and its
 default-SMS role. Instead:
 `./gradlew :data:assembleDebugAndroidTest`, then
