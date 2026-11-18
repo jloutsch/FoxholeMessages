@@ -1536,8 +1536,16 @@ Fixed in the same pass:
   Central build; flexbox 3.0.0 changes default alignment).
 - **Backups stream** one message at a time (`BackupJson`). Device-verified on a Note 10: a 766 MB
   backup of 13,178 messages (3,928 MMS) completed without running out of memory, and a restore from
-  a one-message file worked. Restore has no duplicate check — restoring onto the same phone doubles
-  every message.
+  a one-message file worked. Restore skips messages already on the phone (`RestoreDuplicates`:
+  type, folder, address, time, and text for SMS), so restoring onto the same phone no longer doubles
+  everything.
+- **QRF Reply popup** needs "Display over other apps" (`SYSTEM_ALERT_WINDOW`) on Android 10+, or
+  Android silently blocks it ("Abort background activity starts"). Turning QRF Reply on opens that
+  setting; without it only the notification shows (`OverlayPermission`).
+- **Delivery reports** carry their outcome in the PDU, not the result code (always OK). The delivery
+  PendingIntent must stay mutable or the PDU is dropped (`DeliveryReportStatus`). Not device-verified.
+- **MMS download results** go straight to the manifest `MmsReceivedReceiver`, not a runtime receiver
+  (Android 14+ holds those back for cached apps). Not device-verified.
 - **Compose screen attachments**: only share intents were read, so Forward dropped pictures.
   `InternalIntent` marks this app's own compose intents with a per-process random value; those skip
   the outside-share safety check (`isSafeToAttachFromOtherApp`), everything else still gets it. Use
