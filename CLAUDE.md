@@ -1575,8 +1575,8 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
   `MmsReceivedReceiver`/`MmsSentReceiver` are now constants-only holders (the app's own receivers
   handle the broadcasts); `DownloadRequest` keeps only the static `persist()` that `ReceiveMmsWorker`
   uses; `Utils` keeps four methods. The shadow `android.database.sqlite.SqliteWrapper` is gone, so
-  nothing can bind to the framework's hidden class of that name any more. **Not device-verified:
-  confirm a picture still sends and arrives.**
+  nothing can bind to the framework's hidden class of that name any more. Device-verified on an S23+
+  (2026-11-18): pictures sent to and received from another phone.
 - Plus/billing/`upgraded`, `ReferralManager`, `MigratePreferences` (QKSMS 2.7.3 prefs can't exist
   under this app id), the third-party call-blocker hooks and `com.callcontrol:datashare`.
 - Unused resources were found by searching for `R.<type>.<name>`, `@<type>/<name>` and view-binding
