@@ -20,6 +20,7 @@ package dev.octoshrimpy.quik.feature.compose.part
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.format.Formatter
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkViewHolder
@@ -67,14 +68,7 @@ class FileBinder @Inject constructor(colors: Colors, private val context: Contex
                         context.contentResolver.openInputStream(uri)?.use { it.available() }
                     }
                 }
-                .map { bytes ->
-                    when (bytes) {
-                        in 0..999 -> "$bytes B"
-                        in 1000..999999 -> "${"%.1f".format(bytes / 1000f)} KB"
-                        in 1000000..9999999 -> "${"%.1f".format(bytes / 1000000f)} MB"
-                        else -> "${"%.1f".format(bytes / 1000000000f)} GB"
-                    }
-                }
+                .map { bytes -> Formatter.formatShortFileSize(context, bytes.toLong()) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { size -> binding.size.text = size }

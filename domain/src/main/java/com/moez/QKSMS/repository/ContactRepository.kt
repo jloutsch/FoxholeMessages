@@ -18,11 +18,9 @@
  */
 package dev.octoshrimpy.quik.repository
 
-import android.net.Uri
 import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.ContactGroup
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.realm.RealmResults
 
 interface ContactRepository {

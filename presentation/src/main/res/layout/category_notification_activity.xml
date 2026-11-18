@@ -46,10 +46,13 @@
                 app:title="@string/message_sorting_category_notification_previews"
                 app:widget="@layout/settings_switch_widget" />
 
+            <!-- Vibration and ringtone are hidden until notifications use them: per-category and
+                 per-conversation values both exist, and which one wins hasn't been decided. -->
             <dev.octoshrimpy.quik.common.widget.PreferenceView
                 android:id="@+id/vibration"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 app:title="@string/settings_vibration_title"
                 app:widget="@layout/settings_switch_widget" />
 
@@ -57,6 +60,7 @@
                 android:id="@+id/ringtone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 app:title="@string/settings_ringtone_title" />
 
         </LinearLayout>

@@ -59,6 +59,10 @@ class MessageSortingRulesTest {
     }
 
     @Test
+    fun percentOffInCapitalsIsPromotional() =
+        assertEquals(PROMOTIONAL, classifier.classify("Members get 25% OFF today"))
+
+    @Test
     fun tollFreeNumberIsABusiness() =
         assertEquals(TRANSACTIONAL, sort("+18775755319", "Your appointment is confirmed for Tuesday", replied = false))
 

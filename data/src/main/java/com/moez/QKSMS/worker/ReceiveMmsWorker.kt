@@ -179,11 +179,7 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
                         if (autoSort) Category.UNCLASSIFIED else null
                     }
                     Timber.v("classified. messageId=${message.id} autoSort=$autoSort category=$category")
-                    category?.let { messageRepo.updateMessageCategory(message.id, it.name) }
-
-                    if (otpDetector.isOtp(message.getText())) {
-                        messageRepo.updateMessageOtp(message.id, true)
-                    }
+                    messageRepo.updateReceivedSorting(message.id, category?.name, otpDetector.isOtp(message.getText()))
 
                     // TODO: Ideally this is done when we're saving the MMS to ContentResolver
                     // This change can be made once we move the MMS storing code to the Data module

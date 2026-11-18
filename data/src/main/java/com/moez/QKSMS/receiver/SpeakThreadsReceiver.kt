@@ -40,11 +40,10 @@ class SpeakThreadsReceiver : BroadcastReceiver() {
 
         val threads = when {
             (threadId == -1L) -> conversationRepo.getUnseenIds()
-            (threadId == -2L) -> conversationRepo.getUnreadIds()
             else -> listOf(threadId)
         }
 
-        speakThread.execute(threads) { pendingResult.finish() }
+        speakThread.execute(threads, onTerminate = { pendingResult.finish() })
     }
 
 }

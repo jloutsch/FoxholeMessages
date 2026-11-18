@@ -49,8 +49,6 @@ interface ConversationRepository {
 
     fun getUnseenIds(archived: Boolean = false): List<Long>
 
-    fun getUnreadIds(archived: Boolean = false): List<Long>
-
     fun getConversationAndLastSenderContactName(threadId: Long): Pair<Conversation?, String?>?
 
     fun getConversations(vararg threadIds: Long): RealmResults<Conversation>
@@ -65,15 +63,9 @@ interface ConversationRepository {
 
     fun getOrCreateConversation(threadId: Long, sendAsGroup: Boolean = true): Conversation?
 
-    fun createConversation(threadId: Long, sendAsGroup: Boolean = true): Conversation?
-
     fun getConversation(addresses: Collection<String>): Conversation?
 
     fun getOrCreateConversation(
-        addresses: Collection<String>, sendAsGroup: Boolean = true
-    ): Conversation?
-
-    fun createConversation(
         addresses: Collection<String>, sendAsGroup: Boolean = true
     ): Conversation?
 

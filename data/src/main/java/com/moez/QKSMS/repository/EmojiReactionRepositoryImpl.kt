@@ -217,9 +217,10 @@ class EmojiReactionRepositoryImpl @Inject constructor(
             originalMessageText = parsedReaction.originalMessage
             threadId = reactionMessage.threadId
         }
-        realm.insertOrUpdate(reaction)
 
+        // Only kept when attached: a reaction row is only ever read for a message marked as one
         if (targetMessage != null) {
+            realm.insertOrUpdate(reaction)
             reactionMessage.isEmojiReaction = true
             realm.insertOrUpdate(reactionMessage)
 
@@ -277,18 +278,18 @@ class EmojiReactionRepositoryImpl @Inject constructor(
                     targetMessage,
                     realm,
                 )
-                progress++
-                // Update the progress every 25 messages, and then at completion
-                // that way we don't spam the UI
-                if (progress % 25 == 0 || progress == max) {
-                    onProgress(
-                        SyncRepository.SyncProgress.ParsingEmojis(
-                            max = max,
-                            progress = progress,
-                            indeterminate = false
-                        )
+            }
+            // Counts every message scanned, since max does; counting only reactions left the bar
+            // near the start. Updated every 25 messages and at the end, so the UI isn't flooded.
+            progress++
+            if (progress % 25 == 0 || progress == max) {
+                onProgress(
+                    SyncRepository.SyncProgress.ParsingEmojis(
+                        max = max,
+                        progress = progress,
+                        indeterminate = false
                     )
-                }
+                )
             }
         }
 

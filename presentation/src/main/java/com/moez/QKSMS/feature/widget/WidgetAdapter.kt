@@ -164,8 +164,8 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
             else -> conversation.snippet
         }
         remoteViews.setTextColor(R.id.snippet, if (conversation.unread) textPrimary else textTertiary)
-        remoteViews.setTextViewText(R.id.snippet, boldText(snippet, conversation.unread))
-        remoteViews.setTextViewText(R.id.snippet, italicText(snippet, conversation.draft.isNotEmpty()))
+        remoteViews.setTextViewText(R.id.snippet,
+            italicText(boldText(snippet, conversation.unread), conversation.draft.isNotEmpty()))
 
         // set fill-in intent to be used for current item
         remoteViews.setOnClickFillInIntent(

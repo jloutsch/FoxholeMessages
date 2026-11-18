@@ -68,18 +68,14 @@ class MessageDeliveredReceiver : BroadcastReceiver() {
                     }
 
                     report?.second == DeliveryReportStatus.FAILED ->
-                        markDeliveryFailed.execute(MarkDeliveryFailed.Params(messageId, report.first)) {
-                            pendingResult.finish()
-                        }
+                        markDeliveryFailed.execute(MarkDeliveryFailed.Params(messageId, report.first), onTerminate = { pendingResult.finish() })
 
                     // TODO notify about delivery
-                    pendingResult.resultCode == Activity.RESULT_OK -> markDelivered.execute(messageId) { pendingResult.finish() }
+                    pendingResult.resultCode == Activity.RESULT_OK -> markDelivered.execute(messageId, onTerminate = { pendingResult.finish() })
 
                     // TODO notify about delivery failure
                     else ->
-                        markDeliveryFailed.execute(MarkDeliveryFailed.Params(messageId, resultCode)) {
-                            pendingResult.finish()
-                        }
+                        markDeliveryFailed.execute(MarkDeliveryFailed.Params(messageId, resultCode), onTerminate = { pendingResult.finish() })
                 }
             } ?: let { Timber.e("couldn't get message id") }
     }

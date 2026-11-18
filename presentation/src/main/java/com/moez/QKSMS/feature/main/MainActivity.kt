@@ -427,6 +427,8 @@ class MainActivity : QkThemedActivity(), MainView {
 
             is SyncRepository.SyncProgress.Running -> {
                 syncingBinding.root.isVisible = true
+                // Reset: the emoji pass below changes this label, and a later sync reuses the view
+                syncingBinding.syncingLabel.setText(R.string.main_syncing)
                 syncingBinding.syncingProgress.max = state.syncing.max
                 progressAnimator.apply {
                     setIntValues(syncingBinding.syncingProgress.progress, state.syncing.progress)

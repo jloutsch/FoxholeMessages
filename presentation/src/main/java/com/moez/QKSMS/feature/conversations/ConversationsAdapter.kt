@@ -25,7 +25,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.text.buildSpannedString
 import androidx.core.view.isVisible
-import androidx.recyclerview.widget.RecyclerView
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
@@ -124,8 +123,15 @@ class ConversationsAdapter @Inject constructor(
             else -> conversation.snippet
         }
 
-        // Make the preview in italics if draft
-        if (conversation.draft.isNotEmpty()) binding.snippet.setTypeface(null, Typeface.ITALIC)
+        // Italic for a draft, bold for unread (view type 1). Set every time: rows are reused, so a
+        // style set only for drafts stuck to whichever conversation reused the row next.
+        val unread = holder.itemViewType == 1
+        binding.snippet.typeface = Typeface.create(binding.snippet.typeface, when {
+            conversation.draft.isNotEmpty() && unread -> Typeface.BOLD_ITALIC
+            conversation.draft.isNotEmpty() -> Typeface.ITALIC
+            unread -> Typeface.BOLD
+            else -> Typeface.NORMAL
+        })
 
         binding.scheduled.isVisible = conversation.id in hasScheduledConversation
 

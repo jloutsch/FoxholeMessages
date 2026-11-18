@@ -23,14 +23,10 @@ import android.net.Uri
 import android.provider.BaseColumns
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
-import dev.octoshrimpy.quik.extensions.asFlowable
 import dev.octoshrimpy.quik.extensions.asObservable
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.ContactGroup
-import io.reactivex.Flowable
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
@@ -59,14 +55,10 @@ class ContactRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getUnmanagedAllContacts(): List<Contact> {
-        val realm = Realm.getDefaultInstance()
-
-        return realm
-            .where(Contact::class.java)
-            .findAll()
-            .map { realm.copyFromRealm(it) }
-    }
+    override fun getUnmanagedAllContacts(): List<Contact> =
+        Realm.getDefaultInstance().use { realm ->
+            realm.copyFromRealm(realm.where(Contact::class.java).findAll())
+        }
 
     override fun getUnmanagedContacts(starred: Boolean): Observable<List<Contact>> {
         val realm = Realm.getDefaultInstance()

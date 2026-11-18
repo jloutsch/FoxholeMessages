@@ -46,9 +46,7 @@ class PurgeTrashService : JobService() {
         Timber.i("onStartJob")
         AndroidInjection.inject(this)
         disposables += purgeTrash
-        purgeTrash.execute(Unit) {
-            jobFinished(params, false)
-        }
+        purgeTrash.execute(Unit, onTerminate = { jobFinished(params, false) })
         return true
     }
 

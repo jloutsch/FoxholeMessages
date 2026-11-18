@@ -134,7 +134,11 @@ open class MessageRepositoryImpl @Inject constructor(
 
     override fun getUnmanagedMessage(messageId: Long) =
         Realm.getDefaultInstance().use { realm ->
-            getMessage(messageId)?.let(realm::copyFromRealm)
+            realm.refresh()
+            realm.where(Message::class.java)
+                .equalTo("id", messageId)
+                .findFirst()
+                ?.let(realm::copyFromRealm)
         }
 
     override fun getMessages(messageIds: Collection<Long>): RealmResults<Message> =
@@ -619,11 +623,9 @@ open class MessageRepositoryImpl @Inject constructor(
 
                     // Get the image dimensions
                     val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                    BitmapFactory.decodeStream(
-                        context.contentResolver.openInputStream(uri),
-                        null,
-                        options
-                    )
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        BitmapFactory.decodeStream(stream, null, options)
+                    }
                     val width = options.outWidth
                     val height = options.outHeight
                     val aspectRatio = width.toFloat() / height.toFloat()
@@ -898,7 +900,7 @@ open class MessageRepositoryImpl @Inject constructor(
     /**
      * Marks the message as sending, in case we need to retry sending it
      */
-    override fun markSending(messageId: Long) =
+    private fun markSending(messageId: Long) =
         Realm.getDefaultInstance().use { realm ->
             realm.refresh()
 
@@ -1095,20 +1097,30 @@ open class MessageRepositoryImpl @Inject constructor(
     override fun deleteMessages(messageIds: Collection<Long>) =
         Realm.getDefaultInstance().use { realm ->
             realm.refresh()
-
-            realm.where(Message::class.java)
-                .anyOf("id", messageIds.toLongArray())
-                .findAll()
-                ?.let { messages ->
-                    messages.mapNotNull { message ->
-                        val uri = message.getUri()
-                        if (uri != Uri.EMPTY)
-                            context.contentResolver.delete(uri, null, null)
-                    }
-
-                    realm.executeTransaction { messages.deleteAllFromRealm() }
-                } ?: Unit
+            hardDelete(realm, realm.where(Message::class.java).anyOf("id", messageIds.toLongArray()).findAll())
         }
+
+    /**
+     * Permanently deletes [messages] from this app's database and from the phone's message store.
+     * Every permanent delete goes through here, so they all skip messages with no store entry and
+     * keep going past one that fails.
+     */
+    private fun hardDelete(realm: Realm, messages: List<Message>) {
+        if (messages.isEmpty()) return
+
+        val ids = messages.map { it.id }.toLongArray()
+        // Uri.EMPTY means the message has no entry in the phone's store; deleting it would throw
+        val uris = messages.map { it.getUri() }.filter { it != Uri.EMPTY }
+
+        // Re-query by id inside the transaction rather than deleting the objects above: picking a
+        // retention period both runs a delete and schedules the daily job, which Android can start
+        // at the same moment, and deleting an object the other run already removed throws.
+        realm.executeTransaction {
+            realm.where(Message::class.java).anyOf("id", ids).findAll().deleteAllFromRealm()
+        }
+
+        uris.forEach { uri -> tryOrNull { context.contentResolver.delete(uri, null, null) } }
+    }
 
     override fun trashMessages(messageIds: Collection<Long>) =
         Realm.getDefaultInstance().use { realm ->
@@ -1144,33 +1156,16 @@ open class MessageRepositoryImpl @Inject constructor(
             .findAllAsync()
 
     override fun purgeTrash(maxAgeDays: Int) =
+        deleteTrash(trashedBefore = now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
+
+    override fun emptyTrash() = deleteTrash(trashedBefore = Long.MAX_VALUE)
+
+    private fun deleteTrash(trashedBefore: Long) =
         Realm.getDefaultInstance().use { realm ->
-            val messages = realm.where(Message::class.java)
+            hardDelete(realm, realm.where(Message::class.java)
                 .isNotNull("deletedAt")
-                .lessThan(
-                    "deletedAt",
-                    now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong())
-                )
-                .findAll()
-
-            val uris = messages.map { it.getUri() }
-
-            realm.executeTransaction { messages.deleteAllFromRealm() }
-
-            uris.forEach { uri -> context.contentResolver.delete(uri, null, null) }
-        }
-
-    override fun emptyTrash() =
-        Realm.getDefaultInstance().use { realm ->
-            val messages = realm.where(Message::class.java)
-                .isNotNull("deletedAt")
-                .findAll()
-
-            val uris = messages.map { it.getUri() }
-
-            realm.executeTransaction { messages.deleteAllFromRealm() }
-
-            uris.forEach { uri -> context.contentResolver.delete(uri, null, null) }
+                .lessThan("deletedAt", trashedBefore)
+                .findAll())
         }
 
     override fun getOldMessageCounts(maxAgeDays: Int) =
@@ -1187,20 +1182,9 @@ open class MessageRepositoryImpl @Inject constructor(
 
     override fun deleteOldMessages(maxAgeDays: Int) =
         Realm.getDefaultInstance().use { realm ->
-            val messages = realm.where(Message::class.java)
-                .lessThan(
-                    "date",
-                    now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong())
-                )
-                .findAll()
-
-            val uris = messages.map { it.getUri() }
-
-            realm.executeTransaction { messages.deleteAllFromRealm() }
-
-            uris.forEach {
-                uri -> context.contentResolver.delete(uri, null, null)
-            }
+            hardDelete(realm, realm.where(Message::class.java)
+                .lessThan("date", now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
+                .findAll())
         }
 
     override fun getOldOtpCounts(maxAgeDays: Int) =
@@ -1212,22 +1196,7 @@ open class MessageRepositoryImpl @Inject constructor(
 
     override fun deleteOldOtps(maxAgeDays: Int) =
         Realm.getDefaultInstance().use { realm ->
-            val messages = otpRetentionCandidates(realm, maxAgeDays)
-            if (messages.isEmpty()) return@use
-
-            val ids = messages.map { it.id }.toLongArray()
-            val uris = messages.map { it.getUri() }
-
-            // Re-query by id inside the transaction rather than deleting the objects above: picking a
-            // retention period both runs this and schedules the daily job, which Android can start at
-            // the same moment, and deleting an object the other run already removed throws.
-            realm.executeTransaction {
-                realm.where(Message::class.java).anyOf("id", ids).findAll().deleteAllFromRealm()
-            }
-
-            uris.forEach {
-                uri -> context.contentResolver.delete(uri, null, null)
-            }
+            hardDelete(realm, otpRetentionCandidates(realm, maxAgeDays))
         }
 
     /**
@@ -1428,38 +1397,21 @@ open class MessageRepositoryImpl @Inject constructor(
             matches.size
         }
 
-    override fun updateMessageCategory(messageId: Long, category: String) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.executeTransaction {
-                realm.where(Message::class.java)
-                    .equalTo("id", messageId)
-                    .findFirst()
-                    ?.category = category
-            }
+    override fun updateReceivedSorting(messageId: Long, category: String?, isOtp: Boolean) =
+        editMessage(messageId) {
+            category?.let { this.category = it }
+            if (isOtp) this.isOtp = true
         }
-    }
 
-    override fun updateMessageOtp(messageId: Long, isOtp: Boolean) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.executeTransaction {
-                realm.where(Message::class.java)
-                    .equalTo("id", messageId)
-                    .findFirst()
-                    ?.isOtp = isOtp
-            }
-        }
-    }
+    override fun setStarred(messageId: Long, starred: Boolean) = editMessage(messageId) { isStarred = starred }
 
-    override fun setStarred(messageId: Long, starred: Boolean) {
+    /** Applies [change] to message [messageId], if it still exists, in one write. */
+    private fun editMessage(messageId: Long, change: Message.() -> Unit) =
         Realm.getDefaultInstance().use { realm ->
             realm.executeTransaction {
-                realm.where(Message::class.java)
-                    .equalTo("id", messageId)
-                    .findFirst()
-                    ?.isStarred = starred
+                realm.where(Message::class.java).equalTo("id", messageId).findFirst()?.change()
             }
         }
-    }
 
     override fun getStarredMessages(): RealmResults<Message> =
         Realm.getDefaultInstance()

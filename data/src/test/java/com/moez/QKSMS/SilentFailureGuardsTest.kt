@@ -39,6 +39,19 @@ class SilentFailureGuardsTest {
     }
 
     @Test
+    fun receiversAndJobsFinishEvenWhenTheWorkFails() {
+        // execute()'s trailing lambda is onComplete, which a failure skips, leaving the broadcast
+        // or job open until Android times it out. finish()/jobFinished() belong in onTerminate.
+        val successOnlyFinish = Regex("""\.execute\([^{}]*\)\s*\{\s*\w*\.?(finish\(\)|jobFinished\()""")
+        listOf("receiver", "service").flatMap { dir ->
+            File("..", "data/src/main/java/com/moez/QKSMS/$dir").listFiles()!!.toList()
+        }.forEach { file ->
+            assertFalse("${file.name} finishes in onComplete; use onTerminate",
+                successOnlyFinish.containsMatchIn(file.readText()))
+        }
+    }
+
+    @Test
     fun wapPushBroadcastIsKeptAliveUntilHandled() {
         val code = source("android-smsmms/src/main/java/com/android/mms/transaction/PushReceiver.java")
         assertTrue("PushReceiver must pass goAsync() to ReceivePushTask",

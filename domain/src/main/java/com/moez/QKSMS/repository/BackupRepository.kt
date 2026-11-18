@@ -32,9 +32,8 @@ interface BackupRepository {
         class Saving : Progress(true)
         class Syncing : Progress(true)
         class Finished : Progress(true, false)
+        class Failed : Progress(true, false)
     }
-
-    fun getDefaultBackupPath(): String
 
     fun getBackupDocumentTree(): DocumentFile?
 

@@ -49,7 +49,7 @@ class MessageClassifier @Inject constructor() {
     )
 
     private val promotionalPatterns = listOf(
-        Regex("\\d+%\\s?off"),
+        Regex("\\d+%\\s?off", RegexOption.IGNORE_CASE),
         Regex("\\bsale\\b", RegexOption.IGNORE_CASE),
         Regex("\\boffer ends\\b", RegexOption.IGNORE_CASE),
         Regex("\\blimited time\\b", RegexOption.IGNORE_CASE),

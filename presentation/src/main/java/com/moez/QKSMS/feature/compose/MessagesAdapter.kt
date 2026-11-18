@@ -38,12 +38,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.net.toUri
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.jakewharton.rxbinding2.view.clicks
 import com.moez.QKSMS.common.QkMediaPlayer
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkRealmAdapter
@@ -291,7 +289,8 @@ class MessagesAdapter @Inject constructor(
             // bind the resend icon view
             if (message.isFailedMessage()) {
                 binding.resendIcon.visibility = View.VISIBLE
-                binding.resendIcon.clicks().subscribe {
+                // A listener replaces the previous one; clicks().subscribe() added one more each bind
+                binding.resendIcon.setOnClickListener {
                     resendClicks.onNext(message.id)
                     binding.resendIcon.visibility = View.GONE
                 }

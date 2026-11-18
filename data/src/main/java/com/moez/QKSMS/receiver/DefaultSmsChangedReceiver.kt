@@ -45,7 +45,7 @@ class DefaultSmsChangedReceiver : BroadcastReceiver() {
 
         if (intent.getBooleanExtra(Telephony.Sms.Intents.EXTRA_IS_DEFAULT_SMS_APP, false)) {
             val pendingResult = goAsync()
-            syncMessages.execute(Unit) { pendingResult.finish() }
+            syncMessages.execute(Unit, onTerminate = { pendingResult.finish() })
         }
     }
 

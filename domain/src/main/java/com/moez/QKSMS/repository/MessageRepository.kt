@@ -103,8 +103,6 @@ interface MessageRepository {
 
     fun markUnread(threadIds: Collection<Long>): Int
 
-    fun markSending(messageId: Long)
-
     fun markSent(messageId: Long)
 
     fun markFailed(messageId: Long, resultCode: Int): Boolean
@@ -201,9 +199,8 @@ interface MessageRepository {
      */
     fun tagOtpMessages(isOtp: (String) -> Boolean): Int
 
-    fun updateMessageCategory(messageId: Long, category: String)
-
-    fun updateMessageOtp(messageId: Long, isOtp: Boolean)
+    /** Stores what sorting found for a newly received message: its [category] (if any) and whether it holds a code. */
+    fun updateReceivedSorting(messageId: Long, category: String?, isOtp: Boolean)
 
     fun setStarred(messageId: Long, starred: Boolean)
 

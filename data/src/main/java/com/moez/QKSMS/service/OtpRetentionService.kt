@@ -46,9 +46,7 @@ class OtpRetentionService : JobService() {
         Timber.i("onStartJob")
         AndroidInjection.inject(this)
         disposables += deleteOldOtps
-        deleteOldOtps.execute(Unit) {
-            jobFinished(params, false)
-        }
+        deleteOldOtps.execute(Unit, onTerminate = { jobFinished(params, false) })
         return true
     }
 

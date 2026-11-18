@@ -53,7 +53,7 @@ class GalleryPagerAdapter @Inject constructor(private val context: Context) : Qk
     val clicks: Subject<View> = PublishSubject.create()
 
     private val contentResolver = context.contentResolver
-    private val exoPlayers = Collections.newSetFromMap(WeakHashMap<ExoPlayer?, Boolean>())
+    private val exoPlayers = mutableSetOf<ExoPlayer>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -108,6 +108,7 @@ class GalleryPagerAdapter @Inject constructor(private val context: Context) : Qk
 
             VIEW_TYPE_VIDEO -> {
                 val binding = GalleryVideoPageBinding.bind(holder.itemView)
+                releasePlayer(binding)
                 // A single local MMS video file has no alternate-quality renditions to adapt
                 // between, so there's nothing for a custom track selector to do here - just
                 // build a plain player and hand it a MediaItem, which resolves content:// URIs
@@ -141,8 +142,23 @@ class GalleryPagerAdapter @Inject constructor(private val context: Context) : Qk
         }
     }
 
+    override fun onViewRecycled(holder: QkViewHolder) {
+        super.onViewRecycled(holder)
+        if (holder.itemViewType == VIEW_TYPE_VIDEO) releasePlayer(GalleryVideoPageBinding.bind(holder.itemView))
+    }
+
+    // Each bind builds a new player, so the old one is released here rather than only at exit
+    private fun releasePlayer(binding: GalleryVideoPageBinding) {
+        (binding.video.player as? ExoPlayer)?.let { exoPlayer ->
+            exoPlayer.release()
+            exoPlayers.remove(exoPlayer)
+        }
+        binding.video.player = null
+    }
+
     fun destroy() {
-        exoPlayers.forEach { exoPlayer -> exoPlayer?.release() }
+        exoPlayers.forEach { exoPlayer -> exoPlayer.release() }
+        exoPlayers.clear()
     }
 
 }

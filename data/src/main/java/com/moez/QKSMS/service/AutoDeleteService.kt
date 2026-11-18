@@ -46,9 +46,7 @@ class AutoDeleteService : JobService() {
         Timber.i("onStartJob")
         AndroidInjection.inject(this)
         disposables += deleteOldMessages
-        deleteOldMessages.execute(Unit) {
-            jobFinished(params, false)
-        }
+        deleteOldMessages.execute(Unit, onTerminate = { jobFinished(params, false) })
         return true
     }
 

@@ -32,11 +32,17 @@ abstract class Interactor<in Params> : Disposable {
 
     abstract fun buildObservable(params: Params): Flowable<*>
 
-    fun execute(params: Params, onComplete: () -> Unit = {}) {
+    /**
+     * [onComplete] runs only on success. [onTerminate] runs once the work ends either way, so a
+     * receiver's finish() or a job's jobFinished() belongs there: if it were in [onComplete], a
+     * failure would leave the broadcast or job open until Android times it out.
+     */
+    fun execute(params: Params, onComplete: () -> Unit = {}, onTerminate: () -> Unit = {}) {
         disposables += buildObservable(params)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnComplete(onComplete)
+                .doFinally(onTerminate)
                 .subscribe({}, Timber::w)
     }
 

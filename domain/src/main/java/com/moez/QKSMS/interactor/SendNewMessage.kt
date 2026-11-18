@@ -97,9 +97,10 @@ class SendNewMessage @Inject constructor(
             Timber.i("Marking thread(s) $threadIds read after sending")
             markRead.execute(threadIds)
 
-            AndroidSchedulers.mainThread().scheduleDirect {
-                threadIds.forEach { shortcutManager.getOrCreateShortcut(it) }
-            }
+            // On this background thread, not the main one: building a shortcut loads the contact's
+            // photo with a blocking Glide call, which Glide refuses on the main thread, so the
+            // shortcut silently fell back to initials.
+            threadIds.forEach { shortcutManager.getOrCreateShortcut(it) }
 
             // delete attachment local files, if any, because they're saved to mms db by now
             params.attachments.forEach { it.removeCacheFile(context) }

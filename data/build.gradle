@@ -105,4 +105,6 @@ tasks.withType(Test).configureEach {
     inputs.file("src/main/java/com/moez/QKSMS/manager/QkTransaction.kt")
     inputs.file("../android-smsmms/src/main/java/com/android/mms/transaction/DownloadManager.java")
     inputs.file("../android-smsmms/src/main/java/com/android/mms/transaction/PushReceiver.java")
+    inputs.dir("src/main/java/com/moez/QKSMS/receiver")
+    inputs.dir("src/main/java/com/moez/QKSMS/service")
 }

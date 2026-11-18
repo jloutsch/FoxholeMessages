@@ -126,7 +126,7 @@ class BackupRepositoryImpl @Inject constructor(
 
     @Volatile private var stopFlag: Boolean = false
 
-    override fun getDefaultBackupPath(): String {
+    private fun getDefaultBackupPath(): String {
         return "${Environment.getExternalStorageDirectory()}/FoxholeMessages/Backups"
     }
 
@@ -155,6 +155,7 @@ class BackupRepositoryImpl @Inject constructor(
         if (isBackupOrRestoreRunning()) return
 
         var backupFile: DocumentFile? = null
+        var failed = false
         try {
             val timestamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(now())
             backupFile = getBackupDocumentTree()?.createFile("application/json", "backup-$timestamp.json")
@@ -192,11 +193,12 @@ class BackupRepositoryImpl @Inject constructor(
             Timber.w(e)
             // A half-written backup would only fail later, at restore time
             backupFile?.let { file -> tryOrNull { file.delete() } }
+            failed = true
         }
 
-        // Mark the task finished, and set it as Idle a second later
-        backupProgress.onNext(BackupRepository.Progress.Finished())
-        Timer().schedule(1000) { backupProgress.onNext(BackupRepository.Progress.Idle()) }
+        // Show the outcome, then go back to Idle. A failure stays up longer so it isn't missed.
+        backupProgress.onNext(if (failed) BackupRepository.Progress.Failed() else BackupRepository.Progress.Finished())
+        Timer().schedule(if (failed) 4000L else 1000L) { backupProgress.onNext(BackupRepository.Progress.Idle()) }
     }
 
     private fun messageToBackupMessage(message: Message, recipients: List<String>): BackupMessage = BackupMessage(

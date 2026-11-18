@@ -46,7 +46,6 @@ import android.telephony.SmsManager
 import android.telephony.SmsMessage
 import androidx.core.content.contentValuesOf
 import androidx.core.net.toUri
-import com.android.mms.MmsConfig
 import com.android.mms.dom.smil.parser.SmilXmlSerializer
 import com.google.android.mms.ContentType
 import com.google.android.mms.InvalidHeaderValueException
