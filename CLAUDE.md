@@ -214,10 +214,12 @@ no signing key needed) with the obfuscation report. Each test group was checked 
 broken version of the code it covers. What's covered, and the past failure each guards against:
 
 - `domain`: inbox sorting rules and sender types (`MessageSortingRulesTest`, `SenderKindTest`);
-  code-text detection (`OtpDetectorTest`).
+  code-text detection (`OtpDetectorTest`); scheduled-message attachment folder names
+  (`ScheduledMessageFilesTest`, fork issue #2).
 - `data`: emoji reaction patterns loaded from the real asset files (the v2.3.1 "Liked …" outage;
   `bg`/`ckb`/`ml` are known empty placeholders, so reactions in those languages aren't recognised);
-  backup file format against a saved sample (the unrestorable 2.2.0–2.3.0 backups); duplicate
+  backup file format against a saved sample (the unrestorable 2.2.0–2.3.0 backups) and the
+  streaming backup writer/reader (`BackupJsonTest`); duplicate
   removal and OTP retention rules; keyword/regex content filters (`ContentFilterMatcherTest`); reply
   categories and the sync data-saving list (`SortingAndSyncDataTest` — **fails if a new `Message`
   field isn't classified**, enforcing the "app-only fields must survive sync" rule below).
@@ -225,6 +227,8 @@ broken version of the code it covers. What's covered, and the past failure each 
   on (`ProguardRulesTest`); release consistency — `versionName` is X.Y.Z, `changelog.json` parses and
   its newest entry is this version, Play release notes exist and fit 500 characters, F-Droid metadata
   matches (`ReleaseConsistencyTest`). **Bumping the version means updating all of these together.**
+  The Compose launcher shortcut names the installed app id, so `res/xml/shortcuts.xml` has one copy
+  per build type (`src/main`, `src/debug`, `src/fdroid`), checked by `ShortcutsXmlTest`.
 
 Tests that read files (proguard rules, changelogs, emoji assets) declare them as Gradle test inputs,
 so editing those files re-runs the tests locally rather than reusing a stale pass.
@@ -1515,6 +1519,26 @@ Fixed in the same pass:
   Android may start at the same moment; deletion re-queries by id inside its
   transaction so the second run doesn't throw on rows the first removed
   (verified: two concurrent runs, no error).
+
+### Fix batch (2026-11-18) — things to know before changing these areas
+
+- **okio is pinned to 3.4.0** (root `build.gradle`, `strictly` in `data`/`presentation`). OkHttp
+  4.12.0 asks for 3.6.0, but okio 3.5+ is built with Kotlin 1.9, which this project's Kotlin 1.7.21
+  can't read. Revisit when Kotlin is upgraded. `jcenter()` and the Sonatype snapshots repo are gone;
+  JitPack is limited to `com.github.*`. All four JitPack libraries had to stay (no compatible Maven
+  Central build; flexbox 3.0.0 changes default alignment).
+- **Backups stream** one message at a time (`BackupJson`). Device-verified on a Note 10: a 766 MB
+  backup of 13,178 messages (3,928 MMS) completed without running out of memory, and a restore from
+  a one-message file worked. Restore has no duplicate check — restoring onto the same phone doubles
+  every message.
+- **Compose screen attachments**: only share intents were read, so Forward dropped pictures.
+  `InternalIntent` marks this app's own compose intents with a per-process random value; those skip
+  the outside-share safety check (`isSafeToAttachFromOtherApp`), everything else still gets it. Use
+  `InternalIntent.mark()` for any new in-app path that passes attachments to `ComposeActivity`.
+- **Failed MMS downloads retry** after 1, 10 and 60 minutes once online (`MmsDownloadRetryWorker`).
+  Not device-verified: needs a real failed picture download.
+- **Scheduled messages**: overdue ones are sent once (no alarm), and exact alarms fall back to
+  inexact when "Alarms & reminders" is off. Not device-verified across a reboot.
 
 ### Known gaps / open items
 
