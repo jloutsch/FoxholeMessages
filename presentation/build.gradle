@@ -248,4 +248,5 @@ tasks.withType(Test).configureEach {
     inputs.file("../data/src/main/assets/changelog.json")
     inputs.dir("../metadata/en-US/changelogs")
     inputs.file("../fdroid/metadata/com.foxhole.messages.yml")
+    inputs.files("src/main/res/xml/shortcuts.xml", "src/debug/res/xml/shortcuts.xml", "src/fdroid/res/xml/shortcuts.xml")
 }

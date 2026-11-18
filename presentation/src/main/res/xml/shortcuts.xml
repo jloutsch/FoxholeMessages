@@ -18,6 +18,10 @@
   ~ along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
   -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- targetPackage must be the INSTALLED app id, which differs per build (release,
+         .debug, .fdroid), so each build type has its own copy of this file. It used to name
+         dev.octoshrimpy.quik (upstream QUIK), so the "Compose" launcher shortcut opened nothing.
+         ShortcutsXmlTest checks every copy against presentation/build.gradle. -->
 
     <shortcut
         android:enabled="true"
@@ -30,7 +34,7 @@
         <intent
             android:action="dev.octoshrimpy.quik.START"
             android:targetClass="dev.octoshrimpy.quik.feature.compose.ComposeActivity"
-            android:targetPackage="dev.octoshrimpy.quik" />
+            android:targetPackage="com.foxhole.messages" />
 
         <categories android:name="android.shortcut.conversation" />
 
