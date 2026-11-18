@@ -39,6 +39,16 @@ jobs:
     - name: Run Tests
       run: ./gradlew test
 
+    # Release builds are shrunk and renamed by R8, which the debug build and unit tests never do -
+    # and every release-only outage so far came from that step. This runs it (no signing key needed)
+    # so a broken R8 build shows up on the pull request, and reports how much got obfuscated.
+    - name: Shrunk release build (R8)
+      run: ./gradlew :presentation:minifyReleaseWithR8
+
+    - name: Report obfuscation coverage
+      shell: bash
+      run: python3 .github/scripts/obfuscation_report.py presentation/build/outputs/mapping/release/mapping.txt | tee -a "$GITHUB_STEP_SUMMARY"
+
     - name: List APK Output Directory 
       run: ls -R presentation/build/outputs/apk/debug
 

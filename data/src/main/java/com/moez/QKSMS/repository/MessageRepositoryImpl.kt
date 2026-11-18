@@ -1234,9 +1234,13 @@ open class MessageRepositoryImpl @Inject constructor(
             .lessThan("date", now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
             .findAll()
             .filter { message ->
-                !message.isMe() &&
+                OtpRetentionRule.isDeletable(
+                    isIncoming = !message.isMe(),
+                    isStarred = message.isStarred,
+                    isLocked = message.locked,
                     // One cross-process contacts lookup per sender, not per message.
-                    !isContact.getOrPut(message.address) { contactRepo.isContact(message.address) }
+                    isFromContact = { isContact.getOrPut(message.address) { contactRepo.isContact(message.address) } }
+                )
             }
     }
 
@@ -1291,32 +1295,21 @@ open class MessageRepositoryImpl @Inject constructor(
         return duplicates
     }
 
-    /**
-     * Two rows are the same message (a restore or sync inserting it twice, or a carrier re-delivering
-     * an SMS) when they share thread, sender, box, sent time and content. Weaker signatures deleted
-     * real messages: outgoing SMS have dateSent 0, so every identical reply in a thread matched, and
-     * MMS have an empty body, so separate photos sent within the same second matched.
-     */
-    private fun messageHash(message: Message): String {
-        val signatureString = buildString {
-            append(message.type).append('|')
-            append(message.threadId).append('|')
-            append(message.address).append('|')
-            append(message.boxId).append('|')
-            // dateSent is 0 when unknown (e.g. every outgoing SMS without a delivery report).
-            append(message.dateSent.takeIf { it != 0L } ?: message.date).append('|')
-            append(message.body).append('|')
-            append(message.subject)
-            if (message.isMms()) {
-                // The body is usually empty, so compare the receive time and every part too.
-                append('|').append(message.date)
-                message.parts.sortedBy { it.seq }.forEach { part ->
-                    append('|').append(part.type).append(':').append(part.name).append(':').append(part.text)
-                }
-            }
-        }
-        return sha256(signatureString)
-    }
+    /** See [DuplicateSignature] for what duplicates must share, and why. */
+    private fun messageHash(message: Message): String = sha256(
+        DuplicateSignature.of(
+            type = message.type,
+            threadId = message.threadId,
+            address = message.address,
+            boxId = message.boxId,
+            dateSent = message.dateSent,
+            date = message.date,
+            body = message.body,
+            subject = message.subject,
+            isMms = message.isMms(),
+            parts = message.parts.map { DuplicateSignature.Part(it.seq, it.type, it.name, it.text) }
+        )
+    )
 
     override fun categorizeUnclassifiedMessages(
         categorize: (address: String, body: String, threadId: Long) -> String,

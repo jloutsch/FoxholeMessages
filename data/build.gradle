@@ -71,6 +71,8 @@ dependencies {
     testImplementation "androidx.test:runner:$androidx_testrunner_version"
     testImplementation "junit:junit:$junit_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
+    // The app's Moshi setup (AppModule.provideMoshi) uses KotlinJsonAdapterFactory; backup tests use the same.
+    testImplementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
 
     // coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
@@ -105,4 +107,10 @@ repositories {
         url 'https://oss.sonatype.org/content/repositories/snapshots'
     }
     mavenCentral()
+}
+
+// EmojiReactionPatternsTest reads the shipped pattern files; declare them so editing one re-runs
+// the tests instead of Gradle reusing an earlier pass.
+tasks.withType(Test).configureEach {
+    inputs.dir("src/main/assets/emojis")
 }

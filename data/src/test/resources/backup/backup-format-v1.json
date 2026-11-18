@@ -1,0 +1,42 @@
+{
+	"messageCount": 2,
+	"messages": [
+		{
+			"type": 1,
+			"address": "+15550100101",
+			"date": 1700000000000,
+			"dateSent": 1699999999000,
+			"read": true,
+			"status": -1,
+			"body": "Hello from an SMS backup",
+			"protocol": 0,
+			"serviceCenter": "+15550000000",
+			"locked": false,
+			"subId": 1,
+			"isMms": false,
+			"mmsSubject": null,
+			"mmsRecipients": [],
+			"mmsParts": []
+		},
+		{
+			"type": 1,
+			"address": "+15550100102",
+			"date": 1700000100000,
+			"dateSent": 0,
+			"read": false,
+			"status": 0,
+			"body": "",
+			"protocol": 0,
+			"serviceCenter": null,
+			"locked": true,
+			"subId": -1,
+			"isMms": true,
+			"mmsSubject": "Photos",
+			"mmsRecipients": ["+15550100102", "+15550100103"],
+			"mmsParts": [
+				{ "contentType": "text/plain", "name": null, "text": "Look at this", "data": null },
+				{ "contentType": "image/jpeg", "name": "IMG_0001.jpg", "text": null, "data": "/9j/4AAQSkZJRg==" }
+			]
+		}
+	]
+}

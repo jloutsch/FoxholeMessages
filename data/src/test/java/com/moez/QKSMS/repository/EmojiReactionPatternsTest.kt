@@ -1,0 +1,142 @@
+package dev.octoshrimpy.quik.repository
+
+import com.squareup.moshi.Moshi
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.File
+
+/**
+ * Emoji reactions arrive as plain SMS text and are recognised by per-language patterns shipped in
+ * src/main/assets/emojis. In v2.3.1 every language file silently contributed zero patterns, so
+ * iPhone reactions showed up as "Liked …" text for weeks. These tests load the real files.
+ */
+class EmojiReactionPatternsTest {
+
+    private val assetDir = File("src/main/assets/emojis")
+    private val moshi = Moshi.Builder().build()
+
+    private val patterns = EmojiReactionPatterns().apply {
+        assetDir.listFiles { f -> f.name.endsWith(".json") }!!.sorted().forEach { file ->
+            addLocale(EmojiReactionPatterns.parsePatternsJson(moshi, file.readText()))
+        }
+    }
+
+    private fun parse(body: String) = patterns.parse(body)
+
+    // --- The outage: every language file must actually contribute patterns ---
+
+    @Test
+    fun everyTranslatedLanguageFileContributesPatterns() {
+        val files = assetDir.listFiles { f -> f.name.endsWith(".json") }!!
+        assertTrue("expected the shipped language files, found ${files.size}", files.size >= 12)
+        val untranslated = mutableListOf<String>()
+        files.forEach { file ->
+            val entries = moshi.adapter(Map::class.java).fromJson(file.readText())!!
+            // An empty file is an untranslated placeholder created by the translation service
+            // (ml.json is one); that's expected. A file WITH entries that adds no patterns is the
+            // v2.3.1 outage, where the entries weren't being read.
+            if (entries.isEmpty()) {
+                untranslated += file.name
+                return@forEach
+            }
+            val single = EmojiReactionPatterns()
+            val before = single.reactionCount
+            single.addLocale(EmojiReactionPatterns.parsePatternsJson(moshi, file.readText()))
+            assertTrue("${file.name} has entries but added no reaction patterns", single.reactionCount > before)
+            assertTrue("${file.name} has entries but added no removal patterns", single.removalCount > 1)
+        }
+        // These shipped as empty placeholders from upstream; any OTHER file being empty means a
+        // translation was lost.
+        val knownPlaceholders = setOf("bg.json", "ckb.json", "ml.json")
+        assertTrue(
+            "unexpected empty emoji pattern files: ${untranslated - knownPlaceholders}",
+            knownPlaceholders.containsAll(untranslated)
+        )
+    }
+
+    @Test
+    fun englishHasEveryPattern() {
+        val entries = moshi.adapter(Map::class.java).fromJson(File(assetDir, "en.json").readText())!!
+        assertEquals(14, entries.size)
+    }
+
+    // --- iPhone tapbacks on text (English) ---
+
+    @Test
+    fun tapbacksOnText() {
+        val expected = mapOf(
+            "Loved" to "❤️", "Liked" to "👍", "Disliked" to "👎",
+            "Laughed at" to "😂", "Emphasized" to "‼️", "Questioned" to "❓"
+        )
+        expected.forEach { (verb, emoji) ->
+            assertEquals(verb, ParsedEmojiReaction(emoji, "see you soon"), parse("$verb “see you soon”"))
+        }
+    }
+
+    @Test
+    fun quotedMessageCanSpanLines() =
+        assertEquals(ParsedEmojiReaction("❤️", "line one\nline two"), parse("Loved “line one\nline two”"))
+
+    @Test
+    fun genericEmojiReaction() =
+        assertEquals(ParsedEmojiReaction("🎉", "we won"), parse("Reacted 🎉 to “we won”"))
+
+    // --- Removals are recognised as removals, with the right emoji ---
+
+    @Test
+    fun tapbackRemoval() =
+        assertEquals(ParsedEmojiReaction("❤️", "see you soon", isRemoval = true), parse("Removed a heart from “see you soon”"))
+
+    @Test
+    fun genericRemoval() =
+        assertEquals(ParsedEmojiReaction("🎉", "we won", isRemoval = true), parse("Removed 🎉 from “we won”"))
+
+    // --- Reactions to pictures and other attachments (nothing quoted) ---
+
+    @Test
+    fun reactionsToAttachments() {
+        assertEquals(ParsedEmojiReaction("❤️", "", targetsAttachment = true), parse("Loved an image"))
+        assertEquals(ParsedEmojiReaction("👍", "", targetsAttachment = true), parse("Liked a video"))
+        assertEquals(ParsedEmojiReaction("😂", "", targetsAttachment = true), parse("Laughed at a sticker"))
+        assertEquals(ParsedEmojiReaction("❤️", "", isRemoval = true, targetsAttachment = true), parse("Removed a heart from an image"))
+    }
+
+    // --- Another language, where the quote comes first ---
+
+    @Test
+    fun germanHeart() =
+        assertEquals(ParsedEmojiReaction("❤️", "bis bald"), parse("„bis bald“ ein Herz hinzugefügt"))
+
+    // --- Google Messages' marker-wrapped format ---
+
+    @Test
+    fun googleMessagesReactionAndRemoval() {
+        val hair = " "
+        assertEquals(
+            ParsedEmojiReaction("👍", "Hello there"),
+            parse("${hair}Reacted ​👍​ to ${hair}Hello there${hair}$hair")
+        )
+        assertEquals(
+            ParsedEmojiReaction("👍", "Hello there", isRemoval = true),
+            parse("${hair}Removed ‌👍‌ from ${hair}Hello there${hair}$hair")
+        )
+    }
+
+    // --- Real messages must never be taken for reactions (a match hides the message) ---
+
+    @Test
+    fun ordinaryTextIsNotAReaction() {
+        listOf(
+            "Loved that movie!",
+            "I loved an image of that",
+            "Liked it a lot",
+            "Loved “unterminated quote",
+            "Loved \"straight quotes\"",
+            "Reacted badly to the news",
+            "hello",
+            ""
+        ).forEach { body -> assertNull("taken for a reaction: $body", parse(body)) }
+    }
+}
