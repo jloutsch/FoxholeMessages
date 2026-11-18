@@ -40,6 +40,7 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
+import androidx.viewpager2.widget.ViewPager2
 import com.jakewharton.rxbinding2.view.clicks
 import com.jakewharton.rxbinding2.widget.textChanges
 import com.uber.autodispose.android.lifecycle.scope
@@ -209,6 +210,12 @@ class MainActivity : QkThemedActivity(), MainView {
         conversationsAdapter.autoScrollToStart(binding.recyclerView)
 
         binding.tabPager.adapter = conversationsPagerAdapter
+        // Each tab keeps its own selection, so a selection made in one tab stayed active after
+        // switching to another, and Delete/Archive/Block then acted on conversations the user could
+        // no longer see. Leaving a tab ends selection mode.
+        binding.tabPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) = clearSelection()
+        })
         buildTabStrip()
 
         // Don't allow clicks to pass through the drawer layout

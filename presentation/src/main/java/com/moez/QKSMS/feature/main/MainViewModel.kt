@@ -232,7 +232,8 @@ class MainViewModel @Inject constructor(
                     }
                 else if (state.page is Archived)
                     newState {
-                        copy(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true)))
+                        // Was Inbox(...), which switched the screen to Inbox while showing archived data.
+                        copy(page = Archived(data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true)))
                     }
             }
             .autoDisposable(view.scope())
@@ -427,7 +428,9 @@ class MainViewModel @Inject constructor(
         view.optionsItemIntent
                 .filter { itemId -> itemId == R.id.archive }
                 .withLatestFrom(view.conversationsSelectedIntent) { _, conversations ->
-                    markArchived.execute(conversations)
+                    // A copy: the live selection list is emptied by clearSelection() before
+                    // MarkArchived's mark-as-read step reads it, so the conversation stayed unread.
+                    markArchived.execute(conversations.toList())
                     lastArchivedThreadIds = conversations.toList()
                     view.showArchivedSnackbar(lastArchivedThreadIds.count(), true)
                     view.clearSelection()
@@ -699,7 +702,9 @@ class MainViewModel @Inject constructor(
         // tab via "Move to..."), instead of only on resume, so a moved conversation's unread
         // badge follows it immediately. tabData's RealmResults are already live (findAllAsync),
         // this just derives the counts from that same live data instead of a one-off snapshot.
-        disposables += state
+        // Tied to the view, not the ViewModel: bindView runs again on every rotation, and
+        // `disposables +=` piled up one more copy of this (4 count queries per change) each time.
+        state
             .map { it.tabData to it.starredMessages }
             .distinctUntilChanged()
             .switchMap { (tabData, starred) ->
@@ -710,6 +715,7 @@ class MainViewModel @Inject constructor(
                 Observable.merge(sources)
             }
             .observeOn(Schedulers.io())
+            .autoDisposable(view.scope())
             .subscribe {
                 newState { copy(tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)) }
             }
