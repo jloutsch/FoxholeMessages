@@ -269,7 +269,18 @@ class BackupRepositoryImpl @Inject constructor(
 
         var messageCount = 0
         var errorCount = 0
+        var skippedCount = 0
         var stopped = false
+
+        // What's already on the phone, so restoring doesn't create a second copy of each message.
+        // The app's own copy mirrors the system store (trashed messages included, since Trash
+        // doesn't remove them from it), and the keys match what messageToBackupMessage writes.
+        val alreadyPresent = Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
+            RestoreDuplicates(realm.where(Message::class.java).findAll().map { message ->
+                RestoreDuplicates.key(message.isMms(), message.boxId, message.address, message.date, message.body)
+            })
+        }
 
         // Each message is restored as soon as it's parsed, so only one is held in memory at a time
         try {
@@ -290,7 +301,10 @@ class BackupRepositoryImpl @Inject constructor(
                                     maxOf(declaredCount, messageCount), index))
 
                             try {
-                                restoreMessage(message)
+                                val key = RestoreDuplicates.key(
+                                        message.isMms, message.type, message.address, message.date, message.body)
+                                if (alreadyPresent.isAlreadyPresent(key)) skippedCount++
+                                else restoreMessage(message)
                             } catch (e: Exception) {
                                 Timber.w(e)
                                 errorCount++
@@ -308,6 +322,8 @@ class BackupRepositoryImpl @Inject constructor(
             restoreProgress.onNext(BackupRepository.Progress.Idle())
             return
         }
+
+        Timber.i("Restore: $messageCount messages in file, $skippedCount already on the phone and skipped")
 
         if (errorCount > 0) {
             Timber.w(Exception("Failed to backup $errorCount/$messageCount messages"))
