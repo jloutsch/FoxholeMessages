@@ -48,8 +48,6 @@ import androidx.core.content.contentValuesOf
 import androidx.core.net.toUri
 import com.android.mms.MmsConfig
 import com.android.mms.dom.smil.parser.SmilXmlSerializer
-import com.android.mms.util.DownloadManager
-import com.android.mms.util.RateController
 import com.google.android.mms.ContentType
 import com.google.android.mms.InvalidHeaderValueException
 import com.google.android.mms.MMSPart
@@ -111,8 +109,6 @@ object QkTransaction {
             text += "\n$signature"
 
         if (checkMMS(text, toAddresses.size, parts.size, asGroup, longAsMms)) {
-            RateController.init(context)
-            DownloadManager.init(context)
 
             return createMmsMessage(context, subscriptionId, text, toAddresses, parts)
         }

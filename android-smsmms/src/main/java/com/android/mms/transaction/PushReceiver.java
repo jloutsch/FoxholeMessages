@@ -21,25 +21,19 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
-import android.database.sqlite.SqliteWrapper;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Telephony.Mms;
 import android.provider.Telephony.Mms.Inbox;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import com.android.mms.MmsConfig;
-import com.android.mms.logs.LogTag;
-import com.android.mms.service_alt.DownloadRequest;
-import com.android.mms.service_alt.MmsNetworkManager;
-import com.android.mms.service_alt.MmsRequestManager;
 import com.google.android.mms.ContentType;
 import com.google.android.mms.MmsException;
 import com.google.android.mms.pdu_alt.DeliveryInd;
@@ -49,12 +43,10 @@ import com.google.android.mms.pdu_alt.PduHeaders;
 import com.google.android.mms.pdu_alt.PduParser;
 import com.google.android.mms.pdu_alt.PduPersister;
 import com.google.android.mms.pdu_alt.ReadOrigInd;
+import com.google.android.mms.util_alt.SqliteWrapper;
 import timber.log.Timber; import android.util.Log;
 
-import com.klinker.android.send_message.BroadcastUtils;
-import com.klinker.android.send_message.Settings;
 import com.klinker.android.send_message.SmsManagerFactory;
-import com.klinker.android.send_message.Utils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -132,7 +124,8 @@ public class PushReceiver extends BroadcastReceiver {
             ContentResolver cr = mContext.getContentResolver();
             int type = pdu.getMessageType();
             long threadId = -1;
-            int subId = intent.getIntExtra("subscription", Settings.DEFAULT_SUBSCRIPTION_ID);
+            int subId = intent.getIntExtra("subscription", -1);
+            boolean group = PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("group_message", true);
 
             try {
                 switch (type) {
@@ -143,14 +136,6 @@ public class PushReceiver extends BroadcastReceiver {
                             // The associated SendReq isn't found, therefore skip
                             // processing this PDU.
                             break;
-                        }
-
-                        boolean group;
-
-                        try {
-                            group = com.klinker.android.send_message.Transaction.settings.getGroup();
-                        } catch (Exception e) {
-                            group = PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("group_message", true);
                         }
 
                         Uri uri = p.persist(pdu, Uri.parse("content://mms/inbox"), true,
@@ -164,14 +149,10 @@ public class PushReceiver extends BroadcastReceiver {
                     case MESSAGE_TYPE_NOTIFICATION_IND: {
                         NotificationInd nInd = (NotificationInd) pdu;
 
-                        boolean appendTransactionId = false;
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            Bundle configOverrides = SmsManagerFactory.createSmsManager(subId).getCarrierConfigValues();
-                            appendTransactionId = configOverrides.getBoolean(SmsManager.MMS_CONFIG_APPEND_TRANSACTION_ID);
-
-                            if (appendTransactionId) {
-                                Timber.v("appending the transaction ID, based on the SMS manager overrides");
-                            }
+                        Bundle configOverrides = SmsManagerFactory.createSmsManager(subId).getCarrierConfigValues();
+                        boolean appendTransactionId = configOverrides.getBoolean(SmsManager.MMS_CONFIG_APPEND_TRANSACTION_ID);
+                        if (appendTransactionId) {
+                            Timber.v("appending the transaction ID, based on the SMS manager overrides");
                         }
 
                         if (MmsConfig.getTransIdEnabled() || appendTransactionId) {
@@ -192,16 +173,8 @@ public class PushReceiver extends BroadcastReceiver {
                             // Save the pdu. If we can start downloading the real pdu immediately,
                             // don't allow persist() to create a thread for the notificationInd
                             // because it causes UI jank.
-                            boolean group;
-
-                            try {
-                                group = com.klinker.android.send_message.Transaction.settings.getGroup();
-                            } catch (Exception e) {
-                                group = PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("group_message", true);
-                            }
-
                             Uri uri = p.persist(pdu, Inbox.CONTENT_URI,
-                                    !NotificationTransaction.allowAutoDownload(mContext),
+                                    !allowAutoDownload(mContext),
                                     group,
                                     null,
                                     subId);
@@ -223,49 +196,7 @@ public class PushReceiver extends BroadcastReceiver {
                                 downloadedUrls.add(location);
                             }
 
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                Timber.v("receiving on a lollipop+ device");
-                                boolean useSystem = true;
-
-                                if (com.klinker.android.send_message.Transaction.settings != null) {
-                                    useSystem = com.klinker.android.send_message.Transaction.settings
-                                            .getUseSystemSending();
-                                } else {
-                                    useSystem = PreferenceManager.getDefaultSharedPreferences(mContext)
-                                            .getBoolean("system_mms_sending", useSystem);
-                                }
-
-                                if (useSystem) {
-                                    DownloadManager.getInstance().downloadMultimediaMessage(mContext, location, uri, true, subId);
-                                } else {
-                                    Timber.v("receiving with lollipop method");
-                                    MmsRequestManager requestManager = new MmsRequestManager(mContext);
-                                    DownloadRequest request = new DownloadRequest(requestManager,
-                                            Utils.getDefaultSubscriptionId(),
-                                            location, uri, null, null,
-                                            null, mContext);
-                                    MmsNetworkManager manager = new MmsNetworkManager(mContext, Utils.getDefaultSubscriptionId());
-                                    request.execute(mContext, manager);
-                                }
-                            } else {
-                                if (NotificationTransaction.allowAutoDownload(mContext)) {
-                                    // Start service to finish the notification transaction.
-                                    Intent svc = new Intent(mContext, TransactionService.class);
-                                    svc.putExtra(TransactionBundle.URI, uri.toString());
-                                    svc.putExtra(TransactionBundle.TRANSACTION_TYPE,
-                                            Transaction.NOTIFICATION_TRANSACTION);
-                                    svc.putExtra(TransactionBundle.LOLLIPOP_RECEIVING,
-                                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP);
-                                    mContext.startService(svc);
-                                } else {
-                                    Intent notificationBroadcast = new Intent(com.klinker.android.send_message.Transaction.NOTIFY_OF_MMS);
-                                    notificationBroadcast.putExtra("receive_through_stock", true);
-                                    BroadcastUtils.sendExplicitBroadcast(
-                                            mContext,
-                                            notificationBroadcast,
-                                            com.klinker.android.send_message.Transaction.NOTIFY_OF_MMS);
-                                }
-                            }
+                            DownloadManager.getInstance().downloadMultimediaMessage(mContext, location, uri, true, subId);
                         } else if (LOCAL_LOGV) {
                             Timber.v("Skip downloading duplicate message: "
                                     + new String(nInd.getContentLocation()));
@@ -305,27 +236,20 @@ public class PushReceiver extends BroadcastReceiver {
                 Timber.v("Received PUSH Intent: " + intent);
             }
 
-            SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-            if ((!sharedPrefs.getBoolean("receive_with_stock", false) && Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT && sharedPrefs.getBoolean("override", true))
-                    || Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                MmsConfig.init(context);
-                // Keep the broadcast (and so the process) alive until the push is handled. Passing
-                // null let the process be cached the moment onReceive returned.
-                new ReceivePushTask(context, goAsync()).executeOnExecutor(PUSH_RECEIVER_EXECUTOR, intent);
+            MmsConfig.init(context);
+            // Keep the broadcast (and so the process) alive until the push is handled. Passing
+            // null let the process be cached the moment onReceive returned.
+            new ReceivePushTask(context, goAsync()).executeOnExecutor(PUSH_RECEIVER_EXECUTOR, intent);
 
-                Log.v("mms_receiver", context.getPackageName() + " received and aborted");
-            } else {
-                clearAbortBroadcast();
-                Intent notificationBroadcast = new Intent(com.klinker.android.send_message.Transaction.NOTIFY_OF_MMS);
-                notificationBroadcast.putExtra("receive_through_stock", true);
-                BroadcastUtils.sendExplicitBroadcast(
-                        context,
-                        notificationBroadcast,
-                        com.klinker.android.send_message.Transaction.NOTIFY_OF_MMS);
-
-                Log.v("mms_receiver", context.getPackageName() + " received and not aborted");
-            }
+            Log.v("mms_receiver", context.getPackageName() + " received and aborted");
         }
+    }
+
+    private static boolean allowAutoDownload(Context context) {
+        boolean autoDownload = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("auto_download_mms", true);
+        boolean dataSuspended = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getDataState()
+                == TelephonyManager.DATA_SUSPENDED;
+        return autoDownload && !dataSuspended;
     }
 
     public static String getContentLocation(Context context, Uri uri)

@@ -27,7 +27,6 @@ android {
         targetSdkVersion 36
     }
 
-    useLibrary 'org.apache.http.legacy'
     lint {
         abortOnError false
     }
@@ -37,7 +36,5 @@ android {
 dependencies {
     implementation "androidx.core:core-ktx:$androidx_core_version"
     implementation "com.jakewharton.timber:timber:$timber_version"
-    implementation 'com.squareup.okhttp:okhttp:2.5.0'
-    implementation 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
