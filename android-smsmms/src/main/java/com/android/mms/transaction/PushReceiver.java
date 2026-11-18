@@ -309,7 +309,9 @@ public class PushReceiver extends BroadcastReceiver {
             if ((!sharedPrefs.getBoolean("receive_with_stock", false) && Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT && sharedPrefs.getBoolean("override", true))
                     || Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 MmsConfig.init(context);
-                new ReceivePushTask(context, null).executeOnExecutor(PUSH_RECEIVER_EXECUTOR, intent);
+                // Keep the broadcast (and so the process) alive until the push is handled. Passing
+                // null let the process be cached the moment onReceive returned.
+                new ReceivePushTask(context, goAsync()).executeOnExecutor(PUSH_RECEIVER_EXECUTOR, intent);
 
                 Log.v("mms_receiver", context.getPackageName() + " received and aborted");
             } else {
