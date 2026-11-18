@@ -186,4 +186,71 @@ class EmojiReactionPatternsTest {
         }
         assertNull(p.parse("just a normal message"))
     }
+
+    // --- German: iOS 27 reworded every "added" tapback and iOS 26 the generic removal; older
+    // iPhones keep sending the old text, so both must match (Apple's IMSharedUtilities.loctable) ---
+
+    private val german by lazy {
+        EmojiReactionPatterns().apply { addLocale(EmojiReactionPatterns.parsePatternsJson(moshi, File(assetDir, "de.json").readText())) }
+    }
+
+    private fun assertReaction(body: String, emoji: String, message: String, removal: Boolean = false) {
+        val r = german.parse(body)
+        assertEquals(body, emoji, r?.emoji)
+        assertEquals(body, message, r?.originalMessage)
+        assertEquals(body, removal, r?.isRemoval)
+        assertEquals(body, message.isEmpty(), r?.targetsAttachment)
+    }
+
+    @Test
+    fun germanTapbacksFromIos17To26() {
+        assertReaction("„Hallo“ ein Herz hinzugefügt", "❤️", "Hallo")
+        assertReaction("Gefällt: „Hallo“", "👍", "Hallo")
+        assertReaction("Gefällt nicht: „Hallo“", "👎", "Hallo")
+        assertReaction("„Hallo“ ein Lachen hinzugefügt", "😂", "Hallo")
+        assertReaction("„Hallo“ ein Ausrufezeichen hinzugefügt", "‼️", "Hallo")
+        assertReaction("„Hallo“ ein Fragezeichen hinzugefügt", "❓", "Hallo")
+        assertReaction("Hat mit 🎉 auf „Hallo“ reagiert", "🎉", "Hallo")
+        assertReaction("🎉 aus „Hallo“ entfernt", "🎉", "Hallo", removal = true)   // iOS 18
+    }
+
+    @Test
+    fun germanTapbacksFromIos27() {
+        assertReaction("Hat auf „Hallo“ mit einem Herz reagiert", "❤️", "Hallo")
+        assertReaction("Jemandem gefällt „Hallo“", "👍", "Hallo")
+        assertReaction("Jemandem gefällt „Hallo“ nicht", "👎", "Hallo")
+        assertReaction("Jemand hat auf „Hallo“ mit einem Lachen reagiert", "😂", "Hallo")
+        assertReaction("Hat „Hallo“ mit einem Ausrufezeichen kommentiert", "‼️", "Hallo")
+        assertReaction("Jemand hat auf „Hallo“ mit Fragezeichen reagiert", "❓", "Hallo")
+        assertReaction("Hat 🎉 von „Hallo“ entfernt", "🎉", "Hallo", removal = true)   // iOS 26+
+    }
+
+    @Test
+    fun germanRemovalsUnchangedAcrossVersions() {
+        assertReaction("Herz von „Hallo“ entfernt", "❤️", "Hallo", removal = true)
+        assertReaction("„Gefällt mir“ von „Hallo“ entfernt", "👍", "Hallo", removal = true)
+        assertReaction("„Gefällt mir nicht“ von „Hallo“ entfernt", "👎", "Hallo", removal = true)
+        assertReaction("Fragezeichen von „Hallo“ entfernt", "❓", "Hallo", removal = true)
+    }
+
+    @Test
+    fun germanPictureReactions() {
+        assertReaction("Einem Bild ein Herz hinzugefügt", "❤️", "")
+        assertReaction("Gefällt: Bild", "👍", "")
+        assertReaction("Hat auf ein Bild mit einem Herz reagiert", "❤️", "")
+        assertReaction("Hat auf ein Audionachricht mit einem Herz reagiert", "❤️", "")  // Apple's typo, verbatim
+        assertReaction("Jemandem gefällt ein Film", "👍", "")
+        assertReaction("Lachen von einer Audionachricht entfernt", "😂", "", removal = true)
+        assertReaction("Hat mit 🎉 auf ein Bild reagiert.", "🎉", "")
+        assertReaction("Hat 🎉 von einem Film entfernt.", "🎉", "", removal = true)
+    }
+
+    @Test
+    fun ordinaryGermanTextIsNotAReaction() {
+        // A false match hides a real message, so near-misses must stay plain text.
+        listOf(
+            "Gefällt mir sehr gut", "Jemandem gefällt das bestimmt", "Hat auf dich gewartet",
+            "Gefällt: dein neues Auto", "„Hallo“ ein Herz hinzugefügt und mehr", "Jemand hat auf mich reagiert"
+        ).forEach { assertNull(it, german.parse(it)) }
+    }
 }

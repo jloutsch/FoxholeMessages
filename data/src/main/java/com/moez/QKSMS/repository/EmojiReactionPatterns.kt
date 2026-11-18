@@ -65,13 +65,13 @@ internal class EmojiReactionPatterns {
         ).forEach { (emoji, added, removed) ->
             added?.let {
                 reactionPatterns[Regex(it)] = { match ->
-                    val original = match.groupValues[1]
+                    val original = matchedGroups(match).firstOrNull().orEmpty()
                     ParsedEmojiReaction(emoji, original, targetsAttachment = original.isEmpty())
                 }
             }
             removed?.let {
                 removalPatterns[Regex(it)] = { match ->
-                    val original = match.groupValues[1]
+                    val original = matchedGroups(match).firstOrNull().orEmpty()
                     ParsedEmojiReaction(
                         emoji, original, isRemoval = true, targetsAttachment = original.isEmpty()
                     )
@@ -82,25 +82,37 @@ internal class EmojiReactionPatterns {
         // Generic iOS emoji patterns
         strings.iosGenericAdded?.let { pattern ->
             reactionPatterns[Regex(pattern)] = { match ->
-                if (match.groupValues.getOrNull(1) == "with a sticker") null // TODO: localize "with a sticker"
+                val groups = matchedGroups(match)
+                if (groups.firstOrNull() == "with a sticker") null // TODO: localize "with a sticker"
                 else {
-                    val original = match.groupValues[2]
+                    val original = groups.getOrNull(1).orEmpty()
                     ParsedEmojiReaction(
-                        match.groupValues[1], original, targetsAttachment = original.isEmpty()
+                        groups.first(), original, targetsAttachment = original.isEmpty()
                     )
                 }
             }
         }
         strings.iosGenericRemoved?.let { pattern ->
             removalPatterns[Regex(pattern)] = { match ->
-                val original = match.groupValues[2]
+                val groups = matchedGroups(match)
+                val original = groups.getOrNull(1).orEmpty()
                 ParsedEmojiReaction(
-                    match.groupValues[1], original, isRemoval = true,
+                    groups.first(), original, isRemoval = true,
                     targetsAttachment = original.isEmpty()
                 )
             }
         }
     }
+
+    /**
+     * The values of the capture groups that took part in the match, in order. A pattern can list
+     * several wordings as alternatives (iOS has reworded tapbacks between versions, and older
+     * iPhones keep sending the old text), each with its own groups; only the alternative that
+     * matched contributes. Specific patterns yield [message]; generic ones [emoji, message]. A
+     * picture reaction ("Loved an image") captures no message, which marks it as an attachment.
+     */
+    private fun matchedGroups(match: MatchResult): List<String> =
+        match.groups.drop(1).mapNotNull { it?.value }
 
     /** The reaction [body] expresses, a removal first if it's one, or null if it isn't a reaction. */
     fun parse(body: String): ParsedEmojiReaction? =
