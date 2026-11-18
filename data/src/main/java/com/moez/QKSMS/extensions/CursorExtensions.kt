@@ -32,8 +32,14 @@ fun Cursor.forEach(closeOnComplete: Boolean = true, method: (Cursor) -> Unit = {
     }
 }
 
-fun <T> Cursor.map(map: (Cursor) -> T): List<T> {
-    return List(count) { position ->
+/**
+ * Maps every row, then closes the cursor. Every caller uses this as the last step, and several
+ * never closed the cursor afterwards, leaking it until garbage collection (and logging
+ * "Cursor finalized without prior close" warnings). Closing twice is harmless for callers that
+ * also wrap it in use {}.
+ */
+fun <T> Cursor.map(map: (Cursor) -> T): List<T> = use {
+    List(count) { position ->
         moveToPosition(position)
         map(this)
     }

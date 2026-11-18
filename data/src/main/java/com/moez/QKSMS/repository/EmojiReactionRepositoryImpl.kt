@@ -138,7 +138,8 @@ class EmojiReactionRepositoryImpl @Inject constructor(
             return match
         }
 
-        Timber.w("No target message found for reaction text: '$originalMessageText'")
+        // Length only: the in-app log goes to public Downloads, so it must not contain message text.
+        Timber.w("No target message found for reaction (quoted text length=${originalMessageText.length})")
         return null
     }
 
