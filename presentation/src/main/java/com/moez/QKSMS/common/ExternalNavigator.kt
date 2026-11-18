@@ -99,6 +99,12 @@ class ExternalNavigator @Inject constructor(
         }
     }
 
+    /** Android's "Display over other apps" screen for this app (needed for the QRF Reply popup). */
+    fun showOverlayPermissionSettings() {
+        val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri())
+        startActivity(intent)
+    }
+
     fun showPermissionsInSettings() {
         val intent = Intent()
         intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS

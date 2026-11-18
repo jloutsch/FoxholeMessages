@@ -392,13 +392,19 @@ class NotificationManagerImpl @Inject constructor(
                 .forEach { notification.addAction(it) }
 
         if (prefs.qkreply.get()) {
-            notification.priority = NotificationCompat.PRIORITY_DEFAULT
+            if (OverlayPermission.needed(context)) {
+                // Android 10+ blocks (silently) a background app opening the popup unless it may
+                // "display over other apps"; the notification below still shows as usual.
+                Timber.w("QRF Reply is on but 'Display over other apps' isn't allowed; showing notification only")
+            } else {
+                notification.priority = NotificationCompat.PRIORITY_DEFAULT
 
-            val intent = Intent(context, QkReplyActivity::class.java)
-                    .putExtra("threadId", threadId)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val intent = Intent(context, QkReplyActivity::class.java)
+                        .putExtra("threadId", threadId)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-            context.startActivity(intent)
+                context.startActivity(intent)
+            }
         }
         val sc = shortcutManager.getOrCreateShortcut(threadId)
         notification.setShortcutInfo(sc)

@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.feature.notificationprefs
 
+import dev.octoshrimpy.quik.common.util.extensions.makeToast
+import dev.octoshrimpy.quik.common.util.OverlayPermission
+import android.widget.Toast
 import android.content.Context
 import android.media.RingtoneManager
 import android.net.Uri
@@ -129,7 +132,16 @@ class NotificationPrefsViewModel @Inject constructor(
 
                         R.id.action3 -> view.showActionDialog(prefs.notifAction3.get())
 
-                        R.id.qkreply -> prefs.qkreply.set(!prefs.qkreply.get())
+                        R.id.qkreply -> {
+                            val enable = !prefs.qkreply.get()
+                            prefs.qkreply.set(enable)
+                            // Android 10+ only lets an app open a popup from the background if it may
+                            // "display over other apps"; without that the popup never appears.
+                            if (enable && OverlayPermission.needed(context)) {
+                                context.makeToast(R.string.settings_qkreply_overlay_needed, Toast.LENGTH_LONG)
+                                externalNavigator.showOverlayPermissionSettings()
+                            }
+                        }
 
                         R.id.qkreplyTapDismiss -> prefs.qkreplyTapDismiss.set(!prefs.qkreplyTapDismiss.get())
                     }
