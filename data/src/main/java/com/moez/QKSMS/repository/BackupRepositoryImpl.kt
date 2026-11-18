@@ -51,6 +51,7 @@ import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
 import io.realm.Realm
 import okio.buffer
+import okio.sink
 import okio.source
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
@@ -69,6 +70,10 @@ class BackupRepositoryImpl @Inject constructor(
     private val syncRepo: SyncRepository
 ) : BackupRepository {
 
+    /**
+     * The shape of a backup file. [BackupJson] reads and writes it one message at a time rather
+     * than through this class, but the keys and order are the same.
+     */
     data class Backup(
         val messageCount: Int = 0,
         val messages: List<BackupMessage> = listOf()
@@ -149,49 +154,44 @@ class BackupRepositoryImpl @Inject constructor(
         // If a backup or restore is already running, don't do anything
         if (isBackupOrRestoreRunning()) return
 
-        var messageCount: Int
-
-        // Map all the messages into our object we'll use for the Json mapping
-        val backupMessages = Realm.getDefaultInstance().use { realm ->
-            // Get the messages from realm
-            val messages = realm.where(Message::class.java).sort("date").findAll().createSnapshot()
-            messageCount = messages.size
-
-            // MMS doesn't track its own recipient list per-message (Message.address is just the
-            // sender), so fall back to the parent conversation's current recipients - same as how
-            // the rest of the app already treats "the conversation" as the group of people.
-            val conversationRecipients = realm.where(Conversation::class.java).findAll()
-                    .associate { conversation ->
-                        conversation.id to conversation.recipients.map { recipient -> recipient.address }
-                    }
-
-            // Map the messages to the new format
-            messages.mapIndexed { index, message ->
-                // Update the progress
-                backupProgress.onNext(BackupRepository.Progress.Running(messageCount, index))
-                messageToBackupMessage(message, conversationRecipients[message.threadId] ?: listOf())
-            }
-        }
-
-        // Update the status, and set the progress to be indeterminate since we can no longer calculate progress
-        backupProgress.onNext(BackupRepository.Progress.Saving())
-
-        // Convert the data to json
-        val adapter = moshi.adapter(Backup::class.java).indent("\t")
-        val json = adapter.toJson(Backup(messageCount, backupMessages)).toByteArray()
-
+        var backupFile: DocumentFile? = null
         try {
             val timestamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(now())
-            val inputStream = getBackupDocumentTree()
-                    ?.createFile("application/json", "backup-$timestamp.json")
-                    ?.let { file -> context.contentResolver.openOutputStream(file.uri) }
+            backupFile = getBackupDocumentTree()?.createFile("application/json", "backup-$timestamp.json")
+            val outputStream = backupFile?.let { file -> context.contentResolver.openOutputStream(file.uri) }
                     ?: throw Exception("Failed to open output stream")
 
-            inputStream.use { stream ->
-                stream.write(json)
+            outputStream.sink().buffer().use { sink ->
+                Realm.getDefaultInstance().use { realm ->
+                    val messages = realm.where(Message::class.java).sort("date").findAll().createSnapshot()
+                    val messageCount = messages.size
+
+                    // MMS doesn't track its own recipient list per-message (Message.address is just
+                    // the sender), so fall back to the parent conversation's current recipients -
+                    // same as how the rest of the app already treats "the conversation" as the group
+                    // of people.
+                    val conversationRecipients = realm.where(Conversation::class.java).findAll()
+                            .associate { conversation ->
+                                conversation.id to conversation.recipients.map { recipient -> recipient.address }
+                            }
+
+                    // Lazy, so each message (and its attachments) is converted only as it's written
+                    // and can be freed before the next one is read.
+                    val backupMessages = messages.asSequence().mapIndexed { index, message ->
+                        backupProgress.onNext(BackupRepository.Progress.Running(messageCount, index))
+                        messageToBackupMessage(message, conversationRecipients[message.threadId] ?: listOf())
+                    }
+
+                    BackupJson(moshi).write(sink, messageCount, backupMessages)
+                }
+
+                // Indeterminate while the last of the file is flushed out
+                backupProgress.onNext(BackupRepository.Progress.Saving())
             }
         } catch (e: Exception) {
             Timber.w(e)
+            // A half-written backup would only fail later, at restore time
+            backupFile?.let { file -> tryOrNull { file.delete() } }
         }
 
         // Mark the task finished, and set it as Idle a second later
@@ -267,54 +267,46 @@ class BackupRepositoryImpl @Inject constructor(
 
         restoreProgress.onNext(BackupRepository.Progress.Parsing())
 
-        val adapter = moshi.adapter(Backup::class.java)
-        val backup = DocumentFile.fromSingleUri(context, uri)
-                ?.let { file -> context.contentResolver.openInputStream(file.uri) }
-                ?.source()
-                ?.buffer()
-                ?.use(adapter::fromJson)
-
-        val messageCount = backup?.messages?.size ?: 0
+        var messageCount = 0
         var errorCount = 0
+        var stopped = false
 
-        backup?.messages?.forEachIndexed { index, message ->
-            if (stopFlag) {
-                stopFlag = false
-                restoreProgress.onNext(BackupRepository.Progress.Idle())
-                return
-            }
+        // Each message is restored as soon as it's parsed, so only one is held in memory at a time
+        try {
+            DocumentFile.fromSingleUri(context, uri)
+                    ?.let { file -> context.contentResolver.openInputStream(file.uri) }
+                    ?.source()
+                    ?.buffer()
+                    ?.use { source ->
+                        BackupJson(moshi).read(source) { message, index, declaredCount ->
+                            if (stopFlag) {
+                                stopFlag = false
+                                stopped = true
+                                return@read false
+                            }
 
-            // Update the progress
-            restoreProgress.onNext(BackupRepository.Progress.Running(messageCount, index))
+                            messageCount = index + 1
+                            restoreProgress.onNext(BackupRepository.Progress.Running(
+                                    maxOf(declaredCount, messageCount), index))
 
-            try {
-                if (message.isMms) {
-                    restoreMmsMessage(message)
-                } else {
-                    val values = contentValuesOf(
-                            Telephony.Sms.TYPE to message.type,
-                            Telephony.Sms.ADDRESS to message.address,
-                            Telephony.Sms.DATE to message.date,
-                            Telephony.Sms.DATE_SENT to message.dateSent,
-                            Telephony.Sms.READ to message.read,
-                            Telephony.Sms.SEEN to 1,
-                            Telephony.Sms.STATUS to message.status,
-                            Telephony.Sms.BODY to message.body,
-                            Telephony.Sms.PROTOCOL to message.protocol,
-                            Telephony.Sms.SERVICE_CENTER to message.serviceCenter,
-                            Telephony.Sms.LOCKED to message.locked
-                    )
-
-                    if (prefs.canUseSubId.get()) {
-                        values.put(Telephony.Sms.SUBSCRIPTION_ID, message.subId)
+                            try {
+                                restoreMessage(message)
+                            } catch (e: Exception) {
+                                Timber.w(e)
+                                errorCount++
+                            }
+                            true
+                        }
                     }
+        } catch (e: Exception) {
+            // The file is unreadable from this point on. Messages before it are already in the
+            // system provider, so carry on to the sync below rather than leaving them out of the app.
+            Timber.w(e, "Backup file unreadable after $messageCount messages")
+        }
 
-                    context.contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
-                }
-            } catch (e: Exception) {
-                Timber.w(e)
-                errorCount++
-            }
+        if (stopped) {
+            restoreProgress.onNext(BackupRepository.Progress.Idle())
+            return
         }
 
         if (errorCount > 0) {
@@ -328,6 +320,33 @@ class BackupRepositoryImpl @Inject constructor(
         // Mark the task finished, and set it as Idle a second later
         restoreProgress.onNext(BackupRepository.Progress.Finished())
         Timer().schedule(1000) { restoreProgress.onNext(BackupRepository.Progress.Idle()) }
+    }
+
+    private fun restoreMessage(message: BackupMessage) {
+        if (message.isMms) {
+            restoreMmsMessage(message)
+            return
+        }
+
+        val values = contentValuesOf(
+                Telephony.Sms.TYPE to message.type,
+                Telephony.Sms.ADDRESS to message.address,
+                Telephony.Sms.DATE to message.date,
+                Telephony.Sms.DATE_SENT to message.dateSent,
+                Telephony.Sms.READ to message.read,
+                Telephony.Sms.SEEN to 1,
+                Telephony.Sms.STATUS to message.status,
+                Telephony.Sms.BODY to message.body,
+                Telephony.Sms.PROTOCOL to message.protocol,
+                Telephony.Sms.SERVICE_CENTER to message.serviceCenter,
+                Telephony.Sms.LOCKED to message.locked
+        )
+
+        if (prefs.canUseSubId.get()) {
+            values.put(Telephony.Sms.SUBSCRIPTION_ID, message.subId)
+        }
+
+        context.contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
     }
 
     /**
