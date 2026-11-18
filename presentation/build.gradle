@@ -240,8 +240,12 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
-// ProguardRulesTest reads proguard-rules.pro; declare it so editing the rules re-runs the tests
-// instead of Gradle reusing an earlier pass.
+// ProguardRulesTest and ReleaseConsistencyTest read these files; declare them so editing one re-runs
+// the tests instead of Gradle reusing an earlier pass.
 tasks.withType(Test).configureEach {
     inputs.file("proguard-rules.pro")
+    inputs.file("build.gradle")
+    inputs.file("../data/src/main/assets/changelog.json")
+    inputs.dir("../metadata/en-US/changelogs")
+    inputs.file("../fdroid/metadata/com.foxhole.messages.yml")
 }

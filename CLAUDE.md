@@ -206,6 +206,37 @@ Shipped as `versionCode 2241` / `versionName '1.2.0'` (semver minor
 bump — a new feature (OTP retention) alongside settings removals, not
 a pure fix).
 
+## Tests
+
+`./gradlew test` runs every plain-JVM unit test (no phone needed); the pull-request CI
+(`build-on-pull.yml`) runs it too, plus the shrunk release build (`:presentation:minifyReleaseWithR8`,
+no signing key needed) with the obfuscation report. Each test group was checked against a deliberately
+broken version of the code it covers. What's covered, and the past failure each guards against:
+
+- `domain`: inbox sorting rules and sender types (`MessageSortingRulesTest`, `SenderKindTest`);
+  code-text detection (`OtpDetectorTest`).
+- `data`: emoji reaction patterns loaded from the real asset files (the v2.3.1 "Liked …" outage;
+  `bg`/`ckb`/`ml` are known empty placeholders, so reactions in those languages aren't recognised);
+  backup file format against a saved sample (the unrestorable 2.2.0–2.3.0 backups); duplicate
+  removal and OTP retention rules; keyword/regex content filters (`ContentFilterMatcherTest`); reply
+  categories and the sync data-saving list (`SortingAndSyncDataTest` — **fails if a new `Message`
+  field isn't classified**, enforcing the "app-only fields must survive sync" rule below).
+- `presentation`: blocking-rules file import/export; R8 keep rules every release-only outage depended
+  on (`ProguardRulesTest`); release consistency — `versionName` is X.Y.Z, `changelog.json` parses and
+  its newest entry is this version, Play release notes exist and fit 500 characters, F-Droid metadata
+  matches (`ReleaseConsistencyTest`). **Bumping the version means updating all of these together.**
+
+Tests that read files (proguard rules, changelogs, emoji assets) declare them as Gradle test inputs,
+so editing those files re-runs the tests locally rather than reusing a stale pass.
+
+On-device tests (`data/src/androidTest`, phone-number matching) need a phone and aren't run by CI.
+**Don't use `connectedAndroidTest`** — it uninstalls the app afterwards, wiping its data and its
+default-SMS role. Instead:
+`./gradlew :data:assembleDebugAndroidTest`, then
+`adb install -r -t data/build/outputs/apk/androidTest/debug/data-debug-androidTest.apk`,
+`adb shell am instrument -w dev.octoshrimpy.quik.data.test/androidx.test.runner.AndroidJUnitRunner`,
+then `adb uninstall dev.octoshrimpy.quik.data.test` (the test package only).
+
 ## Cutting a release
 
 1. Merge changes into `master`.

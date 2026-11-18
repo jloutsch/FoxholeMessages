@@ -1355,17 +1355,8 @@ open class MessageRepositoryImpl @Inject constructor(
                 .findAll()
                 .toList()
 
-            val updates = ArrayList<Pair<Message, String?>>()
-            messages.groupBy { it.threadId }.values.forEach { thread ->
-                var latestReceived: String? = null
-                thread.forEach { message ->
-                    if (!message.isMe()) {
-                        // A received message not categorized yet doesn't reset the conversation.
-                        message.category?.let { latestReceived = it }
-                    } else if (message.category != latestReceived) {
-                        updates += message to latestReceived
-                    }
-                }
+            val updates = messages.groupBy { it.threadId }.values.flatMap { conversation ->
+                ReplyCategories.updates(conversation, isSent = { it.isMe() }, category = { it.category })
             }
 
             if (updates.isNotEmpty()) {

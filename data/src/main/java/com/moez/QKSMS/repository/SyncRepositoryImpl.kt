@@ -493,7 +493,7 @@ class SyncRepositoryImpl @Inject constructor(
  * Syncing rebuilds Message rows from the provider, so anything here has to be read before the row is
  * replaced and written back onto the new one, or it is silently lost.
  */
-private class AppOnlyMessageFields(
+internal class AppOnlyMessageFields(
     val deletedAt: Long?,
     val isStarred: Boolean,
     val category: String?,
