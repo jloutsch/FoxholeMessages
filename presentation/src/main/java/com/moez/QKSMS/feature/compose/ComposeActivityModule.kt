@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import dev.octoshrimpy.quik.common.util.InternalIntent
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -88,15 +89,22 @@ class ComposeActivityModule {
     @Named("attachments")
     fun provideSharedAttachments(activity: ComposeActivity): List<Attachment> {
         val uris = mutableListOf<Uri>()
-        when (activity.intent.action) {
-            Intent.ACTION_SEND -> {
+        val internal = InternalIntent.isInternal(activity.intent)
+        when {
+            activity.intent.action == Intent.ACTION_SEND -> {
                 activity.intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.run(uris::add)
             }
-            Intent.ACTION_SEND_MULTIPLE -> {
+            activity.intent.action == Intent.ACTION_SEND_MULTIPLE -> {
+                activity.intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.run(uris::addAll)
+            }
+            // Forward and "edit scheduled message" pass attachments without a share action. They
+            // used to be ignored here, so forwarding a picture sent only its text (fork issue #1).
+            internal -> {
                 activity.intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.run(uris::addAll)
             }
         }
-        val (safe, refused) = uris.partition { it.isSafeToAttachFromOtherApp(activity) }
+        // Our own links point at this app's data by design; only outside shares are checked.
+        val (safe, refused) = if (internal) uris to emptyList() else uris.partition { it.isSafeToAttachFromOtherApp(activity) }
         if (refused.isNotEmpty()) Timber.w("Refused ${refused.size} shared attachment(s) pointing at this app's private data")
         return safe.map { Attachment(activity, it) }
     }

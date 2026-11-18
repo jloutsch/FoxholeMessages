@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.common
 
+import dev.octoshrimpy.quik.common.util.InternalIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -58,7 +59,8 @@ class Navigator @Inject constructor(
     }
 
     fun showCompose(body: String? = null, attachments: List<Uri>? = null, mode: String? = null) {
-        val intent = Intent(context, ComposeActivity::class.java)
+        // Marked internal so the compose screen accepts the attachments (Forward); see InternalIntent.
+        val intent = InternalIntent.mark(Intent(context, ComposeActivity::class.java))
         intent.putExtra(Intent.EXTRA_TEXT, body)
         intent.putExtra("mode", mode)
 
@@ -79,7 +81,7 @@ class Navigator @Inject constructor(
             scheduledMessage.recipients
         )
 
-        val intent = Intent(context, ComposeActivity::class.java)
+        val intent = InternalIntent.mark(Intent(context, ComposeActivity::class.java))
         intent.putExtra(Intent.EXTRA_TEXT, scheduledMessage.body)
         intent.putExtra("threadId", scheduledThreadId)
         intent.putExtra("subscriptionId", scheduledMessage.subId)
