@@ -21,6 +21,7 @@ package dev.octoshrimpy.quik.manager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import dev.octoshrimpy.quik.receiver.SendScheduledMessageReceiver
 import javax.inject.Inject
 
@@ -33,7 +34,15 @@ class AlarmManagerImpl @Inject constructor(private val context: Context) : Alarm
 
     override fun setAlarm(date: Long, intent: PendingIntent) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-        alarmManager.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, date, intent)
+        // Exact alarms need the "Alarms & reminders" permission on Android 12+, which the user can
+        // revoke at any time. Without it setExact throws, which stopped every remaining scheduled
+        // message from being re-armed at boot. Fall back to an inexact alarm (may fire a few minutes
+        // late) rather than not sending at all.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            alarmManager.setAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, date, intent)
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, date, intent)
+        }
     }
 
 }

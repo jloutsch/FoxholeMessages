@@ -27,6 +27,7 @@ import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import io.reactivex.Flowable
 import io.reactivex.rxkotlin.toFlowable
 import io.realm.RealmList
+import java.util.Collections
 import javax.inject.Inject
 
 class SendScheduledMessage @Inject constructor(
@@ -36,7 +37,16 @@ class SendScheduledMessage @Inject constructor(
     private val sendNewMessage: SendNewMessage
 ) : Interactor<Long>() {
 
+    companion object {
+        // Scheduled messages being sent right now. The alarm, the boot-time catch-up and "Send now"
+        // can all ask for the same message; the scheduled copy is only deleted once sending is done,
+        // so without this a second request in that window sent it again.
+        private val sending: MutableSet<Long> = Collections.synchronizedSet(HashSet())
+    }
+
     override fun buildObservable(params: Long): Flowable<*> {
+        if (!sending.add(params)) return Flowable.empty<Unit>()
+
         return Flowable.just(params)
             .mapNotNull(scheduledMessageRepo::getScheduledMessage)
             .flatMap { message ->
@@ -56,6 +66,7 @@ class SendScheduledMessage @Inject constructor(
             }
             .flatMap(sendNewMessage::buildObservable)
             .doOnNext { deleteScheduledMessagesInteractor.execute(listOf(params)) }
+            .doFinally { sending.remove(params) }
     }
 
 }

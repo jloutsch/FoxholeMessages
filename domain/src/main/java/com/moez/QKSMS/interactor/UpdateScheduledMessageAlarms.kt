@@ -34,10 +34,14 @@ class UpdateScheduledMessageAlarms @Inject constructor(
                 .map { scheduledMessageRepo.getScheduledMessages() } // Get all the scheduled messages
                 .map { it.map { message -> Pair(message.id, message.date) } } // Map the data we need out of Realm
                 .flatMap { messages -> Flowable.fromIterable(messages) } // Turn the list into a stream
-                .doOnNext { (id, date) ->
-                    alarmManager.setAlarm(date, alarmManager.getScheduledMessageIntent(id)) // Create alarm
+                .filter { (id, date) ->
+                    // Messages still to come get an alarm. Overdue ones (the phone was off at send time)
+                    // are sent below instead. They used to get an alarm as well, and an alarm set in the
+                    // past fires straight away, so after a reboot they were sent twice.
+                    val overdue = date <= System.currentTimeMillis()
+                    if (!overdue) alarmManager.setAlarm(date, alarmManager.getScheduledMessageIntent(id))
+                    overdue
                 }
-                .filter { (_, date) -> date < System.currentTimeMillis() } // Filter messages that should have already been sent
                 .flatMap { (id, _) -> sendScheduledMessage.buildObservable(id) } // Send them
     }
 
