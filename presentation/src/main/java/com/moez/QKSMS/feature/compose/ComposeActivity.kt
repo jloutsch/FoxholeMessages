@@ -529,7 +529,9 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         binding.scheduledGroup.isVisible = state.scheduled != 0L
         binding.scheduledTime.text = dateFormatter.getScheduledTimestamp(state.scheduled)
 
-        binding.messageAttachments.setVisible(state.attachments.isNotEmpty())
+        // Not in the composeBar group: a Group re-applies its own visibility on every layout pass,
+        // which re-showed this list on each keystroke with the last sent picture still in it.
+        binding.messageAttachments.setVisible(state.attachments.isNotEmpty() && !state.loading)
         composeAttachmentAdapter.data = state.attachments
 
         binding.attach.animate().rotation(if (state.attaching) 135f else 0f).start()
@@ -570,6 +572,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         // hide controls that allow constructing a reply and inform user no valid recipients
         if (!state.editingMode && (state.validRecipientNumbers == 0)) {
             binding.composeBar.visibility = View.GONE
+            binding.messageAttachments.visibility = View.GONE
             binding.sim.visibility = View.GONE
             binding.recordAudioMsg.visibility = View.GONE
             binding.noValidRecipients.visibility = View.VISIBLE
