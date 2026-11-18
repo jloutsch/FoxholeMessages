@@ -133,9 +133,11 @@ internal class EmojiReactionPatterns {
             val mapType = Types.newParameterizedType(
                 Map::class.java, String::class.java, String::class.java
             )
+            // Blank values are dropped: translation services write "" for untranslated entries,
+            // and Regex("") matches every message, after which reading its capture group throws.
             val values = requireNotNull(
                 moshi.adapter<Map<String, String>>(mapType).fromJson(json)
-            ) { "Invalid emoji patterns JSON" }
+            ) { "Invalid emoji patterns JSON" }.filterValues { it.isNotBlank() }
 
             return EmojiPatternStrings(
                 iosGenericAdded = values["emoji_reaction_ios_generic_added"],

@@ -1,1 +1,14 @@
-{}
+{
+  "emoji_reaction_ios_heart_added": "^(?s)‘(.+?)’ എന്നതിൽ സ്നേഹം പ്രകടിപ്പിച്ചു$",
+  "emoji_reaction_ios_heart_removed": "^(?s)‘(.+?)’ എന്നതിൽ നിന്ന് ഹൃദയം നീക്കം ചെയ്തു$",
+  "emoji_reaction_ios_like_added": "^(?s)‘(.+?)’ എന്നതിനെ ലൈക്ക് ചെയ്തു$",
+  "emoji_reaction_ios_like_removed": "^(?s)‘(.+?)’ എന്നതിൽ നിന്ന് ലൈക്ക് നീക്കം ചെയ്തു$",
+  "emoji_reaction_ios_dislike_added": "^(?s)‘(.+?)’ എന്നതിനെ ഡിസ്‌ലൈക്ക് ചെയ്തു$",
+  "emoji_reaction_ios_dislike_removed": "^(?s)‘(.+?)’ എന്നതിൽ നിന്ന് ഡിസ്‌ലൈക്ക് നീക്കം ചെയ്തു$",
+  "emoji_reaction_ios_laugh_added": "^(?s)‘(.+?)’ എന്നതിൽ ചിരിച്ചു$",
+  "emoji_reaction_ios_laugh_removed": "^(?s)‘(.+?)’ എന്നതിൽ നിന്ന് ചിരി നീക്കം ചെയ്തു$",
+  "emoji_reaction_ios_exclamation_added": "^(?s)‘(.+?)’ പ്രധാനമാക്കി$",
+  "emoji_reaction_ios_exclamation_removed": "^(?s)‘(.+?)’ എന്നതിൽ നിന്ന് ആശ്ചര്യചിഹ്നം നീക്കം ചെയ്തു$",
+  "emoji_reaction_ios_question_mark_added": "^(?s)‘(.+?)’ എന്നതിൽ ചോദ്യചിഹ്നമിട്ടു$",
+  "emoji_reaction_ios_question_mark_removed": "^(?s)‘(.+?)’ എന്നതിൽ നിന്ന് ചോദ്യചിഹ്നം നീക്കം ചെയ്തു$"
+}

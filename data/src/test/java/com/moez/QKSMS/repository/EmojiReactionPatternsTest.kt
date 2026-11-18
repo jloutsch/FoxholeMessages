@@ -35,7 +35,7 @@ class EmojiReactionPatternsTest {
         files.forEach { file ->
             val entries = moshi.adapter(Map::class.java).fromJson(file.readText())!!
             // An empty file is an untranslated placeholder created by the translation service
-            // (ml.json is one); that's expected. A file WITH entries that adds no patterns is the
+            // (ckb.json is one); that's expected. A file WITH entries that adds no patterns is the
             // v2.3.1 outage, where the entries weren't being read.
             if (entries.isEmpty()) {
                 untranslated += file.name
@@ -49,7 +49,9 @@ class EmojiReactionPatternsTest {
         }
         // These shipped as empty placeholders from upstream; any OTHER file being empty means a
         // translation was lost.
-        val knownPlaceholders = setOf("bg.json", "ckb.json", "ml.json")
+        // ckb stays empty on purpose: Central Kurdish isn't an iOS system language, so no iPhone
+        // sends tapbacks in it.
+        val knownPlaceholders = setOf("ckb.json")
         assertTrue(
             "unexpected empty emoji pattern files: ${untranslated - knownPlaceholders}",
             knownPlaceholders.containsAll(untranslated)
@@ -138,5 +140,50 @@ class EmojiReactionPatternsTest {
             "hello",
             ""
         ).forEach { body -> assertNull("taken for a reaction: $body", parse(body)) }
+    }
+
+    // --- Bulgarian and Malayalam (Apple's iOS wording, IMSharedUtilities.loctable, iOS 27) ---
+
+    @Test
+    fun bulgarianTapbacks() {
+        val bg = EmojiReactionPatterns().apply { addLocale(EmojiReactionPatterns.parsePatternsJson(moshi, File(assetDir, "bg.json").readText())) }
+        mapOf(
+            "Реагира със сърце на „Здравей“" to "❤️", "Хареса „Здравей“" to "👍", "Не хареса „Здравей“" to "👎",
+            "Реагира със смях на „Здравей“" to "😂", "Реагира с удивителна на „Здравей“" to "‼️",
+            "Реагира с въпросителна на „Здравей“" to "❓", "Реакция: 🎉 на „Здравей“" to "🎉"
+        ).forEach { (body, emoji) ->
+            val r = bg.parse(body)
+            assertEquals(body, emoji, r?.emoji)
+            assertEquals(body, "Здравей", r?.originalMessage)
+            assertEquals(body, false, r?.isRemoval)
+        }
+        val removed = bg.parse("Премахна сърце от „Здравей“")
+        assertEquals("❤️", removed?.emoji)
+        assertEquals(true, removed?.isRemoval)
+        // ordinary Bulgarian text must not be hidden as a reaction
+        assertNull(bg.parse("Хареса ми филмът"))
+        assertNull(bg.parse("Хареса „Здравей“ и още нещо"))
+    }
+
+    @Test
+    fun malayalamTapbacks() {
+        val ml = EmojiReactionPatterns().apply { addLocale(EmojiReactionPatterns.parsePatternsJson(moshi, File(assetDir, "ml.json").readText())) }
+        val heart = ml.parse("‘നമസ്കാരം’ എന്നതിൽ സ്നേഹം പ്രകടിപ്പിച്ചു")
+        assertEquals("❤️", heart?.emoji)
+        assertEquals("നമസ്കാരം", heart?.originalMessage)
+        assertEquals("👎", ml.parse("‘നമസ്കാരം’ എന്നതിനെ ഡിസ്\u200Cലൈക്ക് ചെയ്തു")?.emoji)
+        val removed = ml.parse("‘നമസ്കാരം’ എന്നതിൽ നിന്ന് ലൈക്ക് നീക്കം ചെയ്തു")
+        assertEquals("👍", removed?.emoji)
+        assertEquals(true, removed?.isRemoval)
+        assertNull(ml.parse("നമസ്കാരം"))
+    }
+
+    @Test
+    fun blankPatternsAreIgnored() {
+        // Untranslated entries arrive as "" from translation services; Regex("") would match everything.
+        val p = EmojiReactionPatterns().apply {
+            addLocale(EmojiReactionPatterns.parsePatternsJson(moshi, """{"emoji_reaction_ios_heart_added": "", "emoji_reaction_ios_generic_added": " "}"""))
+        }
+        assertNull(p.parse("just a normal message"))
     }
 }

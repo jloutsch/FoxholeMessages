@@ -217,7 +217,9 @@ broken version of the code it covers. What's covered, and the past failure each 
   code-text detection (`OtpDetectorTest`); scheduled-message attachment folder names
   (`ScheduledMessageFilesTest`, fork issue #2).
 - `data`: emoji reaction patterns loaded from the real asset files (the v2.3.1 "Liked …" outage;
-  `bg`/`ckb`/`ml` are known empty placeholders, so reactions in those languages aren't recognised);
+  `bg`/`ml` hold Apple's own iOS 27 wording from `IMSharedUtilities.loctable` via applelocalization.com
+  — quoted forms only, no picture forms, and Malayalam has no generic patterns; `ckb` stays empty
+  because Central Kurdish isn't an iOS system language; blank values are skipped);
   backup file format against a saved sample (the unrestorable 2.2.0–2.3.0 backups) and the
   streaming backup writer/reader (`BackupJsonTest`); duplicate
   removal and OTP retention rules; keyword/regex content filters (`ContentFilterMatcherTest`); reply

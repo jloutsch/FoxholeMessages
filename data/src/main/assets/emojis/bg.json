@@ -1,1 +1,16 @@
-{}
+{
+  "emoji_reaction_ios_generic_added": "^(?s)Реакция: (.+?) на „(.+?)“$",
+  "emoji_reaction_ios_generic_removed": "^(?s)Премахна (.+?) от „(.+?)“$",
+  "emoji_reaction_ios_heart_added": "^(?s)Реагира със сърце на „(.+?)“$",
+  "emoji_reaction_ios_heart_removed": "^(?s)Премахна сърце от „(.+?)“$",
+  "emoji_reaction_ios_like_added": "^(?s)Хареса „(.+?)“$",
+  "emoji_reaction_ios_like_removed": "^(?s)Премахна харесване от „(.+?)“$",
+  "emoji_reaction_ios_dislike_added": "^(?s)Не хареса „(.+?)“$",
+  "emoji_reaction_ios_dislike_removed": "^(?s)Премахна нехаресване от „(.+?)“$",
+  "emoji_reaction_ios_laugh_added": "^(?s)Реагира със смях на „(.+?)“$",
+  "emoji_reaction_ios_laugh_removed": "^(?s)Премахна смеха от „(.+?)“$",
+  "emoji_reaction_ios_exclamation_added": "^(?s)Реагира с удивителна на „(.+?)“$",
+  "emoji_reaction_ios_exclamation_removed": "^(?s)Премахна удивителна от „(.+?)“$",
+  "emoji_reaction_ios_question_mark_added": "^(?s)Реагира с въпросителна на „(.+?)“$",
+  "emoji_reaction_ios_question_mark_removed": "^(?s)Премахна въпросителна от „(.+?)“$"
+}
