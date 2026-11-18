@@ -54,7 +54,9 @@ class RemoteMessagingReceiver : BroadcastReceiver() {
                 "(${remoteInput.getCharSequence("body")?.length ?: 0} chars) - marking thread read"
         )
 
-        val lastMessage = messageRepo.getMessages(threadId).lastOrNull()
+        // getMessages() loads asynchronously, so read here it was always empty and every reply went
+        // out on the default SIM. The synchronous query gets the SIM the conversation actually uses.
+        val lastMessage = messageRepo.getMessagesSync(threadId).lastOrNull()
         val conversation = conversationRepo.getConversation(threadId) ?: return
 
         // Keep the process alive until both markRead (which dismisses/refreshes the
