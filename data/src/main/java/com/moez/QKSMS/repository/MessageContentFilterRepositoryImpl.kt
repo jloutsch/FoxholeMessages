@@ -50,13 +50,6 @@ class MessageContentFilterRepositoryImpl @Inject constructor() : MessageContentF
             .findAllAsync()
     }
 
-    override fun getMessageContentFilter(id: Long): MessageContentFilter? {
-        return Realm.getDefaultInstance()
-            .where(MessageContentFilter::class.java)
-            .equalTo("id", id)
-            .findFirst()
-    }
-
     override fun isBlocked(messageBody: String, address: String, contactsRepo: ContactRepository): Boolean {
         val isContact = contactsRepo.isContact(address)
 

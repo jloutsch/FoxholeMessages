@@ -31,6 +31,4 @@ class OtpDetector @Inject constructor() {
     fun isOtp(body: String): Boolean =
         keywordPattern.containsMatchIn(body) && codePattern.containsMatchIn(body)
 
-    fun extractCode(body: String): String? = codePattern.find(body)?.value
-
 }

@@ -44,7 +44,6 @@ data class SettingsState(
     val showStt: Boolean = true,
     val showSttOffsetX: Float = Float.MIN_VALUE,
     val showSttOffsetY: Float = Float.MAX_VALUE,
-    val splitSmsEnabled: Boolean = false,
     val longAsMms: Boolean = false,
     val maxMmsSizeSummary: String = "1000KB",
     val maxMmsSizeId: Int = 1000,

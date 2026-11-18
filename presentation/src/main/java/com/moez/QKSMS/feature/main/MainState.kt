@@ -49,12 +49,10 @@ data class Inbox(
     val addContact: Boolean = false,
     val markPinned: Boolean = true,
     val markRead: Boolean = false,
-    val data: RealmResults<Conversation>? = null,
     val selected: Int = 0
 ) : MainPage()
 
 data class Searching(
-    val loading: Boolean = false,
     val data: List<SearchResult>? = null
 ) : MainPage()
 

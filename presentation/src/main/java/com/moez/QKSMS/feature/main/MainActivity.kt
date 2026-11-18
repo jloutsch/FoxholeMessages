@@ -37,7 +37,6 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
-import androidx.recyclerview.widget.ItemTouchHelper
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
 import androidx.viewpager2.widget.ViewPager2
@@ -85,7 +84,6 @@ class MainActivity : QkThemedActivity(), MainView {
     @Inject lateinit var externalNavigator: ExternalNavigator
     @Inject lateinit var conversationsAdapter: ConversationsAdapter
     @Inject lateinit var searchAdapter: SearchAdapter
-    @Inject lateinit var itemTouchCallback: ConversationItemTouchCallback
     @Inject lateinit var conversationsAdapterProvider: Provider<ConversationsAdapter>
     @Inject lateinit var itemTouchCallbackProvider: Provider<ConversationItemTouchCallback>
     @Inject lateinit var starredMessagesAdapter: StarredMessagesAdapter
@@ -128,7 +126,7 @@ class MainActivity : QkThemedActivity(), MainView {
     override val renameConversationIntent: Subject<String> = PublishSubject.create()
     override val moveToIntent: Subject<String> = PublishSubject.create()
     override val swipeConversationIntent by lazy {
-        Observable.merge(listOf(itemTouchCallback.swipes) + conversationTabPages.map { it.touchCallback.swipes })
+        Observable.merge(conversationTabPages.map { it.touchCallback.swipes })
     }
     override val changelogMoreIntent by lazy { changelogDialog.moreClicks }
     override val undoArchiveIntent: Subject<Unit> = PublishSubject.create()
@@ -170,7 +168,6 @@ class MainActivity : QkThemedActivity(), MainView {
             0
         )
     }
-    private val itemTouchHelper by lazy { ItemTouchHelper(itemTouchCallback) }
     private val progressAnimator by lazy {
         ObjectAnimator.ofInt(syncingBinding.syncingProgress, "progress", 0, 0)
     }
@@ -202,7 +199,6 @@ class MainActivity : QkThemedActivity(), MainView {
             homeIntent.onNext(Unit)
         }
 
-        itemTouchCallback.adapter = conversationsAdapter
         conversationsAdapter.autoScrollToStart(binding.recyclerView)
 
         binding.tabPager.adapter = conversationsPagerAdapter
@@ -373,7 +369,6 @@ class MainActivity : QkThemedActivity(), MainView {
                 binding.tabPager.isVisible = true
                 binding.recyclerView.isVisible = false
                 binding.empty.isVisible = false
-                itemTouchHelper.attachToRecyclerView(null)
                 tabPages.forEach { page ->
                     when (page) {
                         is ConversationsPagerAdapter.TabPage.Conversations ->
@@ -392,7 +387,6 @@ class MainActivity : QkThemedActivity(), MainView {
                 binding.recyclerView.isVisible = true
                 if (binding.recyclerView.adapter !== searchAdapter) binding.recyclerView.adapter = searchAdapter
                 searchAdapter.data = state.page.data ?: listOf()
-                itemTouchHelper.attachToRecyclerView(null)
                 binding.empty.setText(R.string.inbox_search_empty_text)
             }
 
@@ -408,7 +402,6 @@ class MainActivity : QkThemedActivity(), MainView {
                 if (binding.recyclerView.adapter !== conversationsAdapter)
                     binding.recyclerView.adapter = conversationsAdapter
                 conversationsAdapter.updateData(state.page.data)
-                itemTouchHelper.attachToRecyclerView(null)
                 binding.empty.setText(R.string.archived_empty_text)
             }
 

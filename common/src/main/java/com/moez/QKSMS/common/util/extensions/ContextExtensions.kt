@@ -82,10 +82,6 @@ fun Context.makeToast(text: String, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(this, text, duration).show()
 }
 
-fun Context.isInstalled(packageName: String): Boolean {
-    return tryOrNull(false) { packageManager.getApplicationInfo(packageName, 0).enabled } ?: false
-}
-
 val Context.versionCode: Int
     get() {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

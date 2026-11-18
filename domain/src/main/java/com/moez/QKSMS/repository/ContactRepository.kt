@@ -27,8 +27,6 @@ import io.realm.RealmResults
 
 interface ContactRepository {
 
-    fun findContactUri(address: String): Single<Uri>
-
     fun getContacts(): RealmResults<Contact>
 
     fun getUnmanagedContact(lookupKey: String): Contact?

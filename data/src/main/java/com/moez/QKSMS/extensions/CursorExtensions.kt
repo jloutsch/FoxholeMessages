@@ -60,15 +60,3 @@ fun Cursor.asFlowable(): Flowable<Cursor> {
             }
             .doOnComplete { close() }
 }
-
-/**
- * Dumps the contents of the cursor as a CSV string
- */
-fun Cursor.dump(): String {
-    val lines = mutableListOf<String>()
-
-    lines += columnNames.joinToString(",")
-    forEach { lines += (0 until columnCount).joinToString(",", transform = ::getString) }
-
-    return lines.joinToString("\n")
-}

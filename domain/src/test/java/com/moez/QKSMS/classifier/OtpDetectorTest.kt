@@ -45,9 +45,4 @@ class OtpDetectorTest {
         // starred, sent) rather than relying on this detector being precise.
         assertTrue(detector.isOtp("The door code is 4821, come on up"))
 
-    @Test
-    fun extractsTheCode() {
-        assertEquals("123456", detector.extractCode("Your verification code is 123456"))
-        assertEquals(null, detector.extractCode("no digits here"))
-    }
 }

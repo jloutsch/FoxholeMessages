@@ -30,8 +30,6 @@ interface MessageContentFilterRepository {
 
     fun exportFilters(): List<MessageContentFilterData>
 
-    fun getMessageContentFilter(id: Long): MessageContentFilter?
-
     fun isBlocked(messageBody: String, address: String, contactsRepo: ContactRepository): Boolean
 
     fun removeFilter(id: Long)

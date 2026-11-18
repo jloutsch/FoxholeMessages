@@ -37,7 +37,6 @@ import dev.octoshrimpy.quik.databinding.ConversationListItemBinding
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
 class ConversationsAdapter @Inject constructor(
@@ -48,7 +47,6 @@ class ConversationsAdapter @Inject constructor(
     private val navigator: Navigator,
     private val phoneNumberUtils: PhoneNumberUtils
 ) : QkRealmAdapter<Conversation, QkBindingViewHolder<ConversationListItemBinding>>() {
-    private val disposables = CompositeDisposable()
 
     var hasScheduledConversation: Set<Long> = emptySet()
         set(value) {
@@ -149,11 +147,6 @@ class ConversationsAdapter @Inject constructor(
 
     override fun getItemViewType(position: Int): Int {
         return if (getItem(position)?.unread == false) 0 else 1
-    }
-
-    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView)
-        disposables.clear()
     }
 
 

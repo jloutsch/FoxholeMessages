@@ -44,13 +44,6 @@ class QkDialog(private val context: Activity) : AlertDialog(context) {
             view.title.isVisible = !value.isNullOrBlank()
         }
 
-    @StringRes
-    var subtitleRes: Int? = null
-        set(value) {
-            field = value
-            subtitle = value?.let(context::getString)
-        }
-
     var subtitle: String? = null
         set(value) {
             field = value

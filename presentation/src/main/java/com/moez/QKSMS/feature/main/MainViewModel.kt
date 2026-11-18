@@ -98,7 +98,7 @@ class MainViewModel @Inject constructor(
     private val syncMessages: SyncMessages
 ) : QkViewModel<MainView, MainState>(
     MainState(
-        page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get())),
+        page = Inbox(),
         tabData = buildTabData(conversationRepo, prefs.unreadAtTop.get()),
         starredMessages = messageRepo.getStarredMessages(),
         tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)
@@ -212,7 +212,7 @@ class MainViewModel @Inject constructor(
                 if (state.page is Inbox)
                     newState {
                         copy(
-                            page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get())),
+                            page = Inbox(),
                             tabData = buildTabData(conversationRepo, prefs.unreadAtTop.get()),
                             starredMessages = messageRepo.getStarredMessages(),
                             tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)
@@ -313,7 +313,7 @@ class MainViewModel @Inject constructor(
                 .map { query -> query.trim() }
                 .withLatestFrom(state) { query, state ->
                     if (query.isEmpty() && state.page is Searching) {
-                        newState { copy(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get()))) }
+                        newState { copy(page = Inbox()) }
                     }
                     query
                 }
@@ -321,14 +321,13 @@ class MainViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .doOnNext {
                     newState {
-                        val page = (page as? Searching) ?: Searching()
-                        copy(page = page.copy(loading = true))
+                        copy(page = (page as? Searching) ?: Searching())
                     }
                 }
                 .observeOn(Schedulers.io())
                 .map(conversationRepo::searchConversations)
                 .autoDisposable(view.scope())
-                .subscribe { data -> newState { copy(page = Searching(loading = false, data = data)) } }
+                .subscribe { data -> newState { copy(page = Searching(data = data)) } }
 
         view.activityResumedIntent
                 .filter { resumed -> !resumed }
@@ -379,7 +378,7 @@ class MainViewModel @Inject constructor(
                             state.page is Inbox && state.page.selected > 0 -> view.clearSelection()
                             state.page is Archived && state.page.selected > 0 -> view.clearSelection()
                             state.page !is Inbox -> {
-                                newState { copy(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get()))) }
+                                newState { copy(page = Inbox()) }
                             }
                             else -> newState { copy(hasError = true) }
                         }
@@ -398,7 +397,7 @@ class MainViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .doOnNext { drawerItem ->
                     when (drawerItem) {
-                        NavItem.INBOX -> newState { copy(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get()))) }
+                        NavItem.INBOX -> newState { copy(page = Inbox()) }
                         NavItem.ARCHIVED -> newState { copy(page = Archived(data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true))) }
                         else -> Unit
                     }

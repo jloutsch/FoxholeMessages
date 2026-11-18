@@ -26,7 +26,6 @@ import java.util.regex.Pattern
 
 class TelephonyCompat {
     companion object {
-        val THREADS_CONTENT_URI = Telephony.Threads.CONTENT_URI!!
 
         private val NAME_ADDRESS_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*")
 

@@ -96,8 +96,6 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
             { error -> Timber.e(error, "otp retention failed") }
         )
 
-        prefs.initialClassificationDone.set(true)
-
         Timber.v("finished")
         Result.success()
     } catch (e: Throwable) {

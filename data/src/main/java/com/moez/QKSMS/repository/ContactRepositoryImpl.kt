@@ -43,26 +43,6 @@ class ContactRepositoryImpl @Inject constructor(
     private val context: Context
 ) : ContactRepository {
 
-    override fun findContactUri(address: String): Single<Uri> {
-        return Flowable.just(address)
-                .map {
-                    when {
-                        address.contains('@') -> {
-                            Uri.withAppendedPath(Email.CONTENT_FILTER_URI, Uri.encode(address))
-                        }
-
-                        else -> {
-                            Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(address))
-                        }
-                    }
-                }
-                .mapNotNull { uri -> context.contentResolver.query(uri, arrayOf(BaseColumns._ID), null, null, null) }
-                .flatMap { cursor -> cursor.asFlowable() }
-                .firstOrError()
-                .map { cursor -> cursor.getString(cursor.getColumnIndexOrThrow(BaseColumns._ID)) }
-                .map { id -> Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_URI, id) }
-    }
-
     override fun getContacts(): RealmResults<Contact> {
         val realm = Realm.getDefaultInstance()
         return realm.where(Contact::class.java)

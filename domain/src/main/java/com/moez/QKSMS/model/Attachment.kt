@@ -67,11 +67,6 @@ class Attachment (
 
     fun getSize(context: Context): Long = uri.getSize(context)
 
-    fun hasDisplayableImage(context: Context): Boolean {
-        val mimeType = getType(context)
-        return (mimeType.startsWith("image/") || mimeType.startsWith("video/"))
-    }
-
     fun getResourceBytes(context: Context): ByteArray {
         // cache resource bytes by loading first time only
         if (resourceBytes != null)

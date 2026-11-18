@@ -92,7 +92,6 @@ class Preferences @Inject constructor(
     }
 
     // Internal
-    val didSetReferrer = rxPrefs.getBoolean("didSetReferrer", false)
     val night = rxPrefs.getBoolean("night", false)
     val canUseSubId = rxPrefs.getBoolean("canUseSubId", true)
     val version = rxPrefs.getInteger("version", context.versionCode)
@@ -147,7 +146,6 @@ class Preferences @Inject constructor(
     val autoDeduplicate = rxPrefs.getBoolean("autoDeduplicateMessages", false)
 
     val autoSortEnabled = rxPrefs.getBoolean("fh_autoSortEnabled", true)
-    val initialClassificationDone = rxPrefs.getBoolean("fh_initialClassificationDone", false)
     // Which version of the sorting rules the stored categories were made with; see
     // MessageCategoryBackfill.CLASSIFIER_VERSION. 0 = before versioning existed.
     val classifierVersion = rxPrefs.getInteger("fh_classifierVersion", 0)

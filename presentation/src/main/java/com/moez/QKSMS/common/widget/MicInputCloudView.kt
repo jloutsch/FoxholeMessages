@@ -355,29 +355,9 @@ class MicInputCloudView(context: Context, attrs: AttributeSet) : View(context, a
         return state
     }
 
-    /**
-     * Sets the rotation speed and radius to the parameters, defaults are left unchanged.
-     */
-    fun setRotationSpeed(speed: Float, r: Float) {
-        rotationSpeedMultiplier = speed
-        radius = r
-        invalidate()
-    }
-
-    /**
-     * Starts the growing and shrinking animation
-     */
-    fun startAnimators() {
-        ovalOneAnimator?.start()
-        ovalTwoAnimator?.start()
-        ovalThreeAnimator?.start()
-    }
-
     companion object {
         val TAG: String? = MicInputCloudView::class.simpleName
         const val DEFAULT_RADIUS: Float = 70f
-        const val EXTENDED_RADIUS: Float = 75f
-        const val MAXIMUM_RADIUS: Float = 80f
         const val ICON_SIZE: Int = 9 // Converted to dp this equals about 24dp
         private const val DEFAULT_SIZE: Int = 110
         private const val DEFAULT_OPACITY: Int = 108

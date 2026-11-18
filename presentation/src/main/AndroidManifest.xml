@@ -268,19 +268,11 @@
         </provider>
 
         <meta-data
-            android:name="com.callcontrol.datashare.messaging"
-            android:value="true" />
-        <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
     </application>
 
     <queries>
-        <package android:name="com.cuiet.blockCalls" />
-        <package android:name="com.flexaspect.android.everycallcontrol" />
-        <package android:name="org.mistergroup.muzutozvednout" />
-        <package android:name="org.mistergroup.shouldianswer" />
-        <package android:name="org.mistergroup.shouldianswerpersonal" />
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
