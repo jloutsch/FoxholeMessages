@@ -44,6 +44,8 @@ import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.util.GlideApp
 import io.reactivex.Observable
+import io.reactivex.Single
+import android.util.LruCache
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
@@ -176,6 +178,10 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
                                 state = QkMediaPlayer.PlayingState.Stopped
                                 partId = -1
                                 viewHolder = null
+                                // Stop the progress timer too. It used to keep ticking every 500ms for
+                                // the life of the app, holding a reference to the old screen.
+                                seekBarUpdater?.dispose()
+                                seekBarUpdater = null
                             }
                         }
 
@@ -248,61 +254,94 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
             setBackgroundTint(primaryColor)
         }
 
-        MediaMetadataRetriever().apply {
-            try {
-                if (part.getUri().resourceExists(context))
-                    setDataSource(context, part.getUri())
+        // bubble shape doesn't depend on the file, so set it straight away
+        binding.thumbnail.bubbleStyle = when {
+            !canGroupWithPrevious && canGroupWithNext ->
+                if (message.isMe()) BubbleImageView.Style.OUT_FIRST else BubbleImageView.Style.IN_FIRST
 
-                // metadata title
-                binding.metadataTitle.apply {
-                    text = extractMetadata(METADATA_KEY_TITLE)
+            canGroupWithPrevious && canGroupWithNext ->
+                if (message.isMe()) BubbleImageView.Style.OUT_MIDDLE else BubbleImageView.Style.IN_MIDDLE
 
-                    if (text.isEmpty())
-                        visibility = View.GONE
-                    else {
-                        visibility = View.VISIBLE
-                        setTextColor(primaryColor)
-                        setBackgroundTint(secondaryColor.withAlpha(0xcc))    // hex value is alpha
-                    }
-                }
+            canGroupWithPrevious && !canGroupWithNext ->
+                if (message.isMe()) BubbleImageView.Style.OUT_LAST else BubbleImageView.Style.IN_LAST
 
-                // bubble / embedded image
-                binding.thumbnail.apply {
-                    bubbleStyle = when {
-                        !canGroupWithPrevious && canGroupWithNext ->
-                            if (message.isMe()) BubbleImageView.Style.OUT_FIRST else BubbleImageView.Style.IN_FIRST
+            else -> BubbleImageView.Style.ONLY
+        }
 
-                        canGroupWithPrevious && canGroupWithNext ->
-                            if (message.isMe()) BubbleImageView.Style.OUT_MIDDLE else BubbleImageView.Style.IN_MIDDLE
+        // Reading the title and cover image opens the audio file. That used to happen on the main
+        // thread on every bind (every scroll, every pinch-to-zoom frame), stuttering the list. Now
+        // it's read once per part in the background and cached.
+        val partId = part.id
+        binding.thumbnail.tag = partId
+        val cached = metadataCache.get(partId)
+        if (cached != null) {
+            bindMetadata(binding, cached, primaryColor, secondaryColor)
+        } else {
+            bindMetadata(binding, AudioMetadata(null, null), primaryColor, secondaryColor)
+            val uri = part.getUri()
+            Single.fromCallable { readMetadata(uri) }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ metadata ->
+                    metadataCache.put(partId, metadata)
+                    // the view may have been reused for another part meanwhile
+                    if (binding.thumbnail.tag == partId) bindMetadata(binding, metadata, primaryColor, secondaryColor)
+                }, { /* leave the plain placeholder */ })
+        }
+    }
 
-                        canGroupWithPrevious && !canGroupWithNext ->
-                            if (message.isMe()) BubbleImageView.Style.OUT_LAST else BubbleImageView.Style.IN_LAST
+    private class AudioMetadata(val title: String?, val picture: ByteArray?)
 
-                        else -> BubbleImageView.Style.ONLY
-                    }
+    private fun readMetadata(uri: android.net.Uri): AudioMetadata {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            if (!uri.resourceExists(context)) AudioMetadata(null, null)
+            else {
+                retriever.setDataSource(context, uri)
+                AudioMetadata(retriever.extractMetadata(METADATA_KEY_TITLE), retriever.embeddedPicture)
+            }
+        } catch (e: Exception) {
+            AudioMetadata(null, null)
+        } finally {
+            retriever.release()
+        }
+    }
 
-                    val embeddedPicture = embeddedPicture
-                    if (embeddedPicture == null) {
-                        binding.frame.layoutParams.height = (binding.frame.layoutParams.width / 2)
-                        setTint(secondaryColor)
-                        setImageResource(R.drawable.rectangle)
-                    } else {
-                        binding.frame.layoutParams.height = binding.frame.layoutParams.width
-                        setTint(null)
-                        GlideApp.with(context)
-                            .asBitmap()
-                            .load(embeddedPicture)
-                            .override(
-                                binding.frame.layoutParams.width,
-                                binding.frame.layoutParams.height
-                            )
-                            .into(this)
-                    }
-                }
-            } catch (e: Exception) { /* nothing */ }
-            finally {
-                release()
+    private fun bindMetadata(
+        binding: MmsAudioPreviewListItemBinding, metadata: AudioMetadata, primaryColor: Int, secondaryColor: Int
+    ) {
+        binding.metadataTitle.apply {
+            text = metadata.title
+            if (metadata.title.isNullOrEmpty())
+                visibility = View.GONE
+            else {
+                visibility = View.VISIBLE
+                setTextColor(primaryColor)
+                setBackgroundTint(secondaryColor.withAlpha(0xcc))    // hex value is alpha
             }
         }
+
+        binding.thumbnail.apply {
+            val embeddedPicture = metadata.picture
+            if (embeddedPicture == null) {
+                binding.frame.layoutParams.height = (binding.frame.layoutParams.width / 2)
+                setTint(secondaryColor)
+                setImageResource(R.drawable.rectangle)
+            } else {
+                binding.frame.layoutParams.height = binding.frame.layoutParams.width
+                setTint(null)
+                GlideApp.with(context)
+                    .asBitmap()
+                    .load(embeddedPicture)
+                    .override(binding.frame.layoutParams.width, binding.frame.layoutParams.height)
+                    .into(this)
+            }
+            binding.frame.requestLayout()
+        }
+    }
+
+    companion object {
+        // cover images can be large; keep only a few dozen voice messages' details
+        private val metadataCache = LruCache<Long, AudioMetadata>(40)
     }
 }

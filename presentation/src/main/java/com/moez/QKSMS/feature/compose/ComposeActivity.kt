@@ -441,6 +441,8 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         QkMediaPlayer.reset()
 
         seekBarUpdater?.dispose()
+        // The voice-message players in the thread have their own timer, owned by the adapter.
+        messageAdapter.releaseAudio()
     }
 
 

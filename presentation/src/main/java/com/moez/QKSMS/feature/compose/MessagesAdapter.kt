@@ -146,6 +146,13 @@ class MessagesAdapter @Inject constructor(
 
     private val audioState = AudioState()
 
+    /** Stops the voice-message progress timer; call when the screen goes away. */
+    fun releaseAudio() {
+        audioState.seekBarUpdater?.dispose()
+        audioState.seekBarUpdater = null
+        audioState.viewHolder = null
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkViewHolder {
         // Use the parent's context to inflate the layout, otherwise link clicks will crash the app
         val inflater = LayoutInflater.from(parent.context)
