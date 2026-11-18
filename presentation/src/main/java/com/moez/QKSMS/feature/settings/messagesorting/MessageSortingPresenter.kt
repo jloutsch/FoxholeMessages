@@ -80,7 +80,7 @@ class MessageSortingPresenter @Inject constructor(
 
         view.confirmSortExistingIntent()
             .autoDisposable(view.scope())
-            .subscribe { ClassifyExistingMessagesWorker.trigger(context) }
+            .subscribe { ClassifyExistingMessagesWorker.trigger(context, fullResort = true) }
 
         view.otpRetentionSelected()
             .autoDisposable(view.scope())

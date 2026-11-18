@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.worker
 
+import androidx.work.workDataOf
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.ExistingWorkPolicy
@@ -42,9 +43,13 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         // Literal rather than simpleName - see HousekeepingWorker for why.
         private const val WORKER_TAG = "ClassifyExistingMessagesWorker"
 
-        fun trigger(context: Context) {
+        private const val INPUT_FULL_RESORT = "fullResort"
+
+        /** [fullResort]: re-sort every message, not only ones never sorted (see MessageCategoryBackfill.run). */
+        fun trigger(context: Context, fullResort: Boolean = false) {
             val request = OneTimeWorkRequest.Builder(ClassifyExistingMessagesWorker::class.java)
                 .addTag(WORKER_TAG)
+                .setInputData(workDataOf(INPUT_FULL_RESORT to fullResort))
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
 
@@ -72,7 +77,7 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         val notificationManagerCompat = NotificationManagerCompat.from(applicationContext)
 
         Timber.v("running backfill")
-        val total = backfill.run()
+        val total = backfill.run(fullResort = inputData.getBoolean(INPUT_FULL_RESORT, false))
 
         if (total > 0) {
             notificationManagerCompat.cancel(NOTIFICATION_ID)

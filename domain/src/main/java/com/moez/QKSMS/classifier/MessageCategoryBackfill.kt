@@ -47,13 +47,19 @@ class MessageCategoryBackfill @Inject constructor(
     /** Whether the stored sort was made by older rules and everything should be re-sorted. */
     fun needsResort(): Boolean = prefs.classifierVersion.get() < CLASSIFIER_VERSION
 
-    fun run(onProgress: (processed: Int, total: Int) -> Unit = { _, _ -> }): Int {
+    /**
+     * [fullResort]: re-sort every message, not just uncategorized ones. Used when the user taps
+     * "Sort existing messages", whose dialog promises exactly that. Without it, a message that got
+     * a wrong or failed result once (a failure is stored as UNCLASSIFIED, i.e. Personal) could
+     * never be sorted again from the app.
+     */
+    fun run(fullResort: Boolean = false, onProgress: (processed: Int, total: Int) -> Unit = { _, _ -> }): Int {
         val categorizer = messageCategorizer.bulkCategorizer()
         var failures = 0
-        // Normally only uncategorized messages are sorted. After a rules change, everything is
-        // re-sorted once; manual choices survive because the categorizer re-applies trusted senders
-        // and "Move to" rules, and conversation overrides aren't stored on messages at all.
-        val resort = needsResort()
+        // Normally only uncategorized messages are sorted. After a rules change, or when asked,
+        // everything is re-sorted; manual choices survive because the categorizer re-applies trusted
+        // senders and "Move to" rules, and conversation overrides aren't stored on messages at all.
+        val resort = fullResort || needsResort()
 
         // Per-message isolation, matching what ReceiveSmsWorker already does on the live path: one
         // message that can't be classified must not abandon the whole run, or a single bad row
@@ -63,7 +69,8 @@ class MessageCategoryBackfill @Inject constructor(
                 try {
                     categorizer(address, body, threadId).name
                 } catch (e: Exception) {
-                    failures++
+                    // Logged (first few only) because these silently land in Personal.
+                    if (failures++ < 3) Timber.w(e, "Could not categorize a message in thread $threadId")
                     Category.UNCLASSIFIED.name
                 }
             },
