@@ -20,6 +20,7 @@ package dev.octoshrimpy.quik.interactor
 
 import android.content.Context
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
+import dev.octoshrimpy.quik.util.ScheduledMessageFiles
 import io.reactivex.Flowable
 import timber.log.Timber
 import java.io.File
@@ -37,8 +38,10 @@ class DeleteScheduledMessages @Inject constructor(
                     // for each message id to delete
                     params.forEach { scheduledMessageId ->
                         // recursively delete scheduled message top level dir
-                        val topDir = File(context.filesDir, "scheduled-${scheduledMessageId}")
-                        topDir.exists() && topDir.deleteRecursively()
+                        ScheduledMessageFiles.dirNames(scheduledMessageId).forEach { name ->
+                            val topDir = File(context.filesDir, name)
+                            topDir.exists() && topDir.deleteRecursively()
+                        }
                     }
                 } catch (e: Exception) {
                     Timber.e("Unable to delete scheduled messages.")

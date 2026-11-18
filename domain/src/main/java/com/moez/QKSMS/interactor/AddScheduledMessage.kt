@@ -25,7 +25,7 @@ import androidx.core.net.toUri
 import dev.octoshrimpy.quik.extensions.getName
 import dev.octoshrimpy.quik.extensions.getResourceBytes
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
-import dev.octoshrimpy.quik.util.Constants
+import dev.octoshrimpy.quik.util.ScheduledMessageFiles
 import dev.octoshrimpy.quik.util.FileUtils
 import io.reactivex.Flowable
 import io.realm.RealmList
@@ -74,7 +74,7 @@ class AddScheduledMessage @Inject constructor(
                             val (localUri, e) = FileUtils.createAndWrite(
                                 context,
                                 FileUtils.Location.Files,  // files dir so not deleted if app cache wiped by user
-                                "${Constants.SCHEDULED_MESSAGE_FILE_PREFIX}-${scheduledMessage.id}/" +
+                                "${ScheduledMessageFiles.dirName(scheduledMessage.id)}/" +
                                                     "${UUID.randomUUID()}/${filename}",
                                 "",
                                 attachmentUri.getResourceBytes(context)

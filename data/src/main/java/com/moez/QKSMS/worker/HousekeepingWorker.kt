@@ -28,6 +28,7 @@ import androidx.work.WorkerParameters
 import com.moez.QKSMS.manager.MediaRecorderManager
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import dev.octoshrimpy.quik.util.Constants
+import dev.octoshrimpy.quik.util.ScheduledMessageFiles
 import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -93,9 +94,11 @@ class HousekeepingWorker(appContext: Context, workerParams: WorkerParameters)
         File(applicationContext.filesDir,"")
             // get dirs that match prefix 'scheduled-'
             .listFiles { entry -> entry.isDirectory && entry.name.startsWith(Constants.SCHEDULED_MESSAGE_FILE_PREFIX) }
-            // filter out any dirs that have an associated scheduled message in db
-            ?.filterNot {
-                scheduledMessageIds.contains(it.name.substringAfter('-').toLong())
+            // keep dirs that have an associated scheduled message in db, and any dir whose id can't
+            // be read (never delete what we can't identify)
+            ?.filter {
+                val id = ScheduledMessageFiles.idFromDirName(it.name)
+                id != null && !scheduledMessageIds.contains(id)
             }
             // recursively delete orphan dir
             ?.forEach { it.deleteRecursively() }
