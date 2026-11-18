@@ -67,7 +67,7 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
         val message = messageRepo.getMessage(messageId) ?: return Result.failure(inputData)
 
         val category = try {
-            messageCategorizer.categorize(message.address, message.getText())
+            messageCategorizer.categorize(message.address, message.getText(), message.threadId)
         } catch (e: Exception) {
             Timber.e(e, "classification failed for messageId=${message.id}, falling back to UNCLASSIFIED")
             Category.UNCLASSIFIED

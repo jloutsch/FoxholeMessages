@@ -20,6 +20,8 @@ package dev.octoshrimpy.quik.repository
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.content.Context
+import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker
 import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
@@ -61,6 +63,7 @@ import javax.inject.Singleton
 
 @Singleton
 class SyncRepositoryImpl @Inject constructor(
+    private val context: Context,
     private val contentResolver: ContentResolver,
     private val conversationRepo: ConversationRepository,
     private val cursorToConversation: CursorToConversation,
@@ -266,6 +269,14 @@ class SyncRepositoryImpl @Inject constructor(
                 handlerThread.quitSafely()
                 oldBlockedSenders.delete()
                 syncProgress.onNext(SyncRepository.SyncProgress.Idle)
+
+                // A full sync imports messages that have no category yet (every message, on a
+                // fresh install or after clearing data). Sort them now instead of leaving them all
+                // in Personal until the user finds "Sort existing messages". Only unsorted messages
+                // are touched, unless the sorting rules changed (see MessageCategoryBackfill).
+                if (rxPrefs.getBoolean("fh_autoSortEnabled", true).get()) {
+                    ClassifyExistingMessagesWorker.trigger(context)
+                }
             },
                 { error ->
                     handlerThread.quitSafely()

@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.interactor
 
+import dev.octoshrimpy.quik.classifier.MessageCategorizer
 import dev.octoshrimpy.quik.manager.ShortcutManager
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.model.Attachment
@@ -31,6 +32,7 @@ import javax.inject.Inject
 class SendNewMessage @Inject constructor(
     private val conversationRepo: ConversationRepository,
     private val messageRepo: MessageRepository,
+    private val messageCategorizer: MessageCategorizer,
     private val updateBadge: UpdateBadge,
     private val markRead: MarkRead,
     private val shortcutManager: ShortcutManager
@@ -69,6 +71,19 @@ class SendNewMessage @Inject constructor(
         }
         .map { messages -> messages.map { it.threadId } }
         .doOnNext { threadIds ->
+            // Replying is a sorting signal: an unknown number's unanswered conversation was filed out
+            // of Personal, and answering it should bring it back. So re-check the latest received
+            // message now that this send exists, then give the reply the conversation's category
+            // (the tab follows the latest message). Both before updateConversations, which picks
+            // the new latest message up. Failures here must not affect the send itself.
+            try {
+                messageRepo.recategorizeLatestReceived(threadIds) { address, body, threadId ->
+                    messageCategorizer.categorize(address, body, threadId).name
+                }
+                messageRepo.inheritReplyCategories(threadIds)
+            } catch (e: Exception) {
+                Timber.e(e, "re-sorting after send failed")
+            }
             conversationRepo.updateConversations(threadIds)
             conversationRepo.markUnarchived(threadIds)
 

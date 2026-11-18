@@ -148,6 +148,9 @@ class Preferences @Inject constructor(
 
     val autoSortEnabled = rxPrefs.getBoolean("fh_autoSortEnabled", true)
     val initialClassificationDone = rxPrefs.getBoolean("fh_initialClassificationDone", false)
+    // Which version of the sorting rules the stored categories were made with; see
+    // MessageCategoryBackfill.CLASSIFIER_VERSION. 0 = before versioning existed.
+    val classifierVersion = rxPrefs.getInteger("fh_classifierVersion", 0)
 
     // Bumping this constant re-runs the emoji reaction reparse once on the next launch, for when
     // reactions that should have been recognised are sitting in threads as plain "Liked ..." text.

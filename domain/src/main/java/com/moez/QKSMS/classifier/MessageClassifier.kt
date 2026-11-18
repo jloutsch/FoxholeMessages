@@ -59,22 +59,51 @@ class MessageClassifier @Inject constructor() {
         Regex("\\bclearance\\b", RegexOption.IGNORE_CASE),
         Regex("\\b(buy|shop) now\\b", RegexOption.IGNORE_CASE),
         Regex("\\bfree shipping\\b", RegexOption.IGNORE_CASE),
-        Regex("\\breply stop\\b", RegexOption.IGNORE_CASE),
-        Regex("\\btxt stop\\b", RegexOption.IGNORE_CASE),
+        // Opt-out wording. US rules require it on bulk/marketing texts, and campaigns phrase it many
+        // ways ("Text STOP to quit", "Stop2End", "Reply STOP to opt out"); the original list only
+        // knew "reply stop" and "txt stop", so most political and marketing texts matched nothing
+        // and were filed as Personal.
+        Regex("\\b(reply|text|txt|send)\\s+[\"']?stop\\b", RegexOption.IGNORE_CASE),
+        Regex("\\bstop\\s*2\\s*(end|quit|stop|opt\\s*out)\\b", RegexOption.IGNORE_CASE),
+        Regex("\\bstop to (end|quit|cancel|stop|opt[- ]?out|unsubscribe)\\b", RegexOption.IGNORE_CASE),
+        Regex("\\bopt[- ]?out\\b", RegexOption.IGNORE_CASE),
+        Regex("\\b(msg|message)\\s*(&|and)\\s*data\\s+rates\\b", RegexOption.IGNORE_CASE),
         Regex("\\bunsubscribe\\b", RegexOption.IGNORE_CASE),
         Regex("\\bexclusive deal\\b", RegexOption.IGNORE_CASE),
-        Regex("\\bflash sale\\b", RegexOption.IGNORE_CASE)
+        Regex("\\bflash sale\\b", RegexOption.IGNORE_CASE),
+        // Fundraising asks.
+        Regex("\\bdonat(e|ion)\\b", RegexOption.IGNORE_CASE),
+        Regex("\\bchip in\\b", RegexOption.IGNORE_CASE)
     )
 
-    fun classify(body: String): Category {
-        val transactionalScore = transactionalPatterns.count { it.containsMatchIn(body) }
-        val promotionalScore = promotionalPatterns.count { it.containsMatchIn(body) }
+    fun classify(body: String): Category = classify(scores(body))
 
-        return when {
-            transactionalScore == 0 && promotionalScore == 0 -> Category.UNCLASSIFIED
-            transactionalScore < promotionalScore -> Category.PROMOTIONAL
-            else -> Category.TRANSACTIONAL
+    /**
+     * Classification for a message from a saved contact. A single money mention ("can you spot me
+     * $20?") is ordinary conversation between people, so it takes at least two transactional
+     * patterns (e.g. an amount *and* "payment of") before a contact's message counts as an alert;
+     * anything less stays personal.
+     */
+    fun classifyFromContact(body: String): Category {
+        val scores = scores(body)
+        return if (scores.transactional >= 2 && classify(scores) == Category.TRANSACTIONAL) {
+            Category.TRANSACTIONAL
+        } else {
+            Category.PERSONAL
         }
+    }
+
+    private class Scores(val transactional: Int, val promotional: Int)
+
+    private fun scores(body: String) = Scores(
+        transactionalPatterns.count { it.containsMatchIn(body) },
+        promotionalPatterns.count { it.containsMatchIn(body) }
+    )
+
+    private fun classify(scores: Scores): Category = when {
+        scores.transactional == 0 && scores.promotional == 0 -> Category.UNCLASSIFIED
+        scores.transactional < scores.promotional -> Category.PROMOTIONAL
+        else -> Category.TRANSACTIONAL
     }
 
 }

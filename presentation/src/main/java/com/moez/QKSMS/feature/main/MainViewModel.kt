@@ -18,7 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import android.content.Context
 import androidx.recyclerview.widget.ItemTouchHelper
+import dev.octoshrimpy.quik.classifier.MessageCategoryBackfill
+import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
@@ -70,6 +73,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
+    context: Context,
     billingManager: BillingManager,
     contactAddedListener: ContactAddedListener,
     markAllSeen: MarkAllSeen,
@@ -168,6 +172,16 @@ class MainViewModel @Inject constructor(
         // once per install and can't be used again. This re-runs the same reparse when
         // EMOJI_REPARSE_VERSION is bumped, to recover reaction messages that were received while
         // recognition wasn't working and are now sitting in threads as plain text.
+        // When the sorting rules change (MessageCategoryBackfill.CLASSIFIER_VERSION), re-sort once in
+        // the background so existing conversations move to the tab the new rules give them;
+        // otherwise only messages arriving from now on would benefit. Skipped when the user has
+        // turned automatic sorting off.
+        if (prefs.autoSortEnabled.get() &&
+            prefs.classifierVersion.get() < MessageCategoryBackfill.CLASSIFIER_VERSION) {
+            Timber.i("Re-sort requested (stored rules=${prefs.classifierVersion.get()}, current=${MessageCategoryBackfill.CLASSIFIER_VERSION})")
+            ClassifyExistingMessagesWorker.trigger(context)
+        }
+
         if (prefs.emojiReparseVersion.get() < EMOJI_REPARSE_VERSION) {
             Timber.i("Emoji reparse requested (stored=${prefs.emojiReparseVersion.get()}, current=$EMOJI_REPARSE_VERSION)")
             Realm.getDefaultInstance().executeTransactionAsync({ realm ->

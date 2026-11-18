@@ -1279,15 +1279,17 @@ open class MessageRepositoryImpl @Inject constructor(
     }
 
     override fun categorizeUnclassifiedMessages(
-        categorize: (address: String, body: String) -> String,
+        categorize: (address: String, body: String, threadId: Long) -> String,
+        includeAlreadyCategorized: Boolean,
         onProgress: (processed: Int, total: Int) -> Unit
     ): Int = Realm.getDefaultInstance().use { realm ->
+        realm.refresh()
         // toList() up front: the query is live, so writing a category back would drop the message
-        // out from under the iteration.
+        // out from under the iteration. Sent messages are left to inheritReplyCategories.
         val pending = realm.where(Message::class.java)
-            .isNull("category")
+            .apply { if (!includeAlreadyCategorized) isNull("category") }
             .findAll()
-            .toList()
+            .filter { message -> !message.isMe() }
 
         val total = pending.size
         var processed = 0
@@ -1297,7 +1299,7 @@ open class MessageRepositoryImpl @Inject constructor(
             // opening the write transaction rather than holding Realm's write lock across
             // cross-process queries.
             val categorized = chunk.map { message ->
-                message to categorize(message.address, message.getText())
+                message to categorize(message.address, message.getText(), message.threadId)
             }
 
             realm.executeTransaction {
@@ -1309,6 +1311,69 @@ open class MessageRepositoryImpl @Inject constructor(
         }
 
         total
+    }
+
+    override fun inheritReplyCategories(threadIds: Collection<Long>?): Int =
+        Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
+            val messages = realm.where(Message::class.java)
+                .apply { if (threadIds != null) anyOf("threadId", threadIds.toLongArray()) }
+                .sort("date", Sort.ASCENDING)
+                .findAll()
+                .toList()
+
+            val updates = ArrayList<Pair<Message, String?>>()
+            messages.groupBy { it.threadId }.values.forEach { thread ->
+                var latestReceived: String? = null
+                thread.forEach { message ->
+                    if (!message.isMe()) {
+                        // A received message not categorized yet doesn't reset the conversation.
+                        message.category?.let { latestReceived = it }
+                    } else if (message.category != latestReceived) {
+                        updates += message to latestReceived
+                    }
+                }
+            }
+
+            if (updates.isNotEmpty()) {
+                realm.executeTransaction { updates.forEach { (message, category) -> message.category = category } }
+            }
+            updates.size
+        }
+
+    // Box ids of messages the user sent or tried to send. SMS: sent 2, outbox 4, failed 5, queued 6;
+    // MMS: sent 2, outbox 4, failed 5. Drafts (3) don't count as having replied.
+    private val sentBoxIds = arrayOf(2, 4, 5, 6)
+
+    override fun getThreadIdsWithSentMessages(threadIds: Collection<Long>?): Set<Long> =
+        Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
+            realm.where(Message::class.java)
+                .apply { if (threadIds != null) anyOf("threadId", threadIds.toLongArray()) }
+                .`in`("boxId", sentBoxIds)
+                .findAll()
+                .mapTo(HashSet()) { it.threadId }
+        }
+
+    override fun recategorizeLatestReceived(
+        threadIds: Collection<Long>,
+        categorize: (address: String, body: String, threadId: Long) -> String
+    ) = Realm.getDefaultInstance().use { realm ->
+        realm.refresh()
+        // Resolve outside the write transaction: categorizing can query the contacts provider.
+        val changes = threadIds.mapNotNull { threadId ->
+            realm.where(Message::class.java)
+                .equalTo("threadId", threadId)
+                .isNull("deletedAt")
+                .sort("date", Sort.DESCENDING)
+                .findAll()
+                .firstOrNull { !it.isMe() }
+                ?.let { latest -> latest to categorize(latest.address, latest.getText(), threadId) }
+                ?.takeIf { (latest, category) -> latest.category != category }
+        }
+        if (changes.isNotEmpty()) {
+            realm.executeTransaction { changes.forEach { (message, category) -> message.category = category } }
+        }
     }
 
     override fun tagOtpMessages(isOtp: (String) -> Boolean): Int =

@@ -150,15 +150,47 @@ interface MessageRepository {
     fun markAsSendingNow(messageId: Long)
 
     /**
-     * Runs [categorize] over every message that has no category yet, writing the result back, and
-     * returns how many were processed. Like [tagOtpMessages] this is one pass on a single Realm
-     * instance: re-syncing messages clears every category at once, so the pending set is the whole
-     * message history and a per-message lookup never finishes.
+     * Runs [categorize] over every *received* message that has no category yet (or over every
+     * received message, if [includeAlreadyCategorized] - used when the sorting rules change), writing
+     * the result back, and returns how many were processed. Messages the user sent are skipped: they
+     * take their category from the conversation instead, see [inheritReplyCategories]. Like
+     * [tagOtpMessages] this is one pass on a single Realm instance: re-syncing messages clears every
+     * category at once, so the pending set is the whole message history and a per-message lookup
+     * never finishes.
      */
     fun categorizeUnclassifiedMessages(
-        categorize: (address: String, body: String) -> String,
+        categorize: (address: String, body: String, threadId: Long) -> String,
+        includeAlreadyCategorized: Boolean = false,
         onProgress: (processed: Int, total: Int) -> Unit = { _, _ -> }
     ): Int
+
+    /**
+     * Gives every message the user sent the category of the most recent *received* message before
+     * it in the same conversation (none, if there isn't one yet), and returns how many changed.
+     *
+     * A conversation's inbox tab follows its latest message, and sent messages were either never
+     * categorized (so replying moved a bank or delivery conversation to Personal) or categorized by
+     * their own wording (so "I paid $20" moved a friend's conversation to Transactions). Inheriting
+     * keeps a conversation in its tab whoever spoke last. Limited to [threadIds] if given.
+     */
+    fun inheritReplyCategories(threadIds: Collection<Long>? = null): Int
+
+    /**
+     * Ids of the conversations (among [threadIds], or all) in which the user has sent at least one
+     * message - sent, sending, queued or failed, but not just a draft. Used by sorting to tell a
+     * conversation the user takes part in from an unanswered blast.
+     */
+    fun getThreadIdsWithSentMessages(threadIds: Collection<Long>? = null): Set<Long>
+
+    /**
+     * Re-runs [categorize] on the latest received message of each conversation in [threadIds] and
+     * stores the result if it changed. Called after the user sends, because replying is itself a
+     * sorting signal: an unknown number's conversation moves back to Personal once answered.
+     */
+    fun recategorizeLatestReceived(
+        threadIds: Collection<Long>,
+        categorize: (address: String, body: String, threadId: Long) -> String
+    )
 
     /**
      * Runs [isOtp] over the body of every message not already tagged as an OTP, tagging the ones

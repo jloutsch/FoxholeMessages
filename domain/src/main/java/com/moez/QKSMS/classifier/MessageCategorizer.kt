@@ -19,29 +19,32 @@
 package dev.octoshrimpy.quik.classifier
 
 import dev.octoshrimpy.quik.repository.ContactRepository
+import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.repository.SenderCategoryRuleRepository
 import dev.octoshrimpy.quik.repository.TrustedSenderRepository
 import javax.inject.Inject
 
 /**
- * Decides which [Category] a message belongs in, in priority order:
- * 1. Trusted senders always go to [Category.PERSONAL].
- * 2. A manual [dev.octoshrimpy.quik.model.SenderCategoryRule] for this sender wins next.
- * 3. Otherwise fall back to keyword classification, with a contact bump: known contacts default
- *    to [Category.PERSONAL] unless the message content is clearly transactional.
+ * Decides which [Category] a message belongs in; see [decideCategory] for the rules. This class
+ * supplies the sender lookups (trusted list, manual rules, contacts, whether the user has replied)
+ * to it.
  */
 class MessageCategorizer @Inject constructor(
     private val trustedSenderRepo: TrustedSenderRepository,
     private val senderRuleRepo: SenderCategoryRuleRepository,
     private val contactsRepo: ContactRepository,
+    private val messageRepo: MessageRepository,
     private val classifier: MessageClassifier
 ) {
 
-    fun categorize(address: String, body: String): Category = categorize(
+    fun categorize(address: String, body: String, threadId: Long): Category = decideCategory(
+        classifier,
+        address,
         body,
         isTrusted = { trustedSenderRepo.isTrusted(address) },
         rule = { ruleOf(address) },
-        isContact = { contactsRepo.isContact(address) }
+        isContact = { contactsRepo.isContact(address) },
+        hasReplied = { threadId in messageRepo.getThreadIdsWithSentMessages(listOf(threadId)) }
     )
 
     /**
@@ -55,43 +58,26 @@ class MessageCategorizer @Inject constructor(
      * The memo lives only as long as the returned function, so it cannot go stale against contact
      * or rule changes the way caching on this shared instance would.
      */
-    fun bulkCategorizer(): (address: String, body: String) -> Category {
+    fun bulkCategorizer(): (address: String, body: String, threadId: Long) -> Category {
         val trusted = HashMap<String, Boolean>()
         val rules = HashMap<String, Category?>()
         val contacts = HashMap<String, Boolean>()
+        // One query for every conversation the user has sent in, instead of one per message.
+        val repliedThreads by lazy { messageRepo.getThreadIdsWithSentMessages() }
 
-        return { address, body ->
-            categorize(
+        return { address, body, threadId ->
+            decideCategory(
+                classifier,
+                address,
                 body,
                 isTrusted = { trusted.getOrPut(address) { trustedSenderRepo.isTrusted(address) } },
                 rule = {
                     if (rules.containsKey(address)) rules[address]
                     else ruleOf(address).also { rules[address] = it }
                 },
-                isContact = { contacts.getOrPut(address) { contactsRepo.isContact(address) } }
+                isContact = { contacts.getOrPut(address) { contactsRepo.isContact(address) } },
+                hasReplied = { threadId in repliedThreads }
             )
-        }
-    }
-
-    // Lookups stay behind lambdas so the short-circuits hold: a trusted sender never triggers a
-    // rule or contacts lookup, and a sender with a rule never triggers a contacts lookup.
-    private inline fun categorize(
-        body: String,
-        isTrusted: () -> Boolean,
-        rule: () -> Category?,
-        isContact: () -> Boolean
-    ): Category {
-        if (isTrusted()) {
-            return Category.PERSONAL
-        }
-
-        rule()?.let { return it }
-
-        val category = classifier.classify(body)
-        return if (isContact() && category != Category.TRANSACTIONAL) {
-            Category.PERSONAL
-        } else {
-            category
         }
     }
 
@@ -104,4 +90,55 @@ class MessageCategorizer @Inject constructor(
             }
         }
 
+}
+
+/**
+ * Which [Category] an incoming message belongs in, in priority order:
+ * 1. A trusted sender is always [Category.PERSONAL].
+ * 2. A manual rule for the sender ("Move to…") wins next.
+ * 3. A **business sender** - short code, named sender or toll-free number (see [SenderKind]) - is
+ *    never Personal: it is classified by its wording, and wording that matches nothing counts as
+ *    [Category.TRANSACTIONAL] (alerts, deliveries, codes). This applies even when it's saved as a
+ *    contact (e.g. a bank).
+ * 4. A **saved contact** with an ordinary phone number stays Personal, unless the message is
+ *    clearly an alert (see [MessageClassifier.classifyFromContact]).
+ * 5. Any other phone number is classified by its wording. If that matches nothing:
+ *    - and the user has **never replied** in the conversation, it is [Category.PROMOTIONAL]: in
+ *      practice these are one-off blasts, reminders and spam. Replying moves the conversation back
+ *      (SendNewMessage re-checks it), so a new person's first text is one reply away from Personal.
+ *    - otherwise [Category.UNCLASSIFIED], which shows in Personal.
+ *
+ * Lookups stay behind lambdas so the short-circuits hold: a trusted sender never triggers a rule or
+ * contacts lookup, businesses never trigger a (cross-process) contacts lookup at all, and the reply
+ * check only runs for unknown numbers whose wording matched nothing.
+ */
+internal inline fun decideCategory(
+    classifier: MessageClassifier,
+    address: String,
+    body: String,
+    isTrusted: () -> Boolean,
+    rule: () -> Category?,
+    isContact: () -> Boolean,
+    hasReplied: () -> Boolean
+): Category {
+    if (isTrusted()) {
+        return Category.PERSONAL
+    }
+
+    rule()?.let { return it }
+
+    if (SenderKind.of(address).isBusiness) {
+        val category = classifier.classify(body)
+        return if (category == Category.UNCLASSIFIED) Category.TRANSACTIONAL else category
+    }
+
+    if (isContact()) {
+        return classifier.classifyFromContact(body)
+    }
+
+    val category = classifier.classify(body)
+    if (category == Category.UNCLASSIFIED && !hasReplied()) {
+        return Category.PROMOTIONAL
+    }
+    return category
 }

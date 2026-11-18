@@ -67,6 +67,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation project(":common")
 
+    // Plain-JVM unit tests (src/test) for logic with no Android dependencies, e.g. message sorting.
+    testImplementation 'junit:junit:4.13.2'
+
 }
 
 repositories {
