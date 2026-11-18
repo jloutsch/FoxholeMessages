@@ -54,6 +54,7 @@ import dev.octoshrimpy.quik.worker.ReceiveMmsWorker.Companion.INPUT_DATA_EXTRA_F
 import dev.octoshrimpy.quik.worker.ReceiveMmsWorker.Companion.INPUT_DATA_EXTRA_LOCATION_URL
 import dev.octoshrimpy.quik.worker.ReceiveMmsWorker.Companion.INPUT_DATA_EXTRA_MMS_HTTP_STATUS
 import dev.octoshrimpy.quik.worker.ReceiveMmsWorker.Companion.INPUT_DATA_EXTRA_URI
+import dev.octoshrimpy.quik.worker.ReceiveMmsWorker.Companion.INPUT_DATA_RESULT_CODE
 import dev.octoshrimpy.quik.worker.ReceiveMmsWorker.Companion.INPUT_DATA_SUBSCRIPTION_ID
 import timber.log.Timber
 
@@ -76,6 +77,7 @@ class MmsReceivedReceiver : BroadcastReceiver() {
                             SmsManager.EXTRA_MMS_HTTP_STATUS,
                             0
                         ),
+                        INPUT_DATA_RESULT_CODE to resultCode,
                         INPUT_DATA_EXTRA_URI to
                                 (intent.getParcelableExtra<Parcelable>(EXTRA_URI) as Uri?)?.toString()
                     )

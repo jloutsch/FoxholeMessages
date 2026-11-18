@@ -75,6 +75,7 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
         const val INPUT_DATA_EXTRA_LOCATION_URL = "locationUrl"
         const val INPUT_DATA_EXTRA_MMS_HTTP_STATUS = "mmsHttpStatus"
         const val INPUT_DATA_EXTRA_URI = "extraUri"
+        const val INPUT_DATA_RESULT_CODE = "resultCode"
 
         private const val LOCATION_SELECTION =
             Telephony.Mms.MESSAGE_TYPE + "=? AND " + Telephony.Mms.CONTENT_LOCATION + " =?"
@@ -120,6 +121,10 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
         Timber.v(filePath)
 
         val downloadFile = File(filePath)
+        val httpStatus = inputData.getInt(INPUT_DATA_EXTRA_MMS_HTTP_STATUS, 0)
+        // Whether the picture message was downloaded and saved. If not, a retry is scheduled below;
+        // before, a failed download was only logged and the picture was lost.
+        var downloaded = false
         try {
             // read file into a bytearray
             val mmsData = FileInputStream(downloadFile).use { inputStream ->
@@ -130,7 +135,7 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
                 }
             }
 
-            Timber.v("response buffered length: ${mmsData.size}")
+            Timber.v("response buffered length: ${mmsData.size} result=${inputData.getInt(INPUT_DATA_RESULT_CODE, 0)} http=$httpStatus")
 
             if (mmsData.isNotEmpty()) {
                 // build notification ind (beware this must be done prior to downloadrequest.persist)
@@ -145,16 +150,21 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
                     locationUrl, subscriptionId, null
                 )
 
-                handleHttpError(
-                    applicationContext,
-                    inputData.getInt(INPUT_DATA_EXTRA_MMS_HTTP_STATUS, 0),
-                    locationUrl
-                )
+                handleHttpError(applicationContext, httpStatus, locationUrl)
 
                 DownloadManager.finishDownload(locationUrl)
 
                 // if message was persisted ok
                 if (messageUri != null) {
+                    downloaded = true
+                    MmsDownloadRetryWorker.clearRetries(applicationContext, locationUrl)
+
+                    // Acknowledge to the carrier as soon as the message is saved. This used to happen
+                    // at the very end, so blocked and content-filtered messages (which return early)
+                    // were never acknowledged, and some carriers then deliver the message again.
+                    sendAcknowledgeInd(applicationContext, subscriptionId, notificationInd)
+                    sendNotifyRespInd(applicationContext, subscriptionId, notificationInd)
+
                     // Sync the message
                     val message = syncRepo.syncMessage(messageUri)
                         ?: return Result.failure(inputData)
@@ -250,12 +260,6 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
                         Timber.v("update badge and widget")
                         updateBadge.execute(Unit)
                     }
-
-                    // send ack to mmsc
-                    sendAcknowledgeInd(applicationContext, subscriptionId, notificationInd)
-
-                    // send notify ind to mmsc
-                    sendNotifyRespInd(applicationContext, subscriptionId, notificationInd)
                 }
             }
             else Timber.e("empty mms data")
@@ -267,6 +271,11 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
             Timber.e("mms receive worker exception: ${e.message}")
         } finally {
             downloadFile.delete()
+            // 400/404 means the carrier no longer has the message (handleHttpError removes the
+            // notice), so retrying can't help.
+            if (!downloaded && httpStatus != 400 && httpStatus != 404) {
+                MmsDownloadRetryWorker.scheduleRetry(applicationContext, locationUrl, extraUri, subscriptionId)
+            }
         }
 
         Timber.v("finished")

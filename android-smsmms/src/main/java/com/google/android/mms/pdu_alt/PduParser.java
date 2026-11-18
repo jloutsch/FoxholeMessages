@@ -913,6 +913,11 @@ public class PduParser {
 
             /* get part's data */
             if (dataLength > 0) {
+                // The length comes from the message itself. Don't allocate more than the message
+                // actually contains (a crafted length could otherwise exhaust memory).
+                if (dataLength > pduDataStream.available()) {
+                    return null;
+                }
                 byte[] partData = new byte[dataLength];
                 String partContentType = new String(part.getContentType());
                 pduDataStream.read(partData, 0, dataLength);
@@ -1336,6 +1341,9 @@ public class PduParser {
      */
     protected static int skipWapValue(ByteArrayInputStream pduDataStream, int length) {
         assert(null != pduDataStream);
+        if (length < 0 || length > pduDataStream.available()) {
+            return -1;
+        }
         byte[] area = new byte[length];
         int readLen = pduDataStream.read(area, 0, length);
         if (readLen < length) { //The actually read length is lower than the length

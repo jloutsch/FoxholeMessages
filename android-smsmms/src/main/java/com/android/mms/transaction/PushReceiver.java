@@ -83,7 +83,17 @@ public class PushReceiver extends BroadcastReceiver {
 
     static final int COLUMN_CONTENT_LOCATION      = 0;
 
-    private static Set<String> downloadedUrls = new HashSet<String>();
+    private static Set<String> downloadedUrls = java.util.Collections.synchronizedSet(new HashSet<String>());
+
+    /**
+     * Forget that a download was started, so a retry (or the carrier re-sending the notification)
+     * is not skipped as a duplicate. Called when a download fails.
+     */
+    public static void forgetDownload(String location) {
+        if (location != null) {
+            downloadedUrls.remove(location);
+        }
+    }
     private static final ExecutorService PUSH_RECEIVER_EXECUTOR = Executors.newSingleThreadExecutor();
 
     private class ReceivePushTask extends AsyncTask<Intent,Void,Void> {
@@ -102,8 +112,16 @@ public class PushReceiver extends BroadcastReceiver {
 
             // Get raw PDU push-data from the message and parse it
             byte[] pushData = intent.getByteArrayExtra("data");
-            PduParser parser = new PduParser(pushData);
-            GenericPdu pdu = parser.parse();
+            GenericPdu pdu;
+            try {
+                // Parsing used to sit outside any try block, so one malformed notification from
+                // the network (the parser throws RuntimeException on a bad length byte) crashed the
+                // app. Treat it like any other invalid push and drop it.
+                pdu = new PduParser(pushData).parse();
+            } catch (Throwable e) {
+                Timber.e(e, "Could not parse PUSH data");
+                pdu = null;
+            }
 
             if (null == pdu) {
                 Timber.e("Invalid PUSH data");
