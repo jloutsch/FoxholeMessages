@@ -53,12 +53,30 @@ class ContentFilterMatcherTest {
     // --- Regex filters ---
 
     @Test
-    fun regexMustMatchTheWholeMessage() {
-        // Existing behaviour, pinned on purpose: a regex filter only blocks a message that it
-        // matches from start to end, unlike keyword filters which match anywhere.
+    fun regexFindsItsPatternAnywhere() {
+        // Used to require a whole-message match, so this never blocked.
+        assertTrue(blocks("prize[0-9]+", "You won prize123!", regex = true))
         assertTrue(blocks("prize[0-9]+", "prize123", regex = true))
-        assertFalse(blocks("prize[0-9]+", "You won prize123!", regex = true))
+        assertFalse(blocks("prize[0-9]+", "You won a prize!", regex = true))
+    }
+
+    @Test
+    fun regexIgnoresCase() =
+        // The dialog greys out "Case sensitive" for regexes; matching now agrees with it.
+        assertTrue(blocks("prize[0-9]+", "YOU WON PRIZE500", regex = true))
+
+    @Test
+    fun regexDotCrossesLineBreaks() =
+        assertTrue(blocks("won.*prize", "You won\nthe big prize", regex = true))
+
+    @Test
+    fun existingRegexFiltersKeepWorking() {
+        // Filters written for the old whole-message rule still match what they matched before.
         assertTrue(blocks(".*prize[0-9]+.*", "You won prize123!", regex = true))
+        assertTrue(blocks("prize[0-9]+", "prize123", regex = true))
+        // Anchors still mean "the whole message", for anyone who wants that.
+        assertTrue(blocks("^prize[0-9]+$", "prize123", regex = true))
+        assertFalse(blocks("^prize[0-9]+$", "You won prize123!", regex = true))
     }
 
     @Test

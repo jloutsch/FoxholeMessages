@@ -35,11 +35,16 @@ internal object ContentFilterMatcher {
         if (isContact && !includeContacts) return false
 
         if (isRegex) {
-            // Regex filters must match the WHOLE message (existing behaviour, kept as is).
+            // Regex filters find their pattern anywhere in the message, ignoring case, with "."
+            // crossing line breaks - the same sense as keyword filters. They used to have to match
+            // the WHOLE message, case-sensitively, with "." stopping at line breaks, so "prize[0-9]+"
+            // never blocked "You won PRIZE123!" (the dialog even greys out "Case sensitive" for
+            // regexes, implying case doesn't matter). Anchors still work: "^...$" means the whole
+            // message, so a filter written that way on purpose keeps its meaning.
             // An invalid saved pattern must not throw: this runs on the receive path, and an
             // exception stops the incoming message from being processed.
             return try {
-                Regex(value).matches(body)
+                Regex(value, setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)).containsMatchIn(body)
             } catch (e: IllegalArgumentException) {
                 Timber.w(e, "Skipping invalid regex content filter")
                 false
