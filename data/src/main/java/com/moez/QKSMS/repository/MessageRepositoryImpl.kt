@@ -90,6 +90,7 @@ open class MessageRepositoryImpl @Inject constructor(
     private val reactions: EmojiReactionRepository,
     private val cursorToMessage: CursorToMessage,
     private val cursorToPart: CursorToPart,
+    private val contactRepo: ContactRepository,
 ) : MessageRepository {
 
     override val deduplicationProgress: Subject<MessageRepository.DeduplicationProgress> =
@@ -1191,45 +1192,65 @@ open class MessageRepositoryImpl @Inject constructor(
 
     override fun getOldOtpCounts(maxAgeDays: Int) =
         Realm.getDefaultInstance().use { realm ->
-            realm.where(Message::class.java)
-                .equalTo("isOtp", true)
-                .lessThan(
-                    "date",
-                    now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong())
-                )
-                .findAll()
+            otpRetentionCandidates(realm, maxAgeDays)
                 .groupingBy { message -> message.threadId }
                 .eachCount()
         }
 
     override fun deleteOldOtps(maxAgeDays: Int) =
         Realm.getDefaultInstance().use { realm ->
-            val messages = realm.where(Message::class.java)
-                .equalTo("isOtp", true)
-                .lessThan(
-                    "date",
-                    now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong())
-                )
-                .findAll()
+            val messages = otpRetentionCandidates(realm, maxAgeDays)
+            if (messages.isEmpty()) return@use
 
+            val ids = messages.map { it.id }.toLongArray()
             val uris = messages.map { it.getUri() }
 
-            realm.executeTransaction { messages.deleteAllFromRealm() }
+            // Re-query by id inside the transaction rather than deleting the objects above: picking a
+            // retention period both runs this and schedules the daily job, which Android can start at
+            // the same moment, and deleting an object the other run already removed throws.
+            realm.executeTransaction {
+                realm.where(Message::class.java).anyOf("id", ids).findAll().deleteAllFromRealm()
+            }
 
             uris.forEach {
                 uri -> context.contentResolver.delete(uri, null, null)
             }
         }
 
+    /**
+     * OTP-tagged messages old enough for retention to delete permanently. Tagging is a loose keyword
+     * match ("code"/"pin"/... plus any 4-8 digit number), so it also catches ordinary texts like a
+     * friend's "door code is 4821" or "pin it, zip 94110". Deletion is therefore limited to what can
+     * only be a received code: incoming, not starred or locked, and not from a saved contact. This is
+     * applied here, at deletion, so it also covers messages tagged under the older, looser rules.
+     */
+    private fun otpRetentionCandidates(realm: Realm, maxAgeDays: Int): List<Message> {
+        realm.refresh()
+        val isContact = HashMap<String, Boolean>()
+        return realm.where(Message::class.java)
+            .equalTo("isOtp", true)
+            .equalTo("isStarred", false)
+            .equalTo("locked", false)
+            .lessThan("date", now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
+            .findAll()
+            .filter { message ->
+                !message.isMe() &&
+                    // One cross-process contacts lookup per sender, not per message.
+                    !isContact.getOrPut(message.address) { contactRepo.isContact(message.address) }
+            }
+    }
+
     override fun deduplicateMessages(): Flowable<MessageRepository.DeduplicationResult> =
         Flowable.fromCallable {
-            val duplicateIds = findDuplicateMessages()
-            if (duplicateIds.isEmpty()) {
+            val duplicates = findDuplicateMessages()
+            if (duplicates.isEmpty()) {
                 MessageRepository.DeduplicationResult.NoDuplicates
             } else {
                 deduplicationProgress.onNext(MessageRepository.DeduplicationProgress.Running(0, 0, true))
-                deleteMessages(duplicateIds)
-                MessageRepository.DeduplicationResult.Success
+                // To Trash rather than deleted outright: a false match is then recoverable for 30
+                // days, and the provider rows are removed by the normal Trash purge afterwards.
+                trashMessages(duplicates.keys)
+                MessageRepository.DeduplicationResult.Success(duplicates.size, duplicates.values.toSet())
             }
         }
         .onErrorReturn { MessageRepository.DeduplicationResult.Failure(it) }
@@ -1237,12 +1258,15 @@ open class MessageRepositoryImpl @Inject constructor(
             deduplicationProgress.onNext(MessageRepository.DeduplicationProgress.Idle)
         }
 
-    private fun findDuplicateMessages(): List<Long> {
+    /** Duplicate message ids mapped to their thread ids. The first (lowest-id) copy is kept. */
+    private fun findDuplicateMessages(): Map<Long, Long> {
         val seenSignatures = HashSet<String>()
-        val duplicateIds = ArrayList<Long>()
+        val duplicates = HashMap<Long, Long>()
 
         Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
             val allMessages = realm.where(Message::class.java)
+                .isNull("deletedAt")
                 .sort("id", Sort.ASCENDING)
                 .findAll()
 
@@ -1259,21 +1283,37 @@ open class MessageRepositoryImpl @Inject constructor(
                     }
                     val signature = messageHash(message)
                     if (!seenSignatures.add(signature)) {
-                        duplicateIds.add(message.id)
+                        duplicates[message.id] = message.threadId
                     }
                 }
             }
         }
-        return duplicateIds
+        return duplicates
     }
 
+    /**
+     * Two rows are the same message (a restore or sync inserting it twice, or a carrier re-delivering
+     * an SMS) when they share thread, sender, box, sent time and content. Weaker signatures deleted
+     * real messages: outgoing SMS have dateSent 0, so every identical reply in a thread matched, and
+     * MMS have an empty body, so separate photos sent within the same second matched.
+     */
     private fun messageHash(message: Message): String {
-        val signatureString= buildString {
+        val signatureString = buildString {
+            append(message.type).append('|')
+            append(message.threadId).append('|')
             append(message.address).append('|')
-            append(message.dateSent).append('|')
             append(message.boxId).append('|')
+            // dateSent is 0 when unknown (e.g. every outgoing SMS without a delivery report).
+            append(message.dateSent.takeIf { it != 0L } ?: message.date).append('|')
             append(message.body).append('|')
-            append(message.attachmentTypeString)
+            append(message.subject)
+            if (message.isMms()) {
+                // The body is usually empty, so compare the receive time and every part too.
+                append('|').append(message.date)
+                message.parts.sortedBy { it.seq }.forEach { part ->
+                    append('|').append(part.type).append(':').append(part.name).append(':').append(part.text)
+                }
+            }
         }
         return sha256(signatureString)
     }
@@ -1378,10 +1418,11 @@ open class MessageRepositoryImpl @Inject constructor(
 
     override fun tagOtpMessages(isOtp: (String) -> Boolean): Int =
         Realm.getDefaultInstance().use { realm ->
+            // Codes are only ever received, so don't tag anything the user sent.
             val matches = realm.where(Message::class.java)
                 .equalTo("isOtp", false)
                 .findAll()
-                .filter { isOtp(it.getText()) }
+                .filter { !it.isMe() && isOtp(it.getText()) }
 
             if (matches.isNotEmpty()) {
                 realm.executeTransaction { matches.forEach { message -> message.isOtp = true } }

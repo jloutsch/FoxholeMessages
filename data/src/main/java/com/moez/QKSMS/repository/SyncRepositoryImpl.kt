@@ -111,9 +111,25 @@ class SyncRepositoryImpl @Inject constructor(
                         .isNotNull("blockingClient")
                         .or()
                         .isNotEmpty("blockReason")
+                        .or()
+                        .isNotNull("categoryOverride")
                         .endGroup()
                         .findAll()
                 ).associateBy { conversation -> conversation.id }.toMutableMap()
+
+                // Message fields only this app keeps (Trash, stars, sorting, OTP tags). The rebuild
+                // below re-creates every message from the system provider, which doesn't have them,
+                // so carry them across by provider identity or they're wiped by every full sync.
+                val persistedMessages = realm.where(Message::class.java)
+                    .notEqualTo("contentId", 0L)
+                    .beginGroup()
+                        .isNotNull("deletedAt")
+                        .or().equalTo("isStarred", true)
+                        .or().isNotNull("category")
+                        .or().equalTo("isOtp", true)
+                    .endGroup()
+                    .findAll()
+                    .associate { message -> AppOnlyMessageFields.key(message) to AppOnlyMessageFields.of(message) }
 
                 removeOldMessages(realm)
 
@@ -155,6 +171,7 @@ class SyncRepositoryImpl @Inject constructor(
                                 )
                             )
                             val message = cursorToMessage.map(Pair(cursor, messageColumns)).apply {
+                                persistedMessages[AppOnlyMessageFields.key(this)]?.applyTo(this)
                                 if (isMms()) {
                                     parts = RealmList<MmsPart>().apply {
                                         addAll(
@@ -198,10 +215,14 @@ class SyncRepositoryImpl @Inject constructor(
                                     blockingClient = persistedConversation.blockingClient
                                     blockReason = persistedConversation.blockReason
                                     sendAsGroup = persistedConversation.sendAsGroup
+                                    categoryOverride = persistedConversation.categoryOverride
                                 }
+                                // Trashed messages are kept above, so skip them here: otherwise a
+                                // conversation deleted to Trash would come back with a trashed snippet.
                                 lastMessage = realm.where(Message::class.java)
                                     .sort("date", Sort.DESCENDING)
                                     .equalTo("threadId", id)
+                                    .isNull("deletedAt")
                                     .findFirst()
                             }
                             realm.insertOrUpdate(conversation)
@@ -245,8 +266,16 @@ class SyncRepositoryImpl @Inject constructor(
                         syncProgress.onNext(progress)
                     })
 
+                realm.insert(SyncLog())
+            }, {
+                handlerThread.quitSafely()
+                oldBlockedSenders.delete()
+                syncProgress.onNext(SyncRepository.SyncProgress.Idle)
+
+                // Only once the sync has committed: run inside the sync transaction (as it used to
+                // be), the dedupe's own write transaction on the same thread threw, so it never ran.
                 if (rxPrefs.getBoolean("autoDeduplicateMessages").get()) {
-                    DeduplicateMessages(messageRepo.get())
+                    DeduplicateMessages(messageRepo.get(), conversationRepo)
                         .buildObservable(Unit)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe { result ->
@@ -255,7 +284,7 @@ class SyncRepositoryImpl @Inject constructor(
                                     Timber.i("No duplicate messages found.")
                                 }
                                 is MessageRepository.DeduplicationResult.Success -> {
-                                    Timber.i("Deleted duplicate messages")
+                                    Timber.i("Moved ${result.trashedCount} duplicate messages to Trash")
                                 }
                                 is MessageRepository.DeduplicationResult.Failure -> {
                                     Timber.e(result.error, "Deduplication failed")
@@ -263,12 +292,6 @@ class SyncRepositoryImpl @Inject constructor(
                             }
                         }
                 }
-
-                realm.insert(SyncLog())
-            }, {
-                handlerThread.quitSafely()
-                oldBlockedSenders.delete()
-                syncProgress.onNext(SyncRepository.SyncProgress.Idle)
 
                 // A full sync imports messages that have no category yet (every message, on a
                 // fresh install or after clearing data). Sort them now instead of leaving them all
@@ -298,8 +321,11 @@ class SyncRepositoryImpl @Inject constructor(
         // If we don't have a valid id, return null
         val contentId = tryOrNull(false) { ContentUris.parseId(uri) } ?: return null
 
-        // Check if the message already exists, so we can reuse the id
-        val existingId = Realm.getDefaultInstance().use { realm ->
+        // Check if the message already exists, so we can reuse the id. The row is about to be
+        // replaced wholesale by insertOrUpdate, so also keep what only this app stores on it -
+        // otherwise any provider change (e.g. another app or a car marking it read) would un-trash
+        // it and drop its star, category, OTP tag and reactions.
+        val existing = Realm.getDefaultInstance().use { realm ->
             realm.refresh()
             realm.where(Message::class.java)
                 .equalTo("type", type)
@@ -311,7 +337,9 @@ class SyncRepositoryImpl @Inject constructor(
                 .equalTo("contentId", 0L)
                 .endGroup()
                 .findFirst()
-                ?.id
+                ?.let { message ->
+                    Triple(message.id, AppOnlyMessageFields.of(message), realm.copyFromRealm(message.emojiReactions))
+                }
         }
 
         // The uri might be something like content://mms/inbox/id
@@ -328,7 +356,12 @@ class SyncRepositoryImpl @Inject constructor(
 
             val columnsMap = CursorToMessage.MessageColumns(cursor)
             cursorToMessage.map(Pair(cursor, columnsMap)).apply {
-                existingId?.let { this.id = it }
+                // Applied before the first write: saveEmojiReaction below writes this object again.
+                existing?.let { (existingId, fields, existingReactions) ->
+                    this.id = existingId
+                    fields.applyTo(this)
+                    emojiReactions.addAll(existingReactions)
+                }
 
                 if (isMms()) {
                     parts = RealmList<MmsPart>().apply {
@@ -453,4 +486,31 @@ class SyncRepositoryImpl @Inject constructor(
         realm.delete(Recipient::class.java)
     }
 
+}
+
+/**
+ * Message fields that exist only in this app's Realm copy, never in the system SMS/MMS provider.
+ * Syncing rebuilds Message rows from the provider, so anything here has to be read before the row is
+ * replaced and written back onto the new one, or it is silently lost.
+ */
+private class AppOnlyMessageFields(
+    val deletedAt: Long?,
+    val isStarred: Boolean,
+    val category: String?,
+    val isOtp: Boolean
+) {
+    fun applyTo(message: Message) {
+        message.deletedAt = deletedAt
+        message.isStarred = isStarred
+        message.category = category
+        message.isOtp = isOtp
+    }
+
+    companion object {
+        fun of(message: Message) =
+            AppOnlyMessageFields(message.deletedAt, message.isStarred, message.category, message.isOtp)
+
+        /** Provider identity. Realm ids are reassigned by a full sync, so they can't be the key. */
+        fun key(message: Message) = "${message.type}:${message.contentId}"
+    }
 }

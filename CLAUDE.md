@@ -1435,6 +1435,56 @@ Device-verified: a received `audio/amr` part saved to
 `content://media/external/downloads`. The `audio_toast_saved` wording was
 confirmed building but shipped without a separate on-device check.
 
+### App-only message fields must survive sync
+
+`Message.deletedAt`, `isStarred`, `category` and `isOtp` exist only in this
+app's Realm copy; the system SMS/MMS provider has no such columns. Both sync
+paths rebuild `Message` rows from the provider, so until this was fixed:
+
+- **Full sync** (`syncMessages`: Settings → Sync, switching the default SMS
+  app away and back, every backup restore) deleted every row and rebuilt it,
+  so Trash emptied back into threads, every star vanished, every conversation
+  fell back to Personal, and "Move to" choices (`Conversation.categoryOverride`,
+  not in the preserved conversation fields) were lost.
+- **Single-message sync** (`syncMessage`, run whenever another app or a car
+  touches a message in the provider) replaced the row via `insertOrUpdate`,
+  doing the same to that one message and also dropping its emoji reactions.
+
+Both now go through `AppOnlyMessageFields` in `SyncRepositoryImpl.kt`, keyed by
+provider identity (`type:contentId`; Realm ids are reassigned on full sync).
+**Any new app-only `Message` field must be added there**, or every sync will
+silently wipe it. In `syncMessage` the fields are applied *before* the first
+write, because `saveEmojiReaction` writes the same object again. The full
+sync's `lastMessage` also skips trashed messages, or a conversation deleted to
+Trash reappears with a trashed snippet.
+
+Device-verified on a Note 10: a star, a Trash item, tab counts and a "Move to"
+choice all survived Settings → Sync messages.
+
+Fixed in the same pass:
+- **Duplicate removal** matched far too loosely (outgoing SMS have
+  `dateSent` 0; MMS have an empty body) and hard-deleted. The hash now also
+  covers type, thread and subject, falls back to `date` when `dateSent` is 0,
+  and for MMS requires the same receive time and parts; matches go to Trash.
+  Auto-dedupe used to run inside the sync's write transaction, where its own
+  transaction threw, so it had never run at all; it now runs after the sync
+  commits. Device run found 8 duplicates, all confirmed as identical-sent-time
+  pairs in the provider (carrier double-delivery).
+- **OTP retention** deleted anything tagged by the loose keyword match
+  ("code"/"pin" + any 4-8 digit number), including sent, starred, locked and
+  contacts' messages, permanently. Deletion is now limited to incoming, not
+  starred, not locked, non-contact messages, enforced at deletion so it also
+  covers messages tagged under the old rules. Device-verified (with Justin's
+  OK to delete real codes on the test phone): of 11 old SMS the keyword rule
+  matched, the old behaviour would have deleted all 11; the new one deleted
+  only the single unstarred incoming non-contact code, keeping 8 from
+  contacts, 1 outgoing and 1 starred (6 MMS codes were also deleted; they
+  weren't snapshotted beforehand, so they can't be itemised). Picking a
+  retention period both runs the deletion and schedules the daily job, which
+  Android may start at the same moment; deletion re-queries by id inside its
+  transaction so the second run doesn't throw on rows the first removed
+  (verified: two concurrent runs, no error).
+
 ### Known gaps / open items
 
 - **Android Auto**: two texts appeared in the car but never in the app's
