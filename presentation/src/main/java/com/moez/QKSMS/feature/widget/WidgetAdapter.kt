@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.widget
 
+import dev.octoshrimpy.quik.classifier.InboxTab
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -83,7 +84,10 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
     }
 
     override fun onDataSetChanged() {
+        // Only the tabs chosen in Settings > Message Sorting > Widget shows (all by default)
+        val tabs = prefs.widgetTabs.get()
         conversations = conversationRepo.getConversationsSnapshot(prefs.unreadAtTop.get())
+            .filter { conversation -> InboxTab.of(conversation) in tabs }
 
         val remoteViews = RemoteViews(context.packageName, R.layout.widget)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, remoteViews)

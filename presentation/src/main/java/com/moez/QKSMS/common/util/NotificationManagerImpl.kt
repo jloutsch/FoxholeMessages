@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.common.util
 
+import dev.octoshrimpy.quik.classifier.InboxTab
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -56,7 +57,6 @@ import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import dev.octoshrimpy.quik.classifier.Category
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.tryOrNull
@@ -587,13 +587,7 @@ class NotificationManagerImpl @Inject constructor(
      * personal. Kept deliberately identical so a conversation can't sit under one tab while its
      * notifications follow another category's settings.
      */
-    private fun categoryOf(conversation: Conversation): String {
-        conversation.categoryOverride?.takeIf { it.isNotEmpty() }?.let { return it }
-
-        return conversation.lastMessage?.category
-                ?.takeIf { it == Category.TRANSACTIONAL.name || it == Category.PROMOTIONAL.name }
-                ?: Category.PERSONAL.name
-    }
+    private fun categoryOf(conversation: Conversation): String = InboxTab.of(conversation)
 
     private fun getChannelIdForNotification(threadId: Long): String {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

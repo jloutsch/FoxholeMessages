@@ -46,6 +46,7 @@ class MessageSortingController :
     @Inject lateinit var otpRetentionDialog: QkDialog
 
     private val confirmSortExistingSubject: Subject<Unit> = PublishSubject.create()
+    private val widgetTabsSubject: Subject<Set<String>> = PublishSubject.create()
 
     init {
         appComponent.inject(this)
@@ -69,6 +70,7 @@ class MessageSortingController :
     override fun render(state: MessageSortingState) {
         binding.autoSort.checkbox?.isChecked = state.autoSortEnabled
         binding.otpRetention.summary = state.otpRetentionSummary
+        binding.widgetTabs.summary = state.widgetTabsSummary
         otpRetentionDialog.adapter.selectedItem = state.otpRetentionId
     }
 
@@ -84,6 +86,20 @@ class MessageSortingController :
     override fun otpRetentionSelected(): Observable<Int> = otpRetentionDialog.adapter.menuItemClicks
 
     override fun showOtpRetentionPicker() = otpRetentionDialog.show(activity!!)
+
+    override fun widgetTabsSelected(): Observable<Set<String>> = widgetTabsSubject
+
+    override fun showWidgetTabsPicker(categories: List<String>, labels: List<String>, selected: Set<String>) {
+        val checked = BooleanArray(categories.size) { categories[it] in selected }
+        AlertDialog.Builder(activity!!)
+            .setTitle(R.string.message_sorting_widget_tabs_title)
+            .setMultiChoiceItems(labels.toTypedArray(), checked) { _, which, isChecked -> checked[which] = isChecked }
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                widgetTabsSubject.onNext(categories.filterIndexed { index, _ -> checked[index] }.toSet())
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
 
     override fun showSenderRules() {
         router.pushController(RouterTransaction.with(SenderRulesController())

@@ -48,6 +48,14 @@
             app:title="@string/message_sorting_category_transactional" />
 
         <dev.octoshrimpy.quik.common.widget.PreferenceView
+            android:id="@+id/widgetTabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:icon="@drawable/ic_smartphone_black_24dp"
+            app:title="@string/message_sorting_widget_tabs_title"
+            tools:summary="Personal, Transactions" />
+
+        <dev.octoshrimpy.quik.common.widget.PreferenceView
             android:id="@+id/otpRetention"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

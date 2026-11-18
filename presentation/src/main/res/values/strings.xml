@@ -348,6 +348,8 @@
     <string name="message_sorting_trusted_senders_dialog_add">Add</string>
     <string name="message_sorting_trusted_senders_remove_locked_title">Remove trusted sender?</string>
     <string name="message_sorting_trusted_senders_remove_locked_message">This sender is protected by default. Are you sure you want to remove it?</string>
+    <string name="message_sorting_widget_tabs_title">Widget shows</string>
+    <string name="message_sorting_widget_tabs_pick_one">Pick at least one tab for the widget</string>
     <string name="message_sorting_sort_existing_title">Sort existing messages</string>
     <string name="message_sorting_sort_existing_summary">Categorize messages you already have</string>
     <string name="message_sorting_sort_existing_confirm_message">This will categorize every message currently in your conversations. This may take a moment.</string>

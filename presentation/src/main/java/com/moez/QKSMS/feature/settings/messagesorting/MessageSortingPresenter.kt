@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
+import dev.octoshrimpy.quik.common.util.extensions.makeToast
+import dev.octoshrimpy.quik.manager.WidgetManager
+import dev.octoshrimpy.quik.feature.conversations.Tab
+import dev.octoshrimpy.quik.classifier.InboxTab
 import android.content.Context
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
@@ -36,7 +40,8 @@ class MessageSortingPresenter @Inject constructor(
     private val context: Context,
     private val navigator: Navigator,
     private val prefs: Preferences,
-    private val deleteOldOtps: DeleteOldOtps
+    private val deleteOldOtps: DeleteOldOtps,
+    private val widgetManager: WidgetManager
 ) : QkPresenter<MessageSortingView, MessageSortingState>(
     MessageSortingState(prefs.autoSortEnabled.get())
 ) {
@@ -52,6 +57,18 @@ class MessageSortingPresenter @Inject constructor(
                 val index = otpRetentionIds.indexOf(days)
                 newState { copy(otpRetentionSummary = otpRetentionLabels[index], otpRetentionId = days) }
             }
+
+        disposables += prefs.widgetTabs.asObservable()
+            .subscribe { tabs ->
+                val summary = InboxTab.ALL.filter { it in tabs }.joinToString(", ", transform = ::tabLabel)
+                newState { copy(widgetTabsSummary = summary) }
+            }
+    }
+
+    /** The tab's name as shown in the inbox, including any name the user gave it. */
+    private fun tabLabel(category: String): String {
+        val tab = Tab.values().first { it.category == category }
+        return prefs.tabTitle(tab.name).get().takeIf { it.isNotBlank() } ?: context.getString(tab.titleRes)
     }
 
     override fun bindIntents(view: MessageSortingView) {
@@ -72,6 +89,9 @@ class MessageSortingPresenter @Inject constructor(
                     R.id.notificationsPromotional -> navigator.showCategoryNotificationSettings(Category.PROMOTIONAL.name)
                     R.id.notificationsTransactional -> navigator.showCategoryNotificationSettings(Category.TRANSACTIONAL.name)
                     R.id.otpRetention -> view.showOtpRetentionPicker()
+                    R.id.widgetTabs -> view.showWidgetTabsPicker(
+                        InboxTab.ALL, InboxTab.ALL.map(::tabLabel), prefs.widgetTabs.get()
+                    )
                     R.id.senderRules -> view.showSenderRules()
                     R.id.sortExisting -> view.showSortExistingConfirmDialog()
                     R.id.trustedSenders -> view.showTrustedSenders()
@@ -81,6 +101,17 @@ class MessageSortingPresenter @Inject constructor(
         view.confirmSortExistingIntent()
             .autoDisposable(view.scope())
             .subscribe { ClassifyExistingMessagesWorker.trigger(context, fullResort = true) }
+
+        view.widgetTabsSelected()
+            .autoDisposable(view.scope())
+            .subscribe { tabs ->
+                if (tabs.isEmpty()) {
+                    context.makeToast(R.string.message_sorting_widget_tabs_pick_one)
+                } else {
+                    prefs.widgetTabs.set(tabs)
+                    widgetManager.sendDatasetChanged()
+                }
+            }
 
         view.otpRetentionSelected()
             .autoDisposable(view.scope())

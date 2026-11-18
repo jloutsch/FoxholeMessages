@@ -160,6 +160,9 @@ class Preferences @Inject constructor(
     val emojiReparseVersion = rxPrefs.getInteger("fh_emojiReparseVersion", 0)
     val otpRetentionDays = rxPrefs.getInteger("fh_otpRetentionDays", OTP_RETENTION_NEVER)
 
+    /** Inbox tabs (category names, see InboxTab) whose conversations the home-screen widget lists. */
+    val widgetTabs = rxPrefs.getStringSet("fh_widgetTabs", setOf("PERSONAL", "TRANSACTIONAL", "PROMOTIONAL"))
+
     fun categoryNotifications(category: String): Preference<Boolean> =
         rxPrefs.getBoolean("fh_notifications_$category", true)
 
