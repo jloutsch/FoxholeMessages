@@ -101,7 +101,11 @@ android {
     }
 
     lint {
-        abortOnError false
+        // Findings that existed when lint started failing the build; only new ones fail it now.
+        // Regenerate with ./gradlew :presentation:updateLintBaseline after fixing some.
+        baseline = file("lint-baseline.xml")
+        // Translations lag the English strings on purpose, so a new string isn't an error.
+        disable 'MissingTranslation'
     }
     namespace 'dev.octoshrimpy.quik'
     buildFeatures {
