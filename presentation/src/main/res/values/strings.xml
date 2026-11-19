@@ -307,6 +307,8 @@
     <string name="message_sorting_category_unclassified">Unclassified</string>
     <string name="message_sorting_otp_retention_title">OTP message retention</string>
     <string name="message_sorting_otp_notification_size_title">Code notification size</string>
+    <string name="notification_copy_code">Copy code</string>
+    <string name="toast_code_copied">Code copied</string>
     <string name="message_sorting_category_manage_header">Manage</string>
     <string name="message_sorting_sender_rules_title">Sender rules</string>
     <string name="message_sorting_sender_rules_summary">Manually set a category for specific senders</string>

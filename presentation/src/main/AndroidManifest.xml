@@ -177,6 +177,9 @@
         <receiver
             android:name=".receiver.SpeakThreadsReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".receiver.CopyCodeReceiver"
+            android:exported="false" />
         <receiver android:name=".receiver.RemoteMessagingReceiver" />
         <receiver android:name=".receiver.NightModeReceiver" />
         <receiver
