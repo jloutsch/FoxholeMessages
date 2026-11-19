@@ -7,8 +7,8 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.interactor.DeduplicateMessages
 import dev.octoshrimpy.quik.interactor.DeleteOldMessages
+import dev.octoshrimpy.quik.worker.RetentionWorker
 import dev.octoshrimpy.quik.repository.MessageRepository
-import dev.octoshrimpy.quik.service.AutoDeleteService
 import dev.octoshrimpy.quik.util.Preferences
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.plusAssign
@@ -91,9 +91,9 @@ class MessageUtilsPresenter @Inject constructor(
             }
             .doOnNext { maxAge ->
                 when (maxAge == 0) {
-                    true -> AutoDeleteService.cancelJob(context)
+                    true -> RetentionWorker.cancel(context, RetentionWorker.AUTO_DELETE)
                     false -> {
-                        AutoDeleteService.scheduleJob(context)
+                        RetentionWorker.schedule(context, RetentionWorker.AUTO_DELETE)
                         deleteOldMessages.execute(Unit)
                     }
                 }

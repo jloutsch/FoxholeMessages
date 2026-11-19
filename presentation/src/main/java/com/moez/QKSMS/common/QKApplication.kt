@@ -41,9 +41,10 @@ import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.interactor.SpeakThreads
 import dev.octoshrimpy.quik.migration.QkMigration
 import dev.octoshrimpy.quik.migration.QkRealmMigration
-import dev.octoshrimpy.quik.service.PurgeTrashService
 import dev.octoshrimpy.quik.util.NightModeManager
+import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.worker.HousekeepingWorker
+import dev.octoshrimpy.quik.worker.RetentionWorker
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import timber.log.Timber
@@ -62,6 +63,7 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
     @Inject lateinit var dispatchingServiceInjector: DispatchingAndroidInjector<Service>
     @Inject lateinit var fileLoggingTree: FileLoggingTree
     @Inject lateinit var nightModeManager: NightModeManager
+    @Inject lateinit var prefs: Preferences
     @Inject lateinit var realmMigration: QkRealmMigration
     @Inject lateinit var workerFactory: WorkerFactory
 
@@ -82,10 +84,6 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
                 .build())
 
         qkMigration.performMigration()
-
-        // Trash retention isn't user-configurable (unlike OTP retention), so this job is
-        // always scheduled rather than toggled from a settings screen
-        PurgeTrashService.scheduleJob(this)
 
         nightModeManager.updateCurrentTheme()
 
@@ -139,6 +137,15 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
 
         // register, or re-register, housekeeping work manager
         HousekeepingWorker.register(applicationContext)
+
+        // Re-registering keeps each schedule; doing it every start also covers upgrades from the
+        // JobScheduler versions, which only scheduled when the setting was changed
+        RetentionWorker.cancelLegacyJobs(this)
+        RetentionWorker.schedule(this, RetentionWorker.PURGE_TRASH) // not a setting: always on
+        if (prefs.autoDelete.get() > 0) RetentionWorker.schedule(this, RetentionWorker.AUTO_DELETE)
+        else RetentionWorker.cancel(this, RetentionWorker.AUTO_DELETE)
+        if (prefs.otpRetentionDays.get() > 0) RetentionWorker.schedule(this, RetentionWorker.OTP_RETENTION)
+        else RetentionWorker.cancel(this, RetentionWorker.OTP_RETENTION)
     }
 
     override fun activityInjector(): AndroidInjector<Activity> {
