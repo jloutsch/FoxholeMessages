@@ -147,7 +147,6 @@
     <string name="info_unarchive">Разархивиране</string>
     <string name="info_block">Забраняване</string>
     <string name="info_unblock">Премахване на забраната</string>
-    <string name="blocking_unblock_title">Премахване на забраната</string>
     <string name="info_delete">Премахване на разговора</string>
     <string name="gallery_toast_saved">Запазено в галерията</string>
     <string name="backup_title">Резервно копие и възстановяване</string>
@@ -157,7 +156,6 @@
     <string name="backup_location_title">Папка за резервни копия</string>
     <string name="backup_location_summary">Избиране на папка</string>
     <string name="blocked_numbers_dialog_block">Забраняване</string>
-    <string name="blocking_block_title">Забраняване</string>
     <string name="backup_restore_title">Възстановяване</string>
     <string name="backup_restore_summary">Избиране на резервно копие</string>
     <string name="backup_restore_error_backup">Създава се резервно копие…</string>
@@ -234,10 +232,6 @@
     <string name="settings_unread_at_top_summary">Показване на непрочетените разговори най-горе</string>
     <string name="settings_signature_title">Подпис</string>
     <string name="settings_signature_summary">Добавяне на подпис в края на съобщението</string>
-    <string name="settings_unicode_title">Премахване на ударенията</string>
-    <string name="settings_unicode_summary">Премахване на ударенията от знаците на изходящите съобщения</string>
-    <string name="settings_mobile_title">Само мобилни номера</string>
-    <string name="settings_mobile_summary">При съставяне на съобщение се показват само мобилни номера</string>
     <string name="settings_auto_delete">Премахване на стари съобщения</string>
     <string name="settings_auto_delete_dialog_message">Съобщенията ще бъдат премахвани след определен брой дни</string>
     <string name="settings_auto_delete_dialog_hint">Брой дни</string>
@@ -251,8 +245,6 @@
     <string name="settings_long_as_mms_summary">Ако по-дългите съобщения не се изпращат или се изпращат в грешен ред, можете да ги изпратите като MMS. Възможно е да бъдат начислени допълнителни такси.</string>
     <string name="settings_mms_size_title">Компресиране на прикаченото в MMS</string>
     <string name="settings_mms_weblink_title">Обработване на препратки в съобщенията</string>
-    <string name="settings_disable_screenshots_title">Изключване на екранните снимки</string>
-    <string name="settings_diable_screenshots_summary">Забраняване на ОС и други приложения да снемат екранни снимки на приложението.</string>
     <string name="settings_sync_title">Синхронизиране на съобщения</string>
     <string name="settings_sync_summary">Принудително синхронизиране на съобщенията със съобщенията от хранилището на Андроид</string>
     <string name="settings_about_title">Относно Foxhole Messages</string>
@@ -261,13 +253,6 @@
     <string name="settings_logging_disabled">Дневникът за грешки е изключен</string>
     <string name="blocking_drop_title">Премахване на съобщения</string>
     <string name="blocking_drop_summary">Премахване, а не скриване, на входящите съобщения от забранените изпращачи</string>
-    <string name="blocking_manager_title">Управление на забраните</string>
-    <string name="blocking_manager_qksms_summary">Вградена в Foxhole Messages възможност за забраняване</string>
-    <string name="blocking_manager_call_blocker_summary">Забранителният списък може да работи по график, за да предотвратява нежелани съобщения и входящи обаждания от определени или непознати номера</string>
-    <string name="blocking_manager_call_control_summary">Филтриране на обаждания и съобщения на едно удобно място! Community IQ™ дава възможност да предотвратите получаването на нежелани съобщения от известни на общността изпращачи</string>
-    <string name="blocking_manager_sia_summary">Филтриране на съобщенията от нежелани номера, с помощта на приложението „Should I Answer“</string>
-    <string name="blocking_manager_copy_title">Копиране на забранените номера</string>
-    <string name="blocking_manager_copy_summary">Продължете с %s и нека бъдат запазени вместо текущите забранени номера</string>
     <string name="blocked_numbers_title">Забранени номера</string>
     <string name="blocked_numbers_empty">Забранените номера ще се показват тук</string>
     <string name="blocked_numbers_add_cd">Забраняване на номер</string>
@@ -284,14 +269,6 @@
     <string name="message_content_filters_dialog_create">Създаване</string>
     <string name="blocked_messages_title">Забранени съобщения</string>
     <string name="blocked_messages_empty">Забранените съобщения ще се показват тук</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Продължаване с %s и забраняване на номера</item>
-        <item quantity="other">Продължаване с %s и забраняване на номерата</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Продължаване с %s и разрешаване на номера</item>
-        <item quantity="other">Продължаване с %s и разрешаване на номерата</item>
-    </plurals>
     <string name="deduplicate_messages_category">Дублирани съобщения</string>
     <string name="deduplicate_messages_title">Премахване на дублираните съобщения</string>
     <string name="deduplicate_messages_summary">Обхожда хранилището със съобщения и изтрива всички, които точно съвпадат с изходните съобщения</string>
@@ -303,12 +280,10 @@
     <string name="deduplicating_messages_failed">Грешка при премахване на дублирани съобщения. Пробвайте отново</string>
     <string name="about_title">Относно</string>
     <string name="about_version_title">Издание</string>
-    <string name="about_developer_title">Разработчици</string>
     <string name="about_source_title">Изходен код</string>
     <string name="about_changelog_title">Дневник на промените</string>
     <string name="about_contact_title">За връзка</string>
     <string name="about_license_title">Лиценз</string>
-    <string name="about_copyright_title">Авторско право</string>
     <string name="widget_loading">Затеждане…</string>
     <string name="widget_more">Преглед на повече разговори</string>
     <string name="all_conversations_widget_title">Всички разговори</string>
@@ -354,6 +329,5 @@
     <string name="main_sync_emojis">Анализ на емоциите…</string>
     <string name="message_management_title">Управление на съобщения</string>
     <string name="compose_reactions_title">Емоции</string>
-    <string name="about_developer">Група прекрасни хора от цял свят!</string>
     <string name="notification_foreground_worker_channel_name">Известия на нишката, получаваща съобщения</string>
 </resources>

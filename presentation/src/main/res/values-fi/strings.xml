@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d valittu</string>
     <string name="compose_subtitle_results">%1$d / %2$d tuloksesta</string>
     <string name="compose_send_group_title">Lähetä ryhmäviestinä</string>
-    <string name="compose_send_group_summary">Vastaanottajat ja vastaukset näkyvät kaikille</string>
     <string name="compose_messages_empty">Tämä on keskustelusi alku. Sano jotain mukavaa!</string>
     <string name="compose_vcard_label">Käyntikortti</string>
     <string name="compose_scheduled_for">Ajoitettu</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Lähetetään joulukuun 23. päivänä</string>
     <string name="scheduled_compose_cd">Ajoita viesti</string>
-    <string-array name="scheduled_options">
-        <item>Lähetä nyt</item>
-        <item>Kopioi teksti</item>
-        <item>Poista</item>
-    </string-array>
     <string name="settings_category_appearance">Ulkonäkö</string>
     <string name="settings_category_general">Yleiset</string>
     <string name="settings_category_qkreply">QK-vastaus</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">Vahvista, että viestit lähetettiin onnistuneesti</string>
     <string name="settings_signature_title">Allekirjoitus</string>
     <string name="settings_signature_summary">Lisää allekirjoitus viestiesi loppuun</string>
-    <string name="settings_unicode_title">Käytä yksinkertaisia merkkejä</string>
-    <string name="settings_unicode_summary">Käytä yksinkertaisia merkkejä lähetettävissä tekstiviesteissä</string>
-    <string name="settings_mobile_title">Vain matkapuhelinnumerot</string>
-    <string name="settings_mobile_summary">Ehdota vain matkapuhelinnumeroita viestejä kirjoittaessasi</string>
     <string name="settings_auto_delete">Delete old messages automatically</string>
     <string name="settings_auto_delete_dialog_message">Messages will be deleted after the specified number of days</string>
     <string name="settings_auto_delete_dialog_hint">Number of days</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">Esto</string>
     <string name="blocking_drop_title">Pudota viestit</string>
     <string name="blocking_drop_summary">Pudottaa estettyjen yhteystietojen lähettämät viestit, niiden piilottamisen sijasta</string>
-    <string name="blocking_manager_title">Estojen hallinta</string>
-    <string name="blocking_manager_qksms_summary">Foxhole Messages:ään sisäänrakennettu esto-toiminto</string>
-    <string name="blocking_manager_call_blocker_summary">Block spam messages, numbers &amp; unknown calls with blacklist &amp; Schedule</string>
-    <string name="blocking_manager_call_control_summary">Suodata puhelusi ja soittosi automaattisesti, yhdessä kätevässä paikassa! Community IQ™ antaa sinun estää haluamattomia viestejä, yhteisölle tutuilta roskapostin lähettäjiltä</string>
-    <string name="blocking_manager_sia_summary">Suodata haluamattomien numeroin lähettämät viestit automaattisesti, \"Should I Answer\" -sovellusta käyttämällä</string>
-    <string name="blocking_manager_copy_title">Kopioi estetyt numerot</string>
-    <string name="blocking_manager_copy_summary">Jatka, ja kopioi jo estämäsi numerot, sovellukseen %s</string>
     <string name="blocked_numbers_title">Estetyt numerot</string>
     <string name="blocked_numbers_empty">Estämäsi numerot näkyvät tässä</string>
     <string name="blocked_numbers_add_cd">Estä uusi numero</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">Estä</string>
     <string name="blocked_messages_title">Estetyt viestit</string>
     <string name="blocked_messages_empty">Estämäsi viestit näkyvät täällä</string>
-    <string name="blocking_block_title">Estä</string>
-    <string name="blocking_unblock_title">Salli</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Jatka sovellukseen %s, ja estä tämä numero</item>
-        <item quantity="other">Jatka sovellukseen %s, ja estä nämä numerot</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Jatka sovellukseen %s, ja salli tämä numero</item>
-        <item quantity="other">Jatka sovellukseen %s, ja salli nämä numerot</item>
-    </plurals>
     <string name="about_title">Tietoja</string>
     <string name="about_version_title">Versio</string>
-    <string name="about_developer_title">Kehittäjä</string>
     <string name="about_source_title">Lähdekoodi</string>
     <string name="about_changelog_title">Muutosloki</string>
     <string name="about_contact_title">Yhteystiedot</string>
     <string name="about_license_title">Lisenssi</string>
-    <string name="about_copyright_title">Tekijänoikeudet</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Ladataan…</string>

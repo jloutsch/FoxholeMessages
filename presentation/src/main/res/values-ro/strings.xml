@@ -103,7 +103,6 @@
     <string name="compose_title_selected">%d selectate</string>
     <string name="compose_subtitle_results">%1$d din %2$d rezultate</string>
     <string name="compose_send_group_title">Trimite ca mesaj de grup</string>
-    <string name="compose_send_group_summary">Destinatarii si răspunsurile vor fi vizibile tuturor</string>
     <string name="compose_messages_empty">Acesta este începutul conversației tale. Spune ceva drăguț!</string>
     <string name="compose_vcard_label">Carte de contact</string>
     <string name="compose_scheduled_for">Programat pentru</string>
@@ -250,10 +249,6 @@
     <string name="settings_unread_at_top_summary">Arată conversațiile necitite în partea de sus</string>
     <string name="settings_signature_title">Semnătură</string>
     <string name="settings_signature_summary">Adaugă o semnătură la sfârșitul mesajelor tale</string>
-    <string name="settings_unicode_title">Renunță la accente</string>
-    <string name="settings_unicode_summary">Elimină accentele de la caracterele din SMS-urile trimise</string>
-    <string name="settings_mobile_title">Numai numere mobile</string>
-    <string name="settings_mobile_summary">Când compui un mesaj, se afișează numai numerele de telefon mobil</string>
     <string name="settings_auto_delete">Șterge automat mesajele vechi</string>
     <string name="settings_auto_delete_dialog_message">Mesajele vor fi șterse după numărul de zile specificat</string>
     <string name="settings_auto_delete_dialog_hint">Număr de zile</string>
@@ -278,13 +273,6 @@
     <string name="blocking_title">Blocare</string>
     <string name="blocking_drop_title">Șterge mesajele</string>
     <string name="blocking_drop_summary">Șterge mesajele primite de la expeditorii blocați în loc să le ascunzi</string>
-    <string name="blocking_manager_title">Manager de blocări</string>
-    <string name="blocking_manager_qksms_summary">Funcționalitate de blocare încorporată în Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Blocare mesaje spam, numere și apeluri necunoscute din lista neagră și Planificare</string>
-    <string name="blocking_manager_call_control_summary">Filtrează automat apelurile și mesajele într-un loc convenabil! Community IQ™ îți permite să previi mesajele nedorite de la spamerii cunoscuți de comunitate</string>
-    <string name="blocking_manager_sia_summary">Filtrează automat mesajele de la numere nesolicitate folosind aplicația \"Trebuie să răspund\"</string>
-    <string name="blocking_manager_copy_title">Copiază numerele blocate</string>
-    <string name="blocking_manager_copy_summary">Continuă să %s și copiază peste numerele existente blocate</string>
     <string name="blocked_numbers_title">Numere blocate</string>
     <string name="blocked_numbers_empty">Numerele tale blocate vor apărea aici</string>
     <string name="blocked_numbers_add_cd">Blochează un număr nou</string>
@@ -293,26 +281,12 @@
     <string name="blocked_numbers_dialog_block">Blochează</string>
     <string name="blocked_messages_title">Mesaje blocate</string>
     <string name="blocked_messages_empty">Mesajele tale blocate vor apărea aici</string>
-    <string name="blocking_block_title">Blochează</string>
-    <string name="blocking_unblock_title">Deblochează</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Continuă să %s și blochează acest număr</item>
-        <item quantity="few">Continuă să %s și blochează aceste numere</item>
-        <item quantity="other">Continuă să %s și blochează aceste numere</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Continuă să %s și permite acest număr</item>
-        <item quantity="few">Continuați să %s și permite aceste numere</item>
-        <item quantity="other">Continuă să %s și permite aceste numere</item>
-    </plurals>
     <string name="about_title">Despre</string>
     <string name="about_version_title">Versiune</string>
-    <string name="about_developer_title">Dezvoltator</string>
     <string name="about_source_title">Cod sursă</string>
     <string name="about_changelog_title">Jurnal modificări</string>
     <string name="about_contact_title">Contact</string>
     <string name="about_license_title">Licență</string>
-    <string name="about_copyright_title">Drepturi de autor</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Se încarcă...</string>

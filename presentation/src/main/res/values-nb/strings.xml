@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d valgt</string>
     <string name="compose_subtitle_results">%1$d av %2$d funn</string>
     <string name="compose_send_group_title">Send som gruppemelding</string>
-    <string name="compose_send_group_summary">Mottakere og svar er synlig for alle</string>
     <string name="compose_messages_empty">Nå starter samtalen. Si noe hyggelig!</string>
     <string name="compose_vcard_label">Kontakt</string>
     <string name="compose_scheduled_for">Planlagt tid:</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Sender den 23. desember</string>
     <string name="scheduled_compose_cd">Planlegg en melding</string>
-    <string-array name="scheduled_options">
-        <item>Send nå</item>
-        <item>Copy text</item>
-        <item>Delete</item>
-    </string-array>
     <string name="settings_category_appearance">Utseende</string>
     <string name="settings_category_general">Generelt</string>
     <string name="settings_category_qkreply">Raskt svar</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">Bekreft at melding ble sendt</string>
     <string name="settings_signature_title">Signatur</string>
     <string name="settings_signature_summary">Legg til en signatur til slutten av dine meldinger</string>
-    <string name="settings_unicode_title">Ta bort akutt-tegn</string>
-    <string name="settings_unicode_summary">Ta bort akutt-tegn fra utgående meldinger</string>
-    <string name="settings_mobile_title">Kun mobilnummre</string>
-    <string name="settings_mobile_summary">Vis kun mobilnummre når du skriver ny melding</string>
     <string name="settings_auto_delete">Slett Gamle meldinger automatisk</string>
     <string name="settings_auto_delete_dialog_message">Gamle meldinger blir slettet etter en angitt antall dager</string>
     <string name="settings_auto_delete_dialog_hint">Antall dager</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">Blokking</string>
     <string name="blocking_drop_title">Forkast meldinger</string>
     <string name="blocking_drop_summary">Forkast meldinger fra blokkerte sendere istedenfor å skjule dem</string>
-    <string name="blocking_manager_title">Blokkeringer</string>
-    <string name="blocking_manager_qksms_summary">Innebygd blokkeringsfunksjon i Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Blokker spammeldinger, numre og ukjente anrop med svarteliste og planlegging</string>
-    <string name="blocking_manager_call_control_summary">Filtrer anrop og meldinger automatisk. Fellesskapets intelligens™ hjelper med å forhindre uønskede henvendelser fra plageånder</string>
-    <string name="blocking_manager_sia_summary">Filtrer meldinger fra ukjente numre automatisk med \"Skal jeg svare\"-appen</string>
-    <string name="blocking_manager_copy_title">Kopier blokkerte numre</string>
-    <string name="blocking_manager_copy_summary">Fortsett med %s og kopier eksisterende blokkerte numre</string>
     <string name="blocked_numbers_title">Blokkerte numre</string>
     <string name="blocked_numbers_empty">Blokkerte numre vil vises her</string>
     <string name="blocked_numbers_add_cd">Blokker et nytt nummer</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">Block</string>
     <string name="blocked_messages_title">Blokkerte meldinger</string>
     <string name="blocked_messages_empty">Blokkerte meldinger vil vises her</string>
-    <string name="blocking_block_title">Block</string>
-    <string name="blocking_unblock_title">Opphev blokkering</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Fortsett til %s og blokker nummeret</item>
-        <item quantity="other">Fortsett til %s og blokker numrene</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Fortsett til %s og tillat nummeret</item>
-        <item quantity="other">Fortsett til %s og tillat numrene</item>
-    </plurals>
     <string name="about_title">Om</string>
     <string name="about_version_title">Versjon</string>
-    <string name="about_developer_title">Utviklere</string>
     <string name="about_source_title">Kildekode</string>
     <string name="about_changelog_title">Endringslogg</string>
     <string name="about_contact_title">Kontakt</string>
     <string name="about_license_title">Lisens</string>
-    <string name="about_copyright_title">Opphavsrett</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Laster inn …</string>
@@ -413,8 +384,6 @@
         <item quantity="other">Ikke arkivert %d samtaler</item>
     </plurals>
     <string name="settings_mms_weblink_title">Håndtering av lenker i meldinger</string>
-    <string name="settings_disable_screenshots_title">Skruv av Skjermbilder</string>
-    <string name="settings_diable_screenshots_summary">Hindre at operativsystemet og andre apper tar skjermbilder av appen.</string>
     <string name="message_content_filters_title">Filtre for meldingsinnhold</string>
     <string name="message_content_filters_empty">Dine filtre for meldingsinnholds vises her</string>
     <string name="message_content_filters_add_cd">Lag et nytt filter</string>
@@ -425,7 +394,6 @@
     <string name="deduplicate_messages_summary">Skanner gjennom meldingsdatabasen og sletter alle meldinger som nøyaktig matcher opprinnelige meldinger</string>
     <string name="deduplicate_message_confirmation_dialog_message">Meldingsdatabase din vil bli skannet for duplikater, og deretter vil disse duplikatene bli fjernet.\nDette vil automatisk slette meldinger, fortsett bare om du forstår konsekvensene.</string>
     <string name="all_conversations_widget_title">Alle Samtaler</string>
-    <string name="about_developer">Et team med fantastiske folk fra hele verden rundt!</string>
     <string name="button_clear">Tøm</string>
     <string name="notification_foreground_worker_title">Mottatt melding</string>
     <string name="notification_foreground_worker_text">På Android 12 og eldre kreves det et varsel for bakgrunnsarbeid som muliggjør mottak av meldinger.</string>

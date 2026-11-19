@@ -82,7 +82,6 @@
     <string name="compose_title_selected">%d נבחרו</string>
     <string name="compose_subtitle_results">%1$d מתוך %2$d תוצאות</string>
     <string name="compose_send_group_title">שליחה כהודעה קבוצתית</string>
-    <string name="compose_send_group_summary">הנמענים והתגובות יהיו חשופים בפני כולם</string>
     <string name="compose_messages_empty">זאת תחילת ההתכתבות שלך. כדאי לפתוח במשהו נחמד!</string>
     <string name="compose_vcard_label">כרטיס קשר</string>
     <string name="compose_scheduled_for">מתוזמן למועד</string>
@@ -160,11 +159,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">לשליחה ב־23 בדצמבר</string>
     <string name="scheduled_compose_cd">תזמון הודעה</string>
-    <string-array name="scheduled_options">
-        <item>שלח כעת</item>
-        <item>העתק טקסט</item>
-        <item>מחק</item>
-    </string-array>
     <string name="settings_category_appearance">מראה</string>
     <string name="settings_category_general">כללי</string>
     <string name="settings_category_qkreply">תגובה מהירה</string>
@@ -211,10 +205,6 @@
     <string name="settings_delivery_summary">אישור שההודעות נשלחו בהצלחה</string>
     <string name="settings_signature_title">חתימה</string>
     <string name="settings_signature_summary">הוספת חתימה לסוף ההודעות שלך</string>
-    <string name="settings_unicode_title">סינון סימנים דיאקריטיים</string>
-    <string name="settings_unicode_summary">הסרת סימנים דיאקריטיים מתווים במסרונים יוצאים</string>
-    <string name="settings_mobile_title">מספרי ניידים בלבד</string>
-    <string name="settings_mobile_summary">בעת כתיבת הודעה, להציג רק מספרי טלפון של ניידים</string>
     <string name="settings_auto_delete">למחוק הודעות ישנות אוטומטית</string>
     <string name="settings_auto_delete_dialog_message">הודעות תימחקנה לאחר כמות מסוימת של ימים</string>
     <string name="settings_auto_delete_dialog_hint">מספר הימים</string>
@@ -239,13 +229,6 @@
     <string name="blocking_title">חסימה</string>
     <string name="blocking_drop_title">השמטת הודעות</string>
     <string name="blocking_drop_summary">להשמיט הודעות נכנסות משולחים חסומים במקום להסתיר אותן</string>
-    <string name="blocking_manager_title">מנהל חסימות</string>
-    <string name="blocking_manager_qksms_summary">תכונת חסימה מובנית בתוך Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">חסימת הודעות ספאם, מספרים ושיחות לא מזוהות עם רשימת חסימה ותזמון</string>
-    <string name="blocking_manager_call_control_summary">לסנן אוטומטית את השיחות וההודעות שלך במקום אחיד ונוח! Community IQ™‎ מאפשר לך להימנע מהודעות בלתי רצויות בזכות דיווחים על מפיצי ספאם מצד הקהילה</string>
-    <string name="blocking_manager_sia_summary">לסנן אוטומטית הודעות ממספרים בלתי רצויים על ידי שימוש ביישומון „Should I Answer” (שאענה)</string>
-    <string name="blocking_manager_copy_title">העתקת מספרים חסומים</string>
-    <string name="blocking_manager_copy_summary">להמשיך אל %s כדי להעתיק לכאן את המספרים שחסומים אצלך כרגע</string>
     <string name="blocked_numbers_title">מספרים חסומים</string>
     <string name="blocked_numbers_empty">המספרים שחסמת יופיעו כאן</string>
     <string name="blocked_numbers_add_cd">חסימת מספר חדש</string>
@@ -254,28 +237,12 @@
     <string name="blocked_numbers_dialog_block">חסימה</string>
     <string name="blocked_messages_title">הודעות חסומות</string>
     <string name="blocked_messages_empty">ההודעות שנחסמו תופענה להלן</string>
-    <string name="blocking_block_title">חסימה</string>
-    <string name="blocking_unblock_title">שחרור</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">להמשיך אל %s ולחסום את המספר הזה</item>
-        <item quantity="two">להמשיך אל %s ולחסום את המספרים האלו</item>
-        <item quantity="many">להמשיך אל %s ולחסום את המספרים האלו</item>
-        <item quantity="other">להמשיך אל %s ולחסום את המספרים האלו</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">להמשיך אל %s ולאפשר את המספר הזה</item>
-        <item quantity="two">להמשיך אל %s ולאפשר את המספרים האלו</item>
-        <item quantity="many">להמשיך אל %s ולאפשר את המספרים האלו</item>
-        <item quantity="other">להמשיך אל %s ולאפשר את המספרים האלו</item>
-    </plurals>
     <string name="about_title">על אודות</string>
     <string name="about_version_title">גרסה</string>
-    <string name="about_developer_title">מפתח</string>
     <string name="about_source_title">קוד מקור</string>
     <string name="about_changelog_title">יומן שינויים</string>
     <string name="about_contact_title">איש קשר</string>
     <string name="about_license_title">רישיון</string>
-    <string name="about_copyright_title">זכויות יוצרים</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">בטעינה…</string>

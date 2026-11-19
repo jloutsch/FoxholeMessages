@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d ausgewählt</string>
     <string name="compose_subtitle_results">%1$d von %2$d Ergebnissen</string>
     <string name="compose_send_group_title">Als Gruppennachricht senden</string>
-    <string name="compose_send_group_summary">Empfänger und Antworten werden für jeden sichtbar sein</string>
     <string name="compose_messages_empty">Das ist der Beginn der Unterhaltung. Sag\' etwas Nettes!</string>
     <string name="compose_vcard_label">Kontaktkarte</string>
     <string name="compose_scheduled_for">Geplante Zeit:</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Am 23. Dezember senden </string>
     <string name="scheduled_compose_cd">Eine Nachricht planen</string>
-    <string-array name="scheduled_options">
-        <item>Sofort senden</item>
-        <item>Text kopieren</item>
-        <item>Löschen</item>
-    </string-array>
     <string name="settings_category_appearance">Aussehen</string>
     <string name="settings_category_general">Allgemein</string>
     <string name="settings_category_qkreply">Schnellantwort</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">Bestätigung, dass Nachrichten erfolgreich gesendet wurden</string>
     <string name="settings_signature_title">Signatur</string>
     <string name="settings_signature_summary">Füge eine Signatur am Ende deiner Nachrichten hinzu</string>
-    <string name="settings_unicode_title">Akzente entfernen</string>
-    <string name="settings_unicode_summary">Akzente aus Zeichen in ausgehenden SMS-Nachrichten entfernen</string>
-    <string name="settings_mobile_title">Nur Mobilfunknummern</string>
-    <string name="settings_mobile_summary">Beim Verfassen einer Nachricht nur Mobilfunknummern anzeigen</string>
     <string name="settings_auto_delete">Alte Nachrichten automatisch löschen</string>
     <string name="settings_auto_delete_dialog_message">Nachrichten werden nach der angegebenen Anzahl von Tagen gelöscht</string>
     <string name="settings_auto_delete_dialog_hint">Anzahl der Tage</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">Blockieren</string>
     <string name="blocking_drop_title">Nachrichten verwerfen</string>
     <string name="blocking_drop_summary">Eingehende Nachrichten von blockierten Absendern verwerfen, anstatt sie auszublenden</string>
-    <string name="blocking_manager_title">Blockierverwaltung</string>
-    <string name="blocking_manager_qksms_summary">In Foxhole Messages integrierte Blockierfunktion</string>
-    <string name="blocking_manager_call_blocker_summary">Spam-Nachrichten und Nummern &amp; unbekannte Anrufe mit Sperrliste &amp; Zeitplan blockieren</string>
-    <string name="blocking_manager_call_control_summary">Filtere deine Anrufe und Nachrichten automatisch an einem praktischen Ort! Mit Community IQ™ kannst du unerwünschte Nachrichten von bekannten Community-Spammern verhindern</string>
-    <string name="blocking_manager_sia_summary">Nachrichten von unerwünschten Nummern automatisch mit Hilfe der App \"Should I Answer?\" filtern</string>
-    <string name="blocking_manager_copy_title">Blockierte Nummern kopieren</string>
-    <string name="blocking_manager_copy_summary">Zu %s wechseln und zu den existierenden blockierten Nummern kopieren</string>
     <string name="blocked_numbers_title">Blockierte Nummern</string>
     <string name="blocked_numbers_empty">Deine blockierte Nummern werden hier angezeigt</string>
     <string name="blocked_numbers_add_cd">Eine neue Nummer blockieren</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">Blockieren</string>
     <string name="blocked_messages_title">Blockierte Nachrichten</string>
     <string name="blocked_messages_empty">Deine blockierte Nachrichten werden hier angezeigt</string>
-    <string name="blocking_block_title">Blockieren</string>
-    <string name="blocking_unblock_title">Freigeben</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Wechseln zu %s und diese Nummer blockieren</item>
-        <item quantity="other">Wechseln zu %s und diese Nummern blockieren</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Wechseln zu %s und diese Nummer erlauben</item>
-        <item quantity="other">Wechseln zu %s und diese Nummern erlauben</item>
-    </plurals>
     <string name="about_title">Über</string>
     <string name="about_version_title">Version</string>
-    <string name="about_developer_title">Entwickler</string>
     <string name="about_source_title">Quelltext</string>
     <string name="about_changelog_title">Änderungsprotokoll</string>
     <string name="about_contact_title">Kontakt</string>
     <string name="about_license_title">Lizenz</string>
-    <string name="about_copyright_title">Urheberrecht</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Lädt…</string>
@@ -400,8 +371,6 @@
     <string name="settings_unread_at_top_title">Ungelesene oben</string>
     <string name="settings_unread_at_top_summary">Ungelesene Unterhaltungen oben anzeigen</string>
     <string name="settings_mms_weblink_title">Linkverarbeitung in Nachrichten</string>
-    <string name="settings_disable_screenshots_title">Bildschirmfotos deaktivieren</string>
-    <string name="settings_diable_screenshots_summary">Verhindert, dass dein Betriebssystem und andere Apps Bildschirmfotos der App machen.</string>
     <string name="message_content_filters_title">Nachrichteninhaltsfilter</string>
     <string name="message_content_filters_empty">Hier werden deine Nachrichteninhaltsfilter angezeigt</string>
     <string name="message_content_filters_add_cd">Neuen Filter erstellen</string>
@@ -446,5 +415,4 @@
     <string name="deduplicating_messages_no_messages">Keine doppelten Nachrichten gefunden.</string>
     <string name="deduplicating_messages_failed">Die Deduplizierung der Nachrichten ist fehlgeschlagen. Bitte versuche es erneut</string>
     <string name="compose_reactions_title">Reaktionen</string>
-    <string name="about_developer">Ein Team aus wunderbaren Menschen aus aller Welt!</string>
 </resources>

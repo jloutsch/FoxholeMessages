@@ -79,7 +79,6 @@
     <string name="compose_title_selected">已選取 %d 個項目</string>
     <string name="compose_subtitle_results">已顯示 %2$d 條中的 %1$d 條結果</string>
     <string name="compose_send_group_title">群發訊息</string>
-    <string name="compose_send_group_summary">收件人和回復對每個人都是可見的</string>
     <string name="compose_messages_empty">這是您談話的開始。說點好聽的吧！</string>
     <string name="compose_vcard_label">聯絡人卡片</string>
     <string name="compose_scheduled_for">排程於：</string>
@@ -157,11 +156,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">在 12 月 23 日傳送 </string>
     <string name="scheduled_compose_cd">新增排程訊息</string>
-    <string-array name="scheduled_options">
-        <item>立即傳送</item>
-        <item>複製文字</item>
-        <item>刪除</item>
-    </string-array>
     <string name="settings_category_appearance">外觀</string>
     <string name="settings_category_general">一般</string>
     <string name="settings_category_qkreply">快速答覆</string>
@@ -208,10 +202,6 @@
     <string name="settings_delivery_summary">確認訊息已成功送達</string>
     <string name="settings_signature_title">簽名</string>
     <string name="settings_signature_summary">在訊息結尾加入簽名</string>
-    <string name="settings_unicode_title">刪除讀音符號</string>
-    <string name="settings_unicode_summary">刪除訊息中字母上的讀音符號</string>
-    <string name="settings_mobile_title">僅限手機號碼</string>
-    <string name="settings_mobile_summary">撰寫訊息時，只顯示手機號碼</string>
     <string name="settings_auto_delete">自動刪除舊訊息</string>
     <string name="settings_auto_delete_dialog_message">會在指定的天數後刪除訊息</string>
     <string name="settings_auto_delete_dialog_hint">天數</string>
@@ -233,13 +223,6 @@
     <string name="blocking_title">封鎖</string>
     <string name="blocking_drop_title">直接刪除</string>
     <string name="blocking_drop_summary">直接刪除封鎖的簡訊，而非只有隱藏簡訊</string>
-    <string name="blocking_manager_title">封鎖管理器</string>
-    <string name="blocking_manager_qksms_summary">Foxhole Messages 內建封鎖功能</string>
-    <string name="blocking_manager_call_blocker_summary">使用黑名單與排程封鎖垃圾訊息、號碼和未知來電</string>
-    <string name="blocking_manager_call_control_summary">自動過濾來電與簡訊！Community IQ™ 能讓你遠離不想要的垃圾簡訊</string>
-    <string name="blocking_manager_sia_summary">使用「Should I Answer」應用程式過濾未知號碼的訊息</string>
-    <string name="blocking_manager_copy_title">複製封鎖號碼</string>
-    <string name="blocking_manager_copy_summary">前往 %s 並複製現有的封鎖號碼</string>
     <string name="blocked_numbers_title">封鎖號碼</string>
     <string name="blocked_numbers_empty">封鎖號碼會顯示在這裡</string>
     <string name="blocked_numbers_add_cd">封鎖新號碼</string>
@@ -248,24 +231,12 @@
     <string name="blocked_numbers_dialog_block">封鎖</string>
     <string name="blocked_messages_title">封鎖的訊息</string>
     <string name="blocked_messages_empty">封鎖的訊息會顯示在這裡</string>
-    <string name="blocking_block_title">封鎖</string>
-    <string name="blocking_unblock_title">解除封鎖</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">前往 %s 並封鎖這個號碼</item>
-        <item quantity="other">前往 %s 並封鎖這些號碼</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">前往 %s 並解鎖這個號碼</item>
-        <item quantity="other">前往 %s 並解鎖這些號碼</item>
-    </plurals>
     <string name="about_title">關於</string>
     <string name="about_version_title">版本</string>
-    <string name="about_developer_title">開發者</string>
     <string name="about_source_title">原始碼</string>
     <string name="about_changelog_title">更新日誌</string>
     <string name="about_contact_title">聯絡資訊</string>
     <string name="about_license_title">授權</string>
-    <string name="about_copyright_title">版權</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">載入中…</string>
@@ -396,8 +367,6 @@
     <string name="settings_unread_at_top_title">將未讀訊息置頂</string>
     <string name="settings_unread_at_top_summary">置頂顯示未讀的對話</string>
     <string name="settings_mms_weblink_title">訊息中的連結處理</string>
-    <string name="settings_disable_screenshots_title">停用螢幕截圖</string>
-    <string name="settings_diable_screenshots_summary">防止作業系統與其他應用程式擷取此應用程式的螢幕截圖。</string>
     <string name="message_content_filters_title">訊息內容篩選器</string>
     <string name="message_content_filters_empty">訊息內容篩選器將會顯示在此處</string>
     <string name="message_content_filters_add_cd">建立新篩選器</string>
@@ -440,6 +409,5 @@
     <string name="deduplicating_messages_no_messages">未發現重複訊息。</string>
     <string name="deduplicating_messages_failed">訊息去重失敗，請再試一次</string>
     <string name="compose_reactions_title">反應</string>
-    <string name="about_developer">一支來自世界各地的優秀團隊！</string>
     <string name="notification_foreground_worker_channel_name">接收訊息服務通知</string>
 </resources>

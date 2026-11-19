@@ -82,7 +82,6 @@
     <string name="compose_title_selected">%d selected</string>
     <string name="compose_subtitle_results">%1$d of %2$d results</string>
     <string name="compose_send_group_title">Send as group message</string>
-    <string name="compose_send_group_summary">Recipients and replies will be visible to everyone</string>
     <string name="compose_messages_empty">This is the start of your conversation. Say something nice!</string>
     <string name="compose_vcard_label">Contact card</string>
     <string name="compose_scheduled_for">Scheduled for</string>
@@ -160,11 +159,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Sending on December 23rd </string>
     <string name="scheduled_compose_cd">Schedule a message</string>
-    <string-array name="scheduled_options">
-        <item>Send now</item>
-        <item>Copy text</item>
-        <item>Delete</item>
-    </string-array>
     <string name="settings_category_appearance">Appearance</string>
     <string name="settings_category_general">General</string>
     <string name="settings_category_qkreply">QK Reply</string>
@@ -211,10 +205,6 @@
     <string name="settings_delivery_summary">Confirm that messages were sent successfully</string>
     <string name="settings_signature_title">Signature</string>
     <string name="settings_signature_summary">Add a signature to the end of your messages</string>
-    <string name="settings_unicode_title">Strip accents</string>
-    <string name="settings_unicode_summary">Remove accents from characters in outgoing SMS messages</string>
-    <string name="settings_mobile_title">Mobile numbers only</string>
-    <string name="settings_mobile_summary">When composing a message, only show mobile numbers</string>
     <string name="settings_auto_delete">Delete old messages automatically</string>
     <string name="settings_auto_delete_dialog_message">Messages will be deleted after the specified number of days</string>
     <string name="settings_auto_delete_dialog_hint">Number of days</string>
@@ -239,13 +229,6 @@
     <string name="blocking_title">Blocking</string>
     <string name="blocking_drop_title">Drop messages</string>
     <string name="blocking_drop_summary">Drop incoming messages from blocked senders instead of hiding them</string>
-    <string name="blocking_manager_title">Blocking Manager</string>
-    <string name="blocking_manager_qksms_summary">Built-in blocking functionality in Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Block spam messages, numbers &amp; unknown calls with blacklist &amp; Schedule</string>
-    <string name="blocking_manager_call_control_summary">Automatically filter your calls and messages in one convenient place! Community IQ™ allows you to prevent unwanted messages from community known spammers</string>
-    <string name="blocking_manager_sia_summary">Automatically filter messages from unsolicited numbers by using the \"Should I Answer\" app</string>
-    <string name="blocking_manager_copy_title">Copy blocked numbers</string>
-    <string name="blocking_manager_copy_summary">Continue to %s and copy over your existing blocked numbers</string>
     <string name="blocked_numbers_title">Blocked numbers</string>
     <string name="blocked_numbers_empty">Your blocked numbers will appear here</string>
     <string name="blocked_numbers_add_cd">Block a new number</string>
@@ -254,28 +237,12 @@
     <string name="blocked_numbers_dialog_block">Block</string>
     <string name="blocked_messages_title">Blocked messages</string>
     <string name="blocked_messages_empty">Your blocked messages will appear here</string>
-    <string name="blocking_block_title">Block</string>
-    <string name="blocking_unblock_title">Unblock</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Continue to %s and block this number</item>
-        <item quantity="two">Continue to %s and block these numbers</item>
-        <item quantity="few">Continue to %s and block these numbers</item>
-        <item quantity="other">Continue to %s and block these numbers</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Continue to %s and allow this number</item>
-        <item quantity="two">Continue to %s and allow these numbers</item>
-        <item quantity="few">Continue to %s and allow these numbers</item>
-        <item quantity="other">Continue to %s and allow these numbers</item>
-    </plurals>
     <string name="about_title">About</string>
     <string name="about_version_title">Version</string>
-    <string name="about_developer_title">Developer</string>
     <string name="about_source_title">Source code</string>
     <string name="about_changelog_title">Changelog</string>
     <string name="about_contact_title">Contact</string>
     <string name="about_license_title">License</string>
-    <string name="about_copyright_title">Copyright</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Loading…</string>

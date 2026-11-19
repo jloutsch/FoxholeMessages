@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d নির্বাচিত</string>
     <string name="compose_subtitle_results">%2$d এর %1$d টি ফলাফল </string>
     <string name="compose_send_group_title">গ্রুপ বার্তা হিসেবে পাঠাও</string>
-    <string name="compose_send_group_summary">প্রাপক এবং উত্তর সবার চোখে পড়বে</string>
     <string name="compose_messages_empty">এখানে তোমার আলাপ শুরু হয়। সুন্দর কিছু বলো!</string>
     <string name="compose_vcard_label">পরিচিতি কার্ড</string>
     <string name="compose_scheduled_for">জন্য পরিকল্পিত</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">২৩শে ডিসেম্বর পাঠানো হচ্ছে </string>
     <string name="scheduled_compose_cd">পরবর্তীতে পাঠানোর জন্য একটি বার্তা পরিকল্পনা করো</string>
-    <string-array name="scheduled_options">
-        <item>এখন পাঠাও</item>
-        <item>লেখা অনুলিপি করো</item>
-        <item>মুছো</item>
-    </string-array>
     <string name="settings_category_appearance">উপস্থিতি</string>
     <string name="settings_category_general">সাধারণ</string>
     <string name="settings_category_qkreply">QK উত্তর</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">নিশ্চিত করো যে বার্তা সফলভাবে পাঠানো হয়েছে</string>
     <string name="settings_signature_title">স্বাক্ষর</string>
     <string name="settings_signature_summary">তোমার বার্তাগুলোর শেষে একটা স্বাক্ষর যোগ করো</string>
-    <string name="settings_unicode_title">কথার টান সরিয়ে দিন</string>
-    <string name="settings_unicode_summary">বহির্গামী এসএমএস বার্তার অক্ষর থেকে কথার টান সরিয়ে নাও(accent)</string>
-    <string name="settings_mobile_title">শুধু মোবাইল নম্বর</string>
-    <string name="settings_mobile_summary">বার্তা লিখার করার সময়, শুধুমাত্র মোবাইল নম্বর দেখাও</string>
     <string name="settings_auto_delete">পুরান বার্তা স্বয়ংক্রিয়ভাবে মুছে দাও</string>
     <string name="settings_auto_delete_dialog_message">নির্দিষ্ট দিন পরে বার্তাগুলো মুছে যাবে</string>
     <string name="settings_auto_delete_dialog_hint">দিন সংখ্যা</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">অবরুদ্ধ হচ্ছে</string>
     <string name="blocking_drop_title">বার্তা ফেলে দাও</string>
     <string name="blocking_drop_summary">অবরোধকৃত প্রেরকদের বার্তা লুকানোর জায়গায় ফেলে দাও</string>
-    <string name="blocking_manager_title">অবরুদ্ধকরণ ব্যবস্থাপক</string>
-    <string name="blocking_manager_qksms_summary">Foxhole Messages-এর অন্তর্ভুক্ত অবরোধী সক্ষমতা(blocking)</string>
-    <string name="blocking_manager_call_blocker_summary">স্প্যাম বার্তা, নম্বর &amp; অজানা কল অবরোধ তালিকা দিয়ে থামাও &amp; সময়সূচী</string>
-    <string name="blocking_manager_call_control_summary">তোমার কল আর বার্তা একটাই সুবিধাজনক জায়গা থেকে ফিল্টার করো বা ছাঁকো! Community IQ™ দিয়ে অবাঞ্ছিত বার্তা আটকানো যায় সমাজে পরিচিত স্প্যামারদের থেকে</string>
-    <string name="blocking_manager_sia_summary">স্বয়ংক্রিয়ভাবে \"Should I Answer\"(আমার কি উত্তর দেয়া উচিত?) অ্যাপ্লিকেশন ব্যবহার করে অযাচিত নম্বর-এর বার্তাগুলি ফিল্টার করো</string>
-    <string name="blocking_manager_copy_title">অবরুদ্ধ নম্বরগুলো অনুলিপি করো</string>
-    <string name="blocking_manager_copy_summary">%s-এ এগিয়ে যাও এবং তোমার আগের অবরোধকৃত নম্বরগুলো অনুলিপি করো</string>
     <string name="blocked_numbers_title">অবরুদ্ধ নম্বরগুলো</string>
     <string name="blocked_numbers_empty">তোমার অবরোধকৃত নম্বরগুলো এখানে আসবে</string>
     <string name="blocked_numbers_add_cd">একটি নতুন নম্বর অবরোধ করো</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">অবরুদ্ধ করুন</string>
     <string name="blocked_messages_title">অবরুদ্ধ করা বার্তা</string>
     <string name="blocked_messages_empty">অবরুদ্ধ করা বার্তা এখানে আসবে</string>
-    <string name="blocking_block_title">অবরুদ্ধ</string>
-    <string name="blocking_unblock_title">অবরুদ্ধতা বাতিল করুন</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">%s-এ এগিয়ে যাও এবং এই নম্বর অবরোধ করো</item>
-        <item quantity="other">%s-এ এগিয়ে যাও ও এই নম্বরগুলো অবরোধ করো</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">%s-এ এগিয়ে যাও ও এই নম্বর থেকে বার্তা আসতে দাও</item>
-        <item quantity="other">%s-এ এগিয়ে যাও ও এই নম্বরগুলো থেকে বার্তা আসতে দাও</item>
-    </plurals>
     <string name="about_title">সম্পর্কে</string>
     <string name="about_version_title">সংস্করণ</string>
-    <string name="about_developer_title">ডেভেলপার</string>
     <string name="about_source_title">সোর্স কোড</string>
     <string name="about_changelog_title">পরিবর্তনসূচী</string>
     <string name="about_contact_title">যোগাযোগ করুন</string>
     <string name="about_license_title">লাইসেন্স</string>
-    <string name="about_copyright_title">স্বত্ব</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">লোড হচ্ছে…</string>

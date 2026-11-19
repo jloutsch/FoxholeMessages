@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d valgt</string>
     <string name="compose_subtitle_results">%1$d af %2$d resultater</string>
     <string name="compose_send_group_title">Send som gruppe besked</string>
-    <string name="compose_send_group_summary">Modtagere og besvarelser vil være synlige for alle</string>
     <string name="compose_messages_empty">Detter er starten på den samtale. Sig noget pænt!</string>
     <string name="compose_vcard_label">Kontaktkort</string>
     <string name="compose_scheduled_for">Planlagt til</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Sender d. 23. december </string>
     <string name="scheduled_compose_cd">Planlæg en besked</string>
-    <string-array name="scheduled_options">
-        <item>Send nu</item>
-        <item>Kopiér tekst</item>
-        <item>Slet</item>
-    </string-array>
     <string name="settings_category_appearance">Udseende</string>
     <string name="settings_category_general">Generelt</string>
     <string name="settings_category_qkreply">QK-svar</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">Bekræft, at SMS\'er er afsendt korrekt</string>
     <string name="settings_signature_title">Signatur</string>
     <string name="settings_signature_summary">Føj en signatur til slutningen af dine beskeder</string>
-    <string name="settings_unicode_title">Fjern betoninger</string>
-    <string name="settings_unicode_summary">Fjern betoninger fra tegn i udgående SMS\'er</string>
-    <string name="settings_mobile_title">Kun mobilnumre</string>
-    <string name="settings_mobile_summary">Vis kun mobilnumre ved SMS-skrivning,</string>
     <string name="settings_auto_delete">Slet automatisk gamle beskeder</string>
     <string name="settings_auto_delete_dialog_message">Beskeder slettes efter det angivne antal dage</string>
     <string name="settings_auto_delete_dialog_hint">Antal dage</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">Blokering</string>
     <string name="blocking_drop_title">Drop beskeder</string>
     <string name="blocking_drop_summary">Drop indgående beskeder fra blokerede afsendere i stedet for at skjule dem</string>
-    <string name="blocking_manager_title">Blokeringshåndtering</string>
-    <string name="blocking_manager_qksms_summary">Indbygget blokeringsfunktionalitet i Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Blokér spambeskeder, numre &amp; ukendte opkald med sortliste &amp; tidsplan</string>
-    <string name="blocking_manager_call_control_summary">Filtrér automatisk dine opkald og beskeder på ét praktisk sted! Community IQ™ giver dig mulighed for at forhindre uønskede beskeder fra spammere kendt af fællesskabet</string>
-    <string name="blocking_manager_sia_summary">Filtrér automatisk beskeder fra uopfordrede numre vha. \"Should I Answer?\" app\'en</string>
-    <string name="blocking_manager_copy_title">Kopiér blokerede numre</string>
-    <string name="blocking_manager_copy_summary">Fortsæt til %s og kopiér dine blokerede nummer dertil</string>
     <string name="blocked_numbers_title">Blokerede numre</string>
     <string name="blocked_numbers_empty">Dine blokerede numre vil fremgå hér</string>
     <string name="blocked_numbers_add_cd">Blokér et nyt nummer</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">Blokér</string>
     <string name="blocked_messages_title">Blokerede beskeder</string>
     <string name="blocked_messages_empty">Dine blokerede beskeder vil fremgå hér</string>
-    <string name="blocking_block_title">Blokér</string>
-    <string name="blocking_unblock_title">Afblokér</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Fortsæt til %s og blokér dette nummer</item>
-        <item quantity="other">Fortsæt til %s og blokér disse numre</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Fortsæt til %s og tillad dette nummer</item>
-        <item quantity="other">Fortsæt til %s og tillad disse numre</item>
-    </plurals>
     <string name="about_title">Om</string>
     <string name="about_version_title">Version</string>
-    <string name="about_developer_title">Udvikler</string>
     <string name="about_source_title">Kildekode</string>
     <string name="about_changelog_title">Ændringslog</string>
     <string name="about_contact_title">Kontakt</string>
     <string name="about_license_title">Licens</string>
-    <string name="about_copyright_title">Copyright</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Indlæser…</string>

@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d தேர்ந்தெடுக்கப்பட்டது</string>
     <string name="compose_subtitle_results">%2$d-ல் %1$d ஆம் முடிவு</string>
     <string name="compose_send_group_title">குழு தகவலாக அனுப்பு</string>
-    <string name="compose_send_group_summary">பெறுநர்கள் மற்றும் பதில்கள் அனைவருக்கும் தெரியும்</string>
     <string name="compose_messages_empty">இது உங்கள் உரையாடலின் ஆரம்பம். ஏதாவது நல்லதைச் சொல்லுங்கள்!</string>
     <string name="compose_vcard_label">தொடர்பு அட்டை</string>
     <string name="compose_scheduled_for">குறித்த நேரம்</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">டிசம்பர் 23 அன்று அனுப்புகிறது</string>
     <string name="scheduled_compose_cd">செய்தியைத் திட்டமிடு</string>
-    <string-array name="scheduled_options">
-        <item>இப்போது அனுப்பு</item>
-        <item>உரையை நகலெடு</item>
-        <item>நீக்கு</item>
-    </string-array>
     <string name="settings_category_appearance">தோற்றம்</string>
     <string name="settings_category_general">பொது</string>
     <string name="settings_category_qkreply">QK பதில்</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">தகவல்கள் வெற்றிகரமாக அனுப்பப்பட்டதை உறுதிசெய்</string>
     <string name="settings_signature_title">ஒப்பம்</string>
     <string name="settings_signature_summary">தகவலின் முடிவில் ஒப்பத்தை சேர்</string>
-    <string name="settings_unicode_title">Strip accents</string>
-    <string name="settings_unicode_summary">Remove accents from characters in outgoing SMS messages</string>
-    <string name="settings_mobile_title">கைபேசி எண்கள் மட்டும்</string>
-    <string name="settings_mobile_summary">தகவல் இயற்றும்போது, கைபேசி எண்கள் மட்டும் காட்டு</string>
     <string name="settings_auto_delete">தானாக பழைய தகவல்களை அழி</string>
     <string name="settings_auto_delete_dialog_message">குறிப்பிட்ட நாட்களுக்குப் பிறகு செய்திகள் நீக்கப்படும்</string>
     <string name="settings_auto_delete_dialog_hint">நாட்களின் எண்ணிக்கை</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">தடுப்பிலுள்ளவை</string>
     <string name="blocking_drop_title">தகவல்களை கைவிடு</string>
     <string name="blocking_drop_summary">தடுத்த அனுப்புநர்களிடமிருந்து வரும் தகவல்களை மறைப்பதற்கு பதிலாக கைவிடு</string>
-    <string name="blocking_manager_title">தடுத்தல் மேலாளர்</string>
-    <string name="blocking_manager_qksms_summary">Built-in blocking functionality in Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Block spam messages, numbers &amp; unknown calls with blacklist &amp; Schedule</string>
-    <string name="blocking_manager_call_control_summary">Automatically filter your calls and messages in one convenient place! Community IQ™ allows you to prevent unwanted messages from community known spammers</string>
-    <string name="blocking_manager_sia_summary">Automatically filter messages from unsolicited numbers by using the \"Should I Answer\" app</string>
-    <string name="blocking_manager_copy_title">தடுக்கப்பட்ட எண்களை நகலெடு</string>
-    <string name="blocking_manager_copy_summary">Continue to %s and copy over your existing blocked numbers</string>
     <string name="blocked_numbers_title">தடுக்கப்பட்ட எண்கள்</string>
     <string name="blocked_numbers_empty">உம் தடுக்கப்பட்ட எண்கள் இங்கு தோன்றும்</string>
     <string name="blocked_numbers_add_cd">ஒரு புது எண்ணை தடு</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">தடு</string>
     <string name="blocked_messages_title">தடுக்கப்பட்ட தகவல்கள்</string>
     <string name="blocked_messages_empty">உம் தடுக்கப்பட்ட தகவல்கள் இங்கு தோன்றும்</string>
-    <string name="blocking_block_title">தடு</string>
-    <string name="blocking_unblock_title">தடைநீக்கு</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Continue to %s and block this number</item>
-        <item quantity="other">Continue to %s and block these numbers</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Continue to %s and allow this number</item>
-        <item quantity="other">Continue to %s and allow these numbers</item>
-    </plurals>
     <string name="about_title">இதுபற்றி</string>
     <string name="about_version_title">பதிப்பு</string>
-    <string name="about_developer_title">உருவாக்குநர்</string>
     <string name="about_source_title">மூல குறியீடு</string>
     <string name="about_changelog_title">மாற்றப்பதிவு</string>
     <string name="about_contact_title">தொடர்பு</string>
     <string name="about_license_title">உரிமம்</string>
-    <string name="about_copyright_title">பதிப்புரிமை</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">ஏற்றுகிறது...</string>
