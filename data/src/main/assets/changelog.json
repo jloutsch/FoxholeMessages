@@ -1,5 +1,25 @@
 [
   {
+    "versionCode": 2267,
+    "versionName": "2.7.0",
+    "added": [
+      "\"Use system colors\" setting: match your wallpaper on Android 12 and newer",
+      "Recent conversations appear in the share sheet",
+      "\"Sort existing messages\" shows its progress and how many messages it sorted",
+      "Back gesture previews (predictive back)"
+    ],
+    "fixed": [
+      "Restoring a backup could fail with \"Couldn't read backup file\"",
+      "\"Delete forever\" in Trash crashed the app",
+      "The restore button in Trash was hard to see, and long messages ran under the delete button",
+      "The daily clean-up deleted the whole image cache instead of only its own leftovers"
+    ],
+    "improved": [
+      "Updated to Kotlin 2 and current Android libraries",
+      "Storage permission is only requested on Android 9 and older"
+    ]
+  },
+  {
     "versionCode": 2266,
     "versionName": "2.6.2",
     "fixed": [

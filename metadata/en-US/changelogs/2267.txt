@@ -1,0 +1,9 @@
+What's new in 2.7.0:
+- New: "Use system colors" to match your wallpaper (Android 12+).
+- New: recent conversations in the share sheet.
+- New: "Sort existing messages" shows progress and a count.
+- Fixed: restoring a backup could fail.
+- Fixed: "Delete forever" in Trash crashed.
+- Fixed: Trash restore button hard to see; long text ran under delete.
+- Fixed: daily clean-up wiped the image cache.
+- Improved: Kotlin 2 and current Android libraries.
