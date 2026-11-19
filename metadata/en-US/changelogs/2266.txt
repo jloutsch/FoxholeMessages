@@ -1,0 +1,5 @@
+What's new in 2.6.2:
+- Fixed: "Attach any file" now opens the file picker (on Android 17 it closed straight away).
+- Fixed: opening the theme color picker could crash on Android 14 and older.
+- Fixed: forwarding a message that had been deleted could crash the app.
+- Improved: Back handling and the video player updated to Android's current versions.

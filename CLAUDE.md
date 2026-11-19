@@ -1091,7 +1091,7 @@ draft can be discarded.
 ## v2.x — Play Store release, obfuscation, and the traps found along the way
 
 The app is live on Google Play as of the 2.x line. Current shipped
-version is **`versionCode 2265` / `versionName '2.6.1'`**. (2.3.1 was
+version is **`versionCode 2266` / `versionName '2.6.2'`**. (2.3.1 was
 split across two versionCodes: the public GitHub release `v2.3.1`
 carries 2259, and 2260 is the same tree with `minSdk` raised, built as a
 draft for Play — see the minSdk note under Play Console notes.)
@@ -1597,9 +1597,19 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
 - **Empty `Conversation` rows** aren't cleaned up after all their
   messages are purged from Trash. Harmless — already invisible via the
   `lastMessage`/`draft` filter.
-- **Predictive back** is opted out via
-  `enableOnBackInvokedCallback="false"`; a real migration to
-  `OnBackPressedCallback` is still owed eventually.
+- **Predictive back** is still opted out via
+  `enableOnBackInvokedCallback="false"`, but since 2.6.2 every screen already
+  handles Back through `OnBackPressedCallback` (`QkActivity.onBack` /
+  `routeBackTo` for Conductor screens) and nothing overrides `onBackPressed`.
+  Don't call `onBackPressed()` directly: the dispatcher's fallback skips
+  subclass overrides, so use `onBackPressedDispatcher.onBackPressed()`.
+  What's left is turning the opt-out off and checking the animation.
+- **Compiler warnings** were taken to zero in 2.6.2; the few deprecated calls
+  kept on purpose each carry a one-line reason at the call site. ExoPlayer is
+  now Media3 1.1.1 (same release line; the gallery video player wasn't
+  re-checked on a phone). `androidx.core` is 1.10.1: its typed
+  `getSerializableExtra` helpers only arrived in 1.13, which wasn't tried
+  with Kotlin 1.7.21.
 - **Custom inbox tabs** (roadmap item 4 above) remains deliberately
   deferred.
 - **`IllegalArgumentException: You must call this method on a background

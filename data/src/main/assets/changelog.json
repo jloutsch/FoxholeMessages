@@ -1,5 +1,17 @@
 [
   {
+    "versionCode": 2266,
+    "versionName": "2.6.2",
+    "fixed": [
+      "\"Attach any file\" now opens the file picker (on Android 17 it closed straight away)",
+      "Opening the theme color picker could crash on Android 14 and older",
+      "Forwarding a message that had been deleted could crash the app"
+    ],
+    "improved": [
+      "Updated Back handling and the video player to Android's current versions"
+    ]
+  },
+  {
     "versionCode": 2265,
     "versionName": "2.6.1",
     "fixed": [
