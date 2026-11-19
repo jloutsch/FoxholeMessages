@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d گزیده شده</string>
     <string name="compose_subtitle_results">اَبدُمان %1$d از %2$d</string>
     <string name="compose_send_group_title">فرستادن پیام گروهی</string>
-    <string name="compose_send_group_summary">گیرندگان اود پاسخ‌ها برای همه هویدا خواهد بود</string>
     <string name="compose_messages_empty">این آغاز گفتگوی شماست. چیز خوبی بگویید!</string>
     <string name="compose_vcard_label">کارت هَمدرِنگ</string>
     <string name="compose_scheduled_for">زمان برنامه‌ریزی‌شده:</string>
@@ -156,11 +155,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">فرستادن در ۲ دی‌ماه</string>
     <string name="scheduled_compose_cd">پیامی را برنامه‌ریزی کنید</string>
-    <string-array name="scheduled_options">
-        <item>هم اکنون بفرست</item>
-        <item>کپی متن</item>
-        <item>حذف</item>
-    </string-array>
     <string name="settings_category_appearance">نما</string>
     <string name="settings_category_general">فراگیر</string>
     <string name="settings_category_qkreply">پاسخ چالاک</string>
@@ -207,10 +201,6 @@
     <string name="settings_delivery_summary">بِهایست که فرستادن پیام‌ها کامیاب بود</string>
     <string name="settings_signature_title">دستینه</string>
     <string name="settings_signature_summary">به پایان پیام‌های خود دستینگی بیافزایید</string>
-    <string name="settings_unicode_title">ستردن گویش‌ها</string>
-    <string name="settings_unicode_summary">ستردن گویش‌ها از وات‌ها در پیام فرستادنی</string>
-    <string name="settings_mobile_title">تنها شماره تلفن‌ها</string>
-    <string name="settings_mobile_summary">هنگام فرستادن پیام، تنها شماره تلفن‌ها نمایش داده شوند</string>
     <string name="settings_auto_delete">فروستردن خودکار پیام‌های کهنه</string>
     <string name="settings_auto_delete_dialog_message">پیام‌ها پس از گذشت روز‌های برگماشته شده سترده می‌شوند</string>
     <string name="settings_auto_delete_dialog_hint">شمار روزها</string>
@@ -233,13 +223,6 @@
     <string name="blocking_title">‏بژکم کردن</string>
     <string name="blocking_drop_title">پیام‌ها را دور بینداز</string>
     <string name="blocking_drop_summary">دریافتی‌های فرستنده‌های بژکم شده را به جای مخفی کردن، دور بیانداز</string>
-    <string name="blocking_manager_title">راینیدن بژکم شدگان</string>
-    <string name="blocking_manager_qksms_summary">کارکرد بژکم کننده درونی در Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">بژکم کردن پیام‌های هرزنامه، شماره‌ها و زنگ‌های ناشناخته با لیست سیاه اود برنامه‌ریزی</string>
-    <string name="blocking_manager_call_control_summary">زنگ‌ها و پیام‌های خود را خودکار پالایش کنید! Community IQ™ به شما دسترسی می دهد تا از پیام‌های ناخواسته از هرزفرست‌های شناخته شده جلوگیری کنید</string>
-    <string name="blocking_manager_sia_summary">با بکارگیری برنامه «می‌شود پاسخ دهم»، پیام‌ها را از شماره‌های ناخواسته خودکار پالایش کنید</string>
-    <string name="blocking_manager_copy_title">پچین شماره‌های بژکم شده</string>
-    <string name="blocking_manager_copy_summary">به %s ادامه دهید اود شماره‌های بژکم شده‌ی فرتاش خویش را پچین کنید</string>
     <string name="blocked_numbers_title">شماره‌های بژکم شده</string>
     <string name="blocked_numbers_empty">شماره‌های بژکم شده‌ی شما در اینجا نمایان می‌شوند</string>
     <string name="blocked_numbers_add_cd">بژکم کردن شماره‌ای نو</string>
@@ -248,24 +231,12 @@
     <string name="blocked_numbers_dialog_block">بَژکم کردن</string>
     <string name="blocked_messages_title">پیام‌های بژکم شده</string>
     <string name="blocked_messages_empty">پیام‌های بژکم شده‌ی شما در اینجا نمایان می‌شوند</string>
-    <string name="blocking_block_title">بژکم کردن</string>
-    <string name="blocking_unblock_title">اَبژکم کردن</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">به %s ادامه ده اود این شماره را بژکم کن</item>
-        <item quantity="other">به %s ادامه ده اود این شماره‌ها را بژکم کن</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">به %s ادامه ده اود این شماره را بِهِل</item>
-        <item quantity="other">به %s ادامه ده اود این شماره‌ها را بِهِل</item>
-    </plurals>
     <string name="about_title">درباره</string>
     <string name="about_version_title">نگارش</string>
-    <string name="about_developer_title">برنامه‌نویس</string>
     <string name="about_source_title">بن‌مایه‌ی دستور</string>
     <string name="about_changelog_title">گزارش دگرگونی‌</string>
     <string name="about_contact_title">پیوند گرفتن</string>
     <string name="about_license_title">پروانه</string>
-    <string name="about_copyright_title">هوده‌ی پچین</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">بارگذاری…</string>
@@ -417,8 +388,6 @@
     <string name="clipboard_unable_to_copy_to">نمی‌توان به بُریده‌‏دان پچین کرد</string>
     <string name="settings_notification_previews_summary">نمایش نام اود پیام</string>
     <string name="settings_notification_silent_summary">آگاهنده‌ها را برای پیام‌هایی که از همدرنگان شما نیستند، بی‌صدا می‌کند</string>
-    <string name="settings_disable_screenshots_title">ناکارا کردن نماگرفت‌ها</string>
-    <string name="settings_diable_screenshots_summary">سامانه‌عامل اود دیگر برنامه‌ها را از نماگرفتن از برنامه بازدارید.</string>
     <string name="compose_message_item">تاگ پیام</string>
     <string name="message_content_filters_title">پالایه‌های اوبَریشن پیام</string>
     <string name="message_content_filters_empty">پالایه‌های اوبَریشن پیام شما اینجا نمایان می‌شوند</string>

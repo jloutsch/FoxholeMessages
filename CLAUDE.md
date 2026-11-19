@@ -238,6 +238,15 @@ broken version of the code it covers. What's covered, and the past failure each 
 Tests that read files (proguard rules, changelogs, emoji assets) declare them as Gradle test inputs,
 so editing those files re-runs the tests locally rather than reusing a stale pass.
 
+Lint runs in the same CI job and **fails the build on any new error**. Findings that existed when
+this was turned on are recorded in `presentation/lint-baseline.xml` and `android-smsmms/lint-baseline.xml`
+(`common`/`domain`/`data` had warnings only). After fixing baselined findings, regenerate with
+`./gradlew :presentation:updateLintBaseline`. `MissingTranslation` is disabled: translations lag English
+on purpose. Real findings still in the baseline worth fixing some day: `MissingPermission` in
+`RestoreBackupService` and in the vendored `getLine1Number` calls. The `AutoDispose` check is disabled:
+version 1.3.0's detector crashes under AGP 8 lint. Before that it flagged three undisposed subscriptions
+(`BlockingController` lines 105 and 123, `CategoryNotificationActivity` line 69).
+
 On-device tests (`data/src/androidTest`) need a phone and aren't run by CI: phone-number matching
 (`PhoneNumberUtilsTest`) and `TrashFiltersTest`, which runs the real repository queries against an
 in-memory database to check that unread badges, search, the media gallery and shortcut ranking leave

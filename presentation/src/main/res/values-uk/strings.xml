@@ -82,7 +82,6 @@
     <string name="compose_title_selected">Обрано: %d</string>
     <string name="compose_subtitle_results">%1$d із %2$d результатів</string>
     <string name="compose_send_group_title">Надіслати як групове повідомлення</string>
-    <string name="compose_send_group_summary">Отримувачі та відповіді будуть видимі для всіх</string>
     <string name="compose_messages_empty">Це початок вашої бесіди. Скажіть, що-небудь приємне!</string>
     <string name="compose_vcard_label">Картка контакту</string>
     <string name="compose_scheduled_for">Заплановано на</string>
@@ -160,11 +159,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Надіслано: 23 грудня </string>
     <string name="scheduled_compose_cd">Запланувати повідомлення</string>
-    <string-array name="scheduled_options">
-        <item>Надіслати зараз</item>
-        <item>Копіювати текст</item>
-        <item>Видалити</item>
-    </string-array>
     <string name="settings_category_appearance">Зовнішній вигляд</string>
     <string name="settings_category_general">Загальні</string>
     <string name="settings_category_qkreply">Швидка відповідь</string>
@@ -211,10 +205,6 @@
     <string name="settings_delivery_summary">Підтвердження успішного надсилання повідомлень</string>
     <string name="settings_signature_title">Підпис</string>
     <string name="settings_signature_summary">Додавати підпис в кінець ваших повідомлень</string>
-    <string name="settings_unicode_title">Видалити акценти</string>
-    <string name="settings_unicode_summary">Видалення акцентів з символів у вихідних SMS-повідомленнях</string>
-    <string name="settings_mobile_title">Лише номери мобільних</string>
-    <string name="settings_mobile_summary">При написанні повідомлення показувати лише мобільні номери</string>
     <string name="settings_auto_delete">Автоматично видаляти старі повідомлення</string>
     <string name="settings_auto_delete_dialog_message">Повідомлення будуть видалені після вказаної кількості днів</string>
     <string name="settings_auto_delete_dialog_hint">Кількість днів</string>
@@ -239,13 +229,6 @@
     <string name="blocking_title">Блокування</string>
     <string name="blocking_drop_title">Видалити повідомлення</string>
     <string name="blocking_drop_summary">Видаляти вхідні повідомлення від заблокованих відправників, а не приховувати їх</string>
-    <string name="blocking_manager_title">Керування блокуванням</string>
-    <string name="blocking_manager_qksms_summary">Вбудована функція блокування Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Блокуйте спам-повідомлення, невідомі номери та дзвінки за допомогою чорного списку та за розкладом</string>
-    <string name="blocking_manager_call_control_summary">Автоматична фільтрація дзвінків та повідомлень в одному зручному місці! Community IQ™ дозволить запобігти отримуванню небажаних повідомлень від відомих спільноті спамерів</string>
-    <string name="blocking_manager_sia_summary">Автоматично фільтрувати повідомлення від небажаних номерів за допомогою застосунку «Should I Answer»</string>
-    <string name="blocking_manager_copy_title">Скопіювати заблоковані номери</string>
-    <string name="blocking_manager_copy_summary">Продовжити з %s і записати їх замість наявних заблокованих номерів</string>
     <string name="blocked_numbers_title">Заблоковані номери</string>
     <string name="blocked_numbers_empty">Тут з\'являтимуться ваші заблоковані номери</string>
     <string name="blocked_numbers_add_cd">Заблокувати новий номер</string>
@@ -254,28 +237,12 @@
     <string name="blocked_numbers_dialog_block">Блокувати</string>
     <string name="blocked_messages_title">Заблоковані повідомлення</string>
     <string name="blocked_messages_empty">Ваші заблоковані повідомлення будуть відображатися тут</string>
-    <string name="blocking_block_title">Блокувати</string>
-    <string name="blocking_unblock_title">Розблокувати</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Продовжити з %s і заблокувати цей номер</item>
-        <item quantity="few">Продовжити з %s і заблокувати ці номери</item>
-        <item quantity="many">Продовжити з %s і заблокувати ці номери</item>
-        <item quantity="other">Продовжити з %s і заблокувати ці номери</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Перейти до %s на дозволити цей номер</item>
-        <item quantity="few">Перейти до %s на дозволити ці номери</item>
-        <item quantity="many">Перейти до %s на дозволити ці номери</item>
-        <item quantity="other">Перейти до %s на дозволити ці номери</item>
-    </plurals>
     <string name="about_title">Про застосунок</string>
     <string name="about_version_title">Версія</string>
-    <string name="about_developer_title">Розробники</string>
     <string name="about_source_title">Вихідний код</string>
     <string name="about_changelog_title">Журнал змін</string>
     <string name="about_contact_title">Контакт</string>
     <string name="about_license_title">Ліцензія</string>
-    <string name="about_copyright_title">Авторське право</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Завантаження…</string>
@@ -419,8 +386,6 @@
     <string name="settings_unread_at_top_title">Непрочитані зверху</string>
     <string name="settings_unread_at_top_summary">Показувати непрочитані розмови вгорі</string>
     <string name="settings_mms_weblink_title">Обробка посилань у повідомленнях</string>
-    <string name="settings_disable_screenshots_title">Відключити знімки екрану</string>
-    <string name="settings_diable_screenshots_summary">Запобігайте вашій ОС та іншим програмам робити скріншоти програми.</string>
     <string name="message_content_filters_title">Фільтри вмісту повідомлень</string>
     <string name="message_content_filters_empty">Тут з\'являться фільтри вмісту вашого повідомлення</string>
     <string name="message_content_filters_add_cd">Створити новий фільтр</string>
@@ -440,7 +405,6 @@
     <string name="deduplicating_messages_no_messages">Дублікати повідомлень відсутні.</string>
     <string name="deduplicating_messages_failed">Помилка усунення дублікатів повідомлень, спробуйте ще раз</string>
     <string name="all_conversations_widget_title">Всі розмови</string>
-    <string name="about_developer">Команда чудових людей з усього світу!</string>
     <string name="button_clear">Очистити</string>
     <plurals name="toast_archived">
         <item quantity="one">Архівувати %d розмову</item>

@@ -79,7 +79,6 @@
     <string name="compose_title_selected">%d 件を選択中</string>
     <string name="compose_subtitle_results">%2$d 件中 %1$d 件の結果</string>
     <string name="compose_send_group_title">グループ メッセージとして送信</string>
-    <string name="compose_send_group_summary">宛先と返信は全員に表示されます</string>
     <string name="compose_messages_empty">これが会話の始まりです。何か素敵なことを言ってください！</string>
     <string name="compose_vcard_label">連絡先カード</string>
     <string name="compose_scheduled_for">送信予約</string>
@@ -157,11 +156,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">12 月 23 日に送信</string>
     <string name="scheduled_compose_cd">メッセージを送信予約</string>
-    <string-array name="scheduled_options">
-        <item>今すぐ送る</item>
-        <item>テキストをコピー</item>
-        <item>削除</item>
-    </string-array>
     <string name="settings_category_appearance">外観</string>
     <string name="settings_category_general">全般</string>
     <string name="settings_category_qkreply">QK Reply</string>
@@ -208,10 +202,6 @@
     <string name="settings_delivery_summary">メッセージが正常に送信されたことを確認します</string>
     <string name="settings_signature_title">署名</string>
     <string name="settings_signature_summary">メッセージの最後に署名を追加します</string>
-    <string name="settings_unicode_title">アクセントの除去</string>
-    <string name="settings_unicode_summary">送信する SMS メッセージの文字からアクセントを削除します</string>
-    <string name="settings_mobile_title">携帯電話番号のみ</string>
-    <string name="settings_mobile_summary">メッセージを作成するときは、携帯電話番号のみを表示します</string>
     <string name="settings_auto_delete">古いメッセージを自動的に削除</string>
     <string name="settings_auto_delete_dialog_message">指定された日数の後にメッセージが削除されます</string>
     <string name="settings_auto_delete_dialog_hint">日数</string>
@@ -233,13 +223,6 @@
     <string name="blocking_title">ブロック</string>
     <string name="blocking_drop_title">メッセージをドロップ</string>
     <string name="blocking_drop_summary">ブロックした送信者からの受信メッセージを非表示にする代わりにドロップします</string>
-    <string name="blocking_manager_title">ブロッキングマネージャー</string>
-    <string name="blocking_manager_qksms_summary">Foxhole Messages の内蔵ブロック機能</string>
-    <string name="blocking_manager_call_blocker_summary">ブラックリストにより迷惑メッセージ、番号、不明な通話をブロック</string>
-    <string name="blocking_manager_call_control_summary">1 か所で便利に通話とメッセージを自動的にフィルタリングします! Community IQ™を使用すると、コミュニティで知られているスパマーからの不要なメッセージを防ぐことができます</string>
-    <string name="blocking_manager_sia_summary">\"Should I Answer\" アプリを使用して、迷惑な番号からのメッセージを自動的にフィルターします</string>
-    <string name="blocking_manager_copy_title">ブロックした番号をコピー</string>
-    <string name="blocking_manager_copy_summary">%s で継続して既存のブロックした番号をコピー</string>
     <string name="blocked_numbers_title">ブロックした番号</string>
     <string name="blocked_numbers_empty">ブロックした番号がここに表示されます</string>
     <string name="blocked_numbers_add_cd">新しい番号をブロック</string>
@@ -248,22 +231,12 @@
     <string name="blocked_numbers_dialog_block">ブロック</string>
     <string name="blocked_messages_title">ブロックしたメッセージ</string>
     <string name="blocked_messages_empty">ブロックしたメッセージがここに表示されます</string>
-    <string name="blocking_block_title">ブロック</string>
-    <string name="blocking_unblock_title">ブロック解除</string>
-    <plurals name="blocking_block_external">
-        <item quantity="other">%s で継続してこの番号をブロック</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="other">%s で継続してこの番号を許可</item>
-    </plurals>
     <string name="about_title">このアプリについて</string>
     <string name="about_version_title">バージョン</string>
-    <string name="about_developer_title">開発者</string>
     <string name="about_source_title">ソースコード</string>
     <string name="about_changelog_title">更新履歴</string>
     <string name="about_contact_title">お問い合わせ</string>
     <string name="about_license_title">ライセンス</string>
-    <string name="about_copyright_title">著作権</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">読み込み中...</string>

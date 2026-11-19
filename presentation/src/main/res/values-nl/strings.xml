@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d geselecteerd</string>
     <string name="compose_subtitle_results">%1$d van de %2$d resultaten</string>
     <string name="compose_send_group_title">Versturen als groepsbericht</string>
-    <string name="compose_send_group_summary">Ontvangers en antwoorden zijn zichtbaar voor iedereen</string>
     <string name="compose_messages_empty">Dit is het begin van je conversatie. Zeg iets leuks!</string>
     <string name="compose_vcard_label">Contactpersoonkaart</string>
     <string name="compose_scheduled_for">Geplande tijd:</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Verzenden op 23 december</string>
     <string name="scheduled_compose_cd">Plan een bericht</string>
-    <string-array name="scheduled_options">
-        <item>Nu versturen</item>
-        <item>Tekst kopiëren</item>
-        <item>Verwijderen</item>
-    </string-array>
     <string name="settings_category_appearance">Uiterlijk</string>
     <string name="settings_category_general">Algemeen</string>
     <string name="settings_category_qkreply">QK Reply</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">Bevestig dat berichten met succes zijn verzonden</string>
     <string name="settings_signature_title">Handtekening</string>
     <string name="settings_signature_summary">Voeg een handtekening toe aan het eind van je berichten</string>
-    <string name="settings_unicode_title">Verwijder accenten</string>
-    <string name="settings_unicode_summary">Verwijder accenten van karakters voor uitgaande berichten</string>
-    <string name="settings_mobile_title">Alleen GSM-nummers</string>
-    <string name="settings_mobile_summary">Enkel mobiele nummers tonen wanneer je een bericht opstelt</string>
     <string name="settings_auto_delete">Oude berichten automatisch verwijderen</string>
     <string name="settings_auto_delete_dialog_message">Berichten zullen worden verwijderd na het opgegeven aantal dagen</string>
     <string name="settings_auto_delete_dialog_hint">Aantal dagen</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">Geblokkeerd</string>
     <string name="blocking_drop_title">Berichten weggooien</string>
     <string name="blocking_drop_summary">Verwijder inkomende berichten van geblokkeerde afzenders in plaats van ze te verbergen</string>
-    <string name="blocking_manager_title">Blokkeermanager</string>
-    <string name="blocking_manager_qksms_summary">Ingebouwde blokkeerfunctie in Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Blokkeer spamberichten, nummers &amp; onbekende oproepen met blacklist &amp; Schedule</string>
-    <string name="blocking_manager_call_control_summary">Filter je oproepen en berichten automatisch op één handige plaats! Community IQ™ stelt je in staat om ongewenste berichten van de bij community bekende spammers te blokkeren</string>
-    <string name="blocking_manager_sia_summary">Automatisch filteren van berichten van ongevraagde nummers met behulp van de app \"Should I Answer\"</string>
-    <string name="blocking_manager_copy_title">Kopieer geblokkeerde nummers</string>
-    <string name="blocking_manager_copy_summary">Ga verder naar %s en kopieer je bestaande geblokkeerde nummers</string>
     <string name="blocked_numbers_title">Geblokkeerde nummers</string>
     <string name="blocked_numbers_empty">Je geblokkeerde nummers verschijnen hier</string>
     <string name="blocked_numbers_add_cd">Blokkeer een nieuw nummer</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">Blokkeren</string>
     <string name="blocked_messages_title">Geblokkeerde berichten</string>
     <string name="blocked_messages_empty">Je geblokkeerde berichten verschijnen hier</string>
-    <string name="blocking_block_title">Blokkeren</string>
-    <string name="blocking_unblock_title">Deblokkeer</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Ga verder naar %s en blokkeer dit nummer</item>
-        <item quantity="other">Ga verder naar %s en blokkeer deze nummers</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Ga door naar %s en sta dit nummer toe</item>
-        <item quantity="other">Ga door naar %s en sta deze nummers toe</item>
-    </plurals>
     <string name="about_title">Over</string>
     <string name="about_version_title">Versie</string>
-    <string name="about_developer_title">Ontwikkelaar</string>
     <string name="about_source_title">Broncode</string>
     <string name="about_changelog_title">Changelog</string>
     <string name="about_contact_title">Contact</string>
     <string name="about_license_title">Licentie</string>
-    <string name="about_copyright_title">Copyright</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Laden…</string>
@@ -399,8 +370,6 @@
     <string name="settings_unread_at_top_title">Ongelezen bovenaan</string>
     <string name="settings_unread_at_top_summary">Toon ongelezen conversaties bovenaan</string>
     <string name="settings_mms_weblink_title">Link afhandeling in berichten</string>
-    <string name="settings_disable_screenshots_title">Schermafbeeldingen uitschakelen</string>
-    <string name="settings_diable_screenshots_summary">Verhinder dat uw OS en andere apps afbeeldingen kunnen maken van deze app.</string>
     <string name="message_content_filters_title">Bericht inhoud filters</string>
     <string name="message_content_filters_empty">Uw bericht inhoud filters verschijnen hier</string>
     <string name="message_content_filters_add_cd">Maak een nieuwe filter</string>

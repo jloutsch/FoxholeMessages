@@ -79,7 +79,6 @@
     <string name="compose_title_selected">%d dipilih</string>
     <string name="compose_subtitle_results">%1$d dari %2$d hasil</string>
     <string name="compose_send_group_title">Kirim sebagai pesan grup</string>
-    <string name="compose_send_group_summary">Penerima dan balasan akan ditampilkan ke semua orang</string>
     <string name="compose_messages_empty">Ini adalah awal percakapan anda. Katakan sesuatu yang baik!</string>
     <string name="compose_vcard_label">Kartu nama</string>
     <string name="compose_scheduled_for">Jadwalkan pada</string>
@@ -157,11 +156,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Mengirim pada tanggal 23 Desember</string>
     <string name="scheduled_compose_cd">Jadwalkan pesan</string>
-    <string-array name="scheduled_options">
-        <item>Kirim sekarang</item>
-        <item>Salin teks</item>
-        <item>Hapus</item>
-    </string-array>
     <string name="settings_category_appearance">Tampilan</string>
     <string name="settings_category_general">Umum</string>
     <string name="settings_category_qkreply">Balasan cepat</string>
@@ -208,10 +202,6 @@
     <string name="settings_delivery_summary">Mengonfirmasi bahwa pesan telah berhasil dikirim</string>
     <string name="settings_signature_title">Tanda tangan</string>
     <string name="settings_signature_summary">Tambahkan tanda tangan di akhir pesan anda</string>
-    <string name="settings_unicode_title">Hapus aksen</string>
-    <string name="settings_unicode_summary">Membuang aksen dari karakter di dalam pesan SMS keluar</string>
-    <string name="settings_mobile_title">Hanya nomor seluler</string>
-    <string name="settings_mobile_summary">Saat menulis pesan, hanya tampilkan nomor seluler</string>
     <string name="settings_auto_delete">Otomatis menghapus pesan lama</string>
     <string name="settings_auto_delete_dialog_message">Pesan akan dihapus setelah rentang hari berikut</string>
     <string name="settings_auto_delete_dialog_hint">Rentang hari</string>
@@ -233,13 +223,6 @@
     <string name="blocking_title">Pemblokiran</string>
     <string name="blocking_drop_title">Tolak pesan</string>
     <string name="blocking_drop_summary">Tolak pesan masuk dari pengirim yang diblokir</string>
-    <string name="blocking_manager_title">Pengelola Pemblokiran</string>
-    <string name="blocking_manager_qksms_summary">Fitur pemblokiran pesan di dalam Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Blokir pesan spam, nomor &amp; panggilan tak dikenal dengan daftar hitam &amp; Jadwal</string>
-    <string name="blocking_manager_call_control_summary">Otomatis menyaring panggilan dan pesan di dalam satu tempat! Community IQ™ memungkinkan anda memblokir pesan yang tidak diinginkan dari daftar spammer</string>
-    <string name="blocking_manager_sia_summary">Secara otomatis menyaring pesan dari nomor yang tidak diinginkan menggunakan aplikasi \"Should I Answer\"</string>
-    <string name="blocking_manager_copy_title">Salin nomor yang diblokir</string>
-    <string name="blocking_manager_copy_summary">Lanjutkan ke %s dan salin semua nomor yang diblokir</string>
     <string name="blocked_numbers_title">Nomor yang diblokir</string>
     <string name="blocked_numbers_empty">Nomor yang anda blokir akan ditampilkan di sini</string>
     <string name="blocked_numbers_add_cd">Blokir nomor baru</string>
@@ -248,22 +231,12 @@
     <string name="blocked_numbers_dialog_block">Blokir</string>
     <string name="blocked_messages_title">Pesan yang diblokir</string>
     <string name="blocked_messages_empty">Pesan yang anda blokir akan ditampilkan di sini</string>
-    <string name="blocking_block_title">Blokir</string>
-    <string name="blocking_unblock_title">Buka blokir</string>
-    <plurals name="blocking_block_external">
-        <item quantity="other">Lanjutkan ke %s dan blokir nomor ini</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="other">Lanjutkan ke %s dan izinkan nomor ini</item>
-    </plurals>
     <string name="about_title">Tentang</string>
     <string name="about_version_title">Versi</string>
-    <string name="about_developer_title">Pengembang</string>
     <string name="about_source_title">Kode sumber</string>
     <string name="about_changelog_title">Catatan perubahan</string>
     <string name="about_contact_title">Kontak</string>
     <string name="about_license_title">Lisensi</string>
-    <string name="about_copyright_title">Hak cipta</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Memuat…</string>

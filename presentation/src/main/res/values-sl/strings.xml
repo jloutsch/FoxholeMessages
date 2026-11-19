@@ -82,7 +82,6 @@
     <string name="compose_title_selected">%d izbran</string>
     <string name="compose_subtitle_results">%1$d od %2$d rezultatov</string>
     <string name="compose_send_group_title">Pošlji kot skupinsko sporočilo</string>
-    <string name="compose_send_group_summary">Prejemniki in odgovori bodo vidni vsem</string>
     <string name="compose_messages_empty">To je začetek vašega pogovora. Povej nekaj lepega!</string>
     <string name="compose_vcard_label">Kontaktna kartica</string>
     <string name="compose_scheduled_for">Načrtovano za</string>
@@ -160,11 +159,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Pošiljanje na 23. December</string>
     <string name="scheduled_compose_cd">Načrtuj sporočilo</string>
-    <string-array name="scheduled_options">
-        <item>Pošlji sedaj</item>
-        <item>Kopiraj besedilo</item>
-        <item>Izbriši</item>
-    </string-array>
     <string name="settings_category_appearance">Izgled</string>
     <string name="settings_category_general">Glavno</string>
     <string name="settings_category_qkreply">QK Odgovor</string>
@@ -211,10 +205,6 @@
     <string name="settings_delivery_summary">Potrdi, da so bila sporočila dostavljena uspešno</string>
     <string name="settings_signature_title">Podpis</string>
     <string name="settings_signature_summary">Dodaj podpis na konec vaših sporočil</string>
-    <string name="settings_unicode_title">Odstrani narečja</string>
-    <string name="settings_unicode_summary">Odstrani narečja iz besedila odhodnih SMS sporočil</string>
-    <string name="settings_mobile_title">Samo telefonske številke</string>
-    <string name="settings_mobile_summary">Ko sestavljaš sporočilo, prikaži samo telefonske številke</string>
     <string name="settings_auto_delete">Samodejno izbriši stara sporočila</string>
     <string name="settings_auto_delete_dialog_message">Po izbranem številu dni bodo sporočila izbrisana</string>
     <string name="settings_auto_delete_dialog_hint">Število dni</string>
@@ -239,13 +229,6 @@
     <string name="blocking_title">Blokiranje</string>
     <string name="blocking_drop_title">Opusti sporočila</string>
     <string name="blocking_drop_summary">Opusti prihajajoča sporočila blokiranih pošiljateljev, namesto da jih skriješ</string>
-    <string name="blocking_manager_title">Upravljalnik Blokiranja</string>
-    <string name="blocking_manager_qksms_summary">Vgrajena sposobnost blokiranja v Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Blokiraj neželena sporočila, številke &amp; neznane klice s črnim seznamom &amp; Urnik</string>
-    <string name="blocking_manager_call_control_summary">Samodejno razvrstite vaše klice in sporočila v eno priročno mesto! Skupnostni IQ™ omogoča, da preprečite prejemanje sporočil pošiljateljev neželenih sporočil, kateri so skupnosti poznani</string>
-    <string name="blocking_manager_sia_summary">Samodejno razvrstite sporočila neželenih številk tako, da uporabiš \"Should I Answer\" aplikacijo</string>
-    <string name="blocking_manager_copy_title">Kopiraj blokirane številke</string>
-    <string name="blocking_manager_copy_summary">Nadaljuj z %s in kopiraj obstoječe blokirane številke</string>
     <string name="blocked_numbers_title">Blokirane številke</string>
     <string name="blocked_numbers_empty">Vaše blokirane številke se bodo pojavile tukaj</string>
     <string name="blocked_numbers_add_cd">Blokiraj novo številko</string>
@@ -254,28 +237,12 @@
     <string name="blocked_numbers_dialog_block">Blokirano</string>
     <string name="blocked_messages_title">Blokirana sporočila</string>
     <string name="blocked_messages_empty">Blokirana sporočila bodo prikazana tukaj</string>
-    <string name="blocking_block_title">Blokiraj</string>
-    <string name="blocking_unblock_title">Odblokiraj</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Nadaljuj z %s in blokiraj to številko</item>
-        <item quantity="two">Nadaljuj z %s in blokiraj ti številki</item>
-        <item quantity="few">Nadaljuj z %s in blokiraj te številke</item>
-        <item quantity="other">Nadaljuj z %s in blokiraj te številke</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Nadaljuj z %s in dovoli to številko</item>
-        <item quantity="two">Nadaljuj z %s in dovoli ti številki</item>
-        <item quantity="few">Nadaljuj z %s in dovoli te številke</item>
-        <item quantity="other">Nadaljuj z %s in dovoli te številke</item>
-    </plurals>
     <string name="about_title">O aplikaciji</string>
     <string name="about_version_title">Različica</string>
-    <string name="about_developer_title">Razvijalec</string>
     <string name="about_source_title">Izvirna koda</string>
     <string name="about_changelog_title">Dnevnik sprememb</string>
     <string name="about_contact_title">Stik</string>
     <string name="about_license_title">Licenca</string>
-    <string name="about_copyright_title">Avtorske pravice</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Nalaganje…</string>

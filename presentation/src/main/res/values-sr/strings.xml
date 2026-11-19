@@ -81,7 +81,6 @@
     <string name="compose_title_selected">Изабрано: %d</string>
     <string name="compose_subtitle_results">%1$d од %2$d резултата</string>
     <string name="compose_send_group_title">Пошаљи као групну поруку</string>
-    <string name="compose_send_group_summary">Примаоци и одговори ће бити свима видљиви</string>
     <string name="compose_messages_empty">Овде почиње ваш разговор. Реци нешто лепо за почетак!</string>
     <string name="compose_vcard_label">Контакт картица</string>
     <string name="compose_scheduled_for">Заказано за</string>
@@ -159,11 +158,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Шаље се 23. децембра.</string>
     <string name="scheduled_compose_cd">Закажи слање</string>
-    <string-array name="scheduled_options">
-        <item>Пошаљи одмах</item>
-        <item>Копирај текст</item>
-        <item>Обриши</item>
-    </string-array>
     <string name="settings_category_appearance">Уреди изглед</string>
     <string name="settings_category_general">Опште</string>
     <string name="settings_category_qkreply">Брзи одговор</string>
@@ -210,10 +204,6 @@
     <string name="settings_delivery_summary">Потврди да су поруке успешно послате</string>
     <string name="settings_signature_title">Потпис</string>
     <string name="settings_signature_summary">Додај потпис на крај сваке поруке</string>
-    <string name="settings_unicode_title">Уклони акценте</string>
-    <string name="settings_unicode_summary">Уклони акценте са слова у одлазним порукама</string>
-    <string name="settings_mobile_title">Само бројеви из мобилних мрежа</string>
-    <string name="settings_mobile_summary">При састављању порука прикажи само бројеве из мобилних мрежа</string>
     <string name="settings_auto_delete">Аутоматско брисање старих порука</string>
     <string name="settings_auto_delete_dialog_message">Поруке ће бити обрисане после наведеног броја дана</string>
     <string name="settings_auto_delete_dialog_hint">Број дана</string>
@@ -237,13 +227,6 @@
     <string name="blocking_title">Блокирање</string>
     <string name="blocking_drop_title">Одбиј поруке</string>
     <string name="blocking_drop_summary">Одбиј поруке које стижу са блокираних бројева уместо да их сакријеш</string>
-    <string name="blocking_manager_title">Апликација за блокирање</string>
-    <string name="blocking_manager_qksms_summary">Уграђена могућност блокирања у Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Блокирај нежељене поруке, бројеве и непознате позиве помоћу листе непожељних бројева</string>
-    <string name="blocking_manager_call_control_summary">Аутоматски филтрирај позиве и поруке на једном месту! Community IQ™ ти омогућује да блокираш нежељене поруке од \"спамера\" познатих заједници</string>
-    <string name="blocking_manager_sia_summary">Аутоматски фитрирај поруке са непожељних бројева користећи \"Should I Answer\" апликацију</string>
-    <string name="blocking_manager_copy_title">Копирај блокиране бројеве</string>
-    <string name="blocking_manager_copy_summary">Отвори %s и пренеси бројеве које си већ блокирао</string>
     <string name="blocked_numbers_title">Блокирани бројеви</string>
     <string name="blocked_numbers_empty">Овде ће се појавити бројеви које блокираш</string>
     <string name="blocked_numbers_add_cd">Блокирај нови број</string>
@@ -252,26 +235,12 @@
     <string name="blocked_numbers_dialog_block">Блокирај</string>
     <string name="blocked_messages_title">Блокиране поруке</string>
     <string name="blocked_messages_empty">Овде ће се појавити поруке које блокираш</string>
-    <string name="blocking_block_title">Блокирај</string>
-    <string name="blocking_unblock_title">Одблокирај</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Отвори %s и блокирај овај број</item>
-        <item quantity="few">Отвори %s и блокирај ове бројеве</item>
-        <item quantity="other">Отвори %s и блокирај ове бројеве</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Отвори %s и дозволи овај број</item>
-        <item quantity="few">Отвори %s и дозволи ове бројеве</item>
-        <item quantity="other">Отвори %s и дозволи ове бројеве</item>
-    </plurals>
     <string name="about_title">О апликацији</string>
     <string name="about_version_title">Верзија</string>
-    <string name="about_developer_title">Програмер</string>
     <string name="about_source_title">Изворни код</string>
     <string name="about_changelog_title">Историја измена</string>
     <string name="about_contact_title">Kontakt</string>
     <string name="about_license_title">Лиценца</string>
-    <string name="about_copyright_title">Ауторска права</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Учитавање…</string>

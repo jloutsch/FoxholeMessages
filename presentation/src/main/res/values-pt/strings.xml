@@ -81,7 +81,6 @@
     <string name="compose_title_selected">%d selecionada(s)</string>
     <string name="compose_subtitle_results">%1$d de %2$d resultados</string>
     <string name="compose_send_group_title">Enviar como mensagem de grupo</string>
-    <string name="compose_send_group_summary">Destinatários e respostas visíveis para todos</string>
     <string name="compose_messages_empty">Este é o início da sua conversa. Pode dizer algo simpático!</string>
     <string name="compose_vcard_label">Cartão do contacto</string>
     <string name="compose_scheduled_for">Hora/data do agendamento:</string>
@@ -159,11 +158,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Enviar no dia 23 de dezembro</string>
     <string name="scheduled_compose_cd">Agendar mensagem</string>
-    <string-array name="scheduled_options">
-        <item>Enviar agora</item>
-        <item>Copiar texto</item>
-        <item>Apagar</item>
-    </string-array>
     <string name="settings_category_appearance">Aparência</string>
     <string name="settings_category_general">Geral</string>
     <string name="settings_category_qkreply">QK Reply</string>
@@ -210,10 +204,6 @@
     <string name="settings_delivery_summary">Confirmação de mensagens enviadas com sucesso</string>
     <string name="settings_signature_title">Assinatura</string>
     <string name="settings_signature_summary">Adicionar uma assinatura às mensagens</string>
-    <string name="settings_unicode_title">Remover acentos</string>
-    <string name="settings_unicode_summary">Remover acentos dos caracteres nas mensagens enviadas</string>
-    <string name="settings_mobile_title">Apenas números de telemóvel</string>
-    <string name="settings_mobile_summary">Ao escrever uma mensagem, mostrar apenas os números móveis</string>
     <string name="settings_auto_delete">Eliminar antigas automaticamente</string>
     <string name="settings_auto_delete_dialog_message">As mensagens serão eliminadas após o número de dias especificado</string>
     <string name="settings_auto_delete_dialog_hint">Número de dias</string>
@@ -237,13 +227,6 @@
     <string name="blocking_title">Bloqueio</string>
     <string name="blocking_drop_title">Descartar mensagens</string>
     <string name="blocking_drop_summary">Descartar mensagens enviadas pelos remetentes bloqueados em vez de as ocultar</string>
-    <string name="blocking_manager_title">Gestor de bloqueios</string>
-    <string name="blocking_manager_qksms_summary">Funcionalidade de bloqueio, nativa no Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Bloquear spam, números e chamadas desconhecidas com lista negra e agendamento</string>
-    <string name="blocking_manager_call_control_summary">Filtrar automaticamente as chamadas e as mensagens com a aplicação Community IQ™, com a qual pode descartar as mensagens que forem enviadas pelo \'spammers\' reconhecidos na comunidade</string>
-    <string name="blocking_manager_sia_summary">Filtrar automaticamente as mensagens de números utilizando a aplicação \"Should I Answer\"</string>
-    <string name="blocking_manager_copy_title">Copiar números bloqueados</string>
-    <string name="blocking_manager_copy_summary">Continuar para %s e substituir os números bloqueados</string>
     <string name="blocked_numbers_title">Números bloqueados</string>
     <string name="blocked_numbers_empty">Os números bloqueados aparecerão aqui</string>
     <string name="blocked_numbers_add_cd">Bloquear um novo número</string>
@@ -252,26 +235,12 @@
     <string name="blocked_numbers_dialog_block">Bloquear</string>
     <string name="blocked_messages_title">Mensagens bloqueadas</string>
     <string name="blocked_messages_empty">As mensagens bloqueadas aparecerão aqui</string>
-    <string name="blocking_block_title">Bloquear</string>
-    <string name="blocking_unblock_title">Desbloquear</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Continuar para %s e bloquear este número</item>
-        <item quantity="many">Continuar para %s e bloquear estes números</item>
-        <item quantity="other">Continuar para %s e bloquear estes números</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Continuar para %s e permitir este número</item>
-        <item quantity="many">Continuar para %s e permitir estes números</item>
-        <item quantity="other">Continuar para %s e permitir estes números</item>
-    </plurals>
     <string name="about_title">Acerca</string>
     <string name="about_version_title">Versão</string>
-    <string name="about_developer_title">Programadores</string>
     <string name="about_source_title">Código fonte</string>
     <string name="about_changelog_title">Alterações</string>
     <string name="about_contact_title">Contactos</string>
     <string name="about_license_title">Licença</string>
-    <string name="about_copyright_title">Copyright</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">A carregar…</string>
@@ -408,8 +377,6 @@
     <string name="settings_unread_at_top_title">Não lidas em cima</string>
     <string name="settings_unread_at_top_summary">Mostrar conversas não lidas em cima</string>
     <string name="settings_mms_weblink_title">Gestão de ligações em mensagens</string>
-    <string name="settings_disable_screenshots_title">Desativar capturas de ecrã</string>
-    <string name="settings_diable_screenshots_summary">Impedir que o SO e outras aplicações obtenham capturas de ecrã</string>
     <string name="message_content_filters_title">Filtro de conteúdos</string>
     <string name="message_content_filters_empty">Os filtros de conteúdos serão mostrados aqui</string>
     <string name="message_content_filters_add_cd">Criar filtro</string>
@@ -455,6 +422,5 @@
     <string name="deduplicating_messages_finished">Mensagens deduplicadas com sucesso!</string>
     <string name="deduplicating_messages_no_messages">Não foram encontrados duplicados.</string>
     <string name="deduplicating_messages_failed">Falha ao deduplicar. Por favor, tente novamente.</string>
-    <string name="about_developer">Uma equipa de pessoas maravilhosas de todo o mundo!</string>
     <string name="notification_foreground_worker_channel_name">Serviço de notificação de receção de mensagens</string>
 </resources>

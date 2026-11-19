@@ -82,7 +82,6 @@
     <string name="compose_title_selected">%d vybratých</string>
     <string name="compose_subtitle_results">%1$d z %2$d výsledkov</string>
     <string name="compose_send_group_title">Poslať ako skupinovú správu</string>
-    <string name="compose_send_group_summary">Príjemcovia a odpovede budú viditeľné všetkým</string>
     <string name="compose_messages_empty">Toto je začiatok vašej konverzácie. Napíšte niečo pekného!</string>
     <string name="compose_vcard_label">Karta kontaktu</string>
     <string name="compose_scheduled_for">Naplánované na</string>
@@ -160,11 +159,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Pošle sa 23. decembra</string>
     <string name="scheduled_compose_cd">Naplánovať správu</string>
-    <string-array name="scheduled_options">
-        <item>Odoslať teraz</item>
-        <item>Kopírovať text</item>
-        <item>Odstrániť</item>
-    </string-array>
     <string name="settings_category_appearance">Vzhľad</string>
     <string name="settings_category_general">Všeobecné</string>
     <string name="settings_category_qkreply">Rýchla odpoveď</string>
@@ -211,10 +205,6 @@
     <string name="settings_delivery_summary">Potvrdiť úspešné doručenie správy</string>
     <string name="settings_signature_title">Podpis</string>
     <string name="settings_signature_summary">Pridať podpis na koniec vašich správ</string>
-    <string name="settings_unicode_title">Odstrániť diakritiku</string>
-    <string name="settings_unicode_summary">Odstrániť diakritiku v odosielaných správach</string>
-    <string name="settings_mobile_title">Iba telefónne čísla</string>
-    <string name="settings_mobile_summary">Pri písaní správ, zobraziť iba telefónne čísla</string>
     <string name="settings_auto_delete">Delete old messages automatically</string>
     <string name="settings_auto_delete_dialog_message">Messages will be deleted after the specified number of days</string>
     <string name="settings_auto_delete_dialog_hint">Number of days</string>
@@ -239,13 +229,6 @@
     <string name="blocking_title">Blokovanie</string>
     <string name="blocking_drop_title">Zahodiť správy</string>
     <string name="blocking_drop_summary">Zahodiť prichádzajúce správy od blokovaných odosielateľov namiesto ich skrytia.</string>
-    <string name="blocking_manager_title">Správca blokovaní</string>
-    <string name="blocking_manager_qksms_summary">Vstavané blokovanie v Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Block spam messages, numbers &amp; unknown calls with blacklist &amp; Schedule</string>
-    <string name="blocking_manager_call_control_summary">Automaticky filtrujte svoje hovory a správy na jednom mieste! Community IQ™ vám poskytuje ochranu pred spamom od komunitou označených spammerov.</string>
-    <string name="blocking_manager_sia_summary">Automaticky filtrovať správy od nevyžiadaných čísiel pomocou aplikácie \"Should I Answer?\"</string>
-    <string name="blocking_manager_copy_title">Kopírovať blokované čísla</string>
-    <string name="blocking_manager_copy_summary">Pokračovať do %s a skopírovať existujúce zablokované čísla</string>
     <string name="blocked_numbers_title">Blokované čísla</string>
     <string name="blocked_numbers_empty">Tu sa objavia vami blokované čísla</string>
     <string name="blocked_numbers_add_cd">Zablokovať nové číslo</string>
@@ -254,28 +237,12 @@
     <string name="blocked_numbers_dialog_block">Zablokovať</string>
     <string name="blocked_messages_title">Blokované správy</string>
     <string name="blocked_messages_empty">Tu sa objavia vami blokované čísla</string>
-    <string name="blocking_block_title">Zablokovať</string>
-    <string name="blocking_unblock_title">Odblokovať</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Pokračovať na %s a zablokovať toto číslo</item>
-        <item quantity="few">Pokračovať na %s a zablokovať tieto čísla</item>
-        <item quantity="many">Pokračovať na %s a zablokovať tieto čísla</item>
-        <item quantity="other">Pokračovať na %s a zablokovať tieto čísla</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Pokračovať na %s a povoliť toto číslo</item>
-        <item quantity="few">Pokračovať na %s a povoliť tieto čísla</item>
-        <item quantity="many">Pokračovať na %s a povoliť tieto čísla</item>
-        <item quantity="other">Pokračovať na %s a povoliť tieto čísla</item>
-    </plurals>
     <string name="about_title">O aplikácii</string>
     <string name="about_version_title">Verzia</string>
-    <string name="about_developer_title">Vývojár</string>
     <string name="about_source_title">Zdrojový kód</string>
     <string name="about_changelog_title">Zoznam zmien</string>
     <string name="about_contact_title">Konktakt</string>
     <string name="about_license_title">Licencia</string>
-    <string name="about_copyright_title">Autorské práva</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Načítavanie…</string>

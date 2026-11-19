@@ -106,7 +106,6 @@
     <string name="compose_title_selected">Wybrano %d</string>
     <string name="compose_subtitle_results">Wyniki: %1$d z %2$d</string>
     <string name="compose_send_group_title">Wyślij jako wiadomość grupową</string>
-    <string name="compose_send_group_summary">Odbiorcy i odpowiedzi będą widoczne dla wszystkich</string>
     <string name="compose_messages_empty">To jest początek rozmowy. Powiedz coś miłego!</string>
     <string name="compose_vcard_label">Karta kontaktu</string>
     <string name="compose_scheduled_for">Zaplanowane na:</string>
@@ -253,10 +252,6 @@
     <string name="settings_unread_at_top_summary">Wyświetlanie nieprzeczytanych rozmów na samej górze</string>
     <string name="settings_signature_title">Podpis</string>
     <string name="settings_signature_summary">Dodawaj podpis na końcu wiadomości</string>
-    <string name="settings_unicode_title">Usuwaj ogonki</string>
-    <string name="settings_unicode_summary">Usuwaj ogonki ze znaków w wiadomościach</string>
-    <string name="settings_mobile_title">Tylko numery komórkowe</string>
-    <string name="settings_mobile_summary">Pokazuj kontakty tylko z numerami komórkowymi</string>
     <string name="settings_auto_delete">Automatycznie usuwaj wiadomości</string>
     <string name="settings_auto_delete_dialog_message">Stare wiadomości będą usuwane po określonej liczbie dni</string>
     <string name="settings_auto_delete_dialog_hint">Liczba dni</string>
@@ -282,13 +277,6 @@
     <string name="blocking_title">Blokowanie</string>
     <string name="blocking_drop_title">Odrzuć wiadomości</string>
     <string name="blocking_drop_summary">Odrzuć przychodzące wiadomości od zablokowanych nadawców zamiast ich ukrywać</string>
-    <string name="blocking_manager_title">Menadżer Blokowania</string>
-    <string name="blocking_manager_qksms_summary">Wbudowana funkcja blokowania w Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Blokuj spam, numery i połączenia od nieznajomych za pomocą czarnej listy i harmonogramu</string>
-    <string name="blocking_manager_call_control_summary">Automatycznie filtruj twoje rozmowy i wiadomości tekstowe w jednym wygodnym miejscu! Community IQ™ pozwala zapobiegać niechcianym wiadomościom od znanych spamerów</string>
-    <string name="blocking_manager_sia_summary">Automatycznie filtruj wiadomości od niechcianych numerów za pomocą aplikacji \"Should I Answer?\"</string>
-    <string name="blocking_manager_copy_title">Skopiuj zablokowane numery</string>
-    <string name="blocking_manager_copy_summary">Kontynuuj do %s i skopiuj twoje obecnie blokowane numery</string>
     <string name="blocked_numbers_title">Zablokowane numery</string>
     <string name="blocked_numbers_empty">Twoje zablokowane numery się tutaj pojawią</string>
     <string name="blocked_numbers_add_cd">Zablokuj nowy numer</string>
@@ -297,28 +285,12 @@
     <string name="blocked_numbers_dialog_block">Blokuj</string>
     <string name="blocked_messages_title">Zablokowane wiadomości</string>
     <string name="blocked_messages_empty">Miejsce dla twoich zablokowanych wiadomości</string>
-    <string name="blocking_block_title">Zablokuj</string>
-    <string name="blocking_unblock_title">Odblokuj</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Kontynuuj do %s i blokuj ten numer</item>
-        <item quantity="few">Kontynuuj do %s i blokuj te numery</item>
-        <item quantity="many">Kontynuuj do %s i blokuj te numery</item>
-        <item quantity="other">Kontynuuj do %s i blokuj te numery</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Kontynuuj do %s i odblokuj ten numer</item>
-        <item quantity="few">Kontynuuj do %s i odblokuj te numery</item>
-        <item quantity="many">Kontynuuj do %s i odblokuj te numery</item>
-        <item quantity="other">Kontynuuj do %s i odblokuj te numery</item>
-    </plurals>
     <string name="about_title">O Foxhole Messages</string>
     <string name="about_version_title">Wersja</string>
-    <string name="about_developer_title">Programiści</string>
     <string name="about_source_title">Kod źródłowy</string>
     <string name="about_changelog_title">Lista zmian</string>
     <string name="about_contact_title">Kontakt</string>
     <string name="about_license_title">Licencja</string>
-    <string name="about_copyright_title">Prawa autorskie</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Ładowanie…</string>
@@ -446,8 +418,6 @@
     <string name="clipboard_too_large_to_copy">Długość tekstu przekracza limit schowka</string>
     <string name="clipboard_unable_to_copy_to">Nie można skopiować do schowka</string>
     <string name="scheduled_send_cd">Zaplanuj tę wiadomość</string>
-    <string name="settings_disable_screenshots_title">Wyłącz zrzuty ekranu</string>
-    <string name="settings_diable_screenshots_summary">Zapobiega robieniu zrzutów ekranu z aplikacji przez system oraz inne aplikacje.</string>
     <string name="message_content_filters_title">Filtry treści wiadomości</string>
     <string name="message_content_filters_empty">Twoje filtry treści wiadomości pojawią się tutaj</string>
     <string name="message_content_filters_add_cd">Utwórz nowy filtr</string>
@@ -482,6 +452,5 @@
     <string name="deduplicating_messages_finished">Zakończono deduplikację wiadomości!</string>
     <string name="deduplicating_messages_no_messages">Nie znaleziono zduplikowanych wiadomości.</string>
     <string name="deduplicating_messages_failed">Deduplikacja wiadomości nie powiodła się. Spróbuj ponownie</string>
-    <string name="about_developer">Zespół wspaniałych ludzi z całego świata!</string>
     <string name="notification_foreground_worker_channel_name">Powiadomienie dla modułu obsługującego odbiór wiadomości</string>
 </resources>

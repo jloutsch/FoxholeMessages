@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d चयनित</string>
     <string name="compose_subtitle_results">%1$d के %2$d परिणाम</string>
     <string name="compose_send_group_title">समूह संदेश के रूप में भेजें</string>
-    <string name="compose_send_group_summary">प्राप्तकर्ता और उत्तर सभी को दिखाई देंगे</string>
     <string name="compose_messages_empty">यह आपकी बातचीत की शुरुआत है । कुछ अच्छा कहिये!</string>
     <string name="compose_vcard_label">संपर्क कार्ड</string>
     <string name="compose_scheduled_for">निर्धारित समय:</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">23 दिसंबर को भेजा जा रहा है </string>
     <string name="scheduled_compose_cd">एक संदेश अनुसूचित करें</string>
-    <string-array name="scheduled_options">
-        <item>अभी भेजें</item>
-        <item>टेक्स्ट कॉपी करें</item>
-        <item>मिटाएँ</item>
-    </string-array>
     <string name="settings_category_appearance">दिखावट</string>
     <string name="settings_category_general">सामान्य</string>
     <string name="settings_category_qkreply">QK उत्तर</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">पुष्टि करें कि संदेश सफलतापूर्वक भेजे गए थे</string>
     <string name="settings_signature_title">हस्ताक्षर</string>
     <string name="settings_signature_summary">अपने संदेशों के अंत में एक हस्ताक्षर जोड़ें</string>
-    <string name="settings_unicode_title">Strip accents</string>
-    <string name="settings_unicode_summary">आउटगोइंग एसएमएस संदेशों में वर्णों से उच्चारण हटाएं</string>
-    <string name="settings_mobile_title">केवल मोबाइल नंबर</string>
-    <string name="settings_mobile_summary">संदेश लिखते समय केवल मोबाइल नंबर दिखाएं</string>
     <string name="settings_auto_delete">पुराने संदेशों को स्वचालित रूप से हटाएं</string>
     <string name="settings_auto_delete_dialog_message">निर्दिष्ट दिनों के बाद संदेश हटा दिए जाएंगे</string>
     <string name="settings_auto_delete_dialog_hint">दिनों की संख्या</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">अवरुद्ध</string>
     <string name="blocking_drop_title">संदेश छोड़ें</string>
     <string name="blocking_drop_summary">आने वाले संदेशों को छिपाने के बजाय अवरुद्ध प्रेषकों से ड्रॉप करें</string>
-    <string name="blocking_manager_title">अवरोध प्रबंधक</string>
-    <string name="blocking_manager_qksms_summary">Foxhole Messages में अंतर्निहित अवरोधन कार्यक्षमता</string>
-    <string name="blocking_manager_call_blocker_summary">Block spam messages, numbers &amp; unknown calls with blacklist &amp; Schedule</string>
-    <string name="blocking_manager_call_control_summary">Automatically filter your calls and messages in one convenient place! Community IQ™ allows you to prevent unwanted messages from community known spammers</string>
-    <string name="blocking_manager_sia_summary">Automatically filter messages from unsolicited numbers by using the \"Should I Answer\" app</string>
-    <string name="blocking_manager_copy_title">Copy blocked numbers</string>
-    <string name="blocking_manager_copy_summary">Continue to %s and copy over your existing blocked numbers</string>
     <string name="blocked_numbers_title">Blocked numbers</string>
     <string name="blocked_numbers_empty">Your blocked numbers will appear here</string>
     <string name="blocked_numbers_add_cd">Block a new number</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">अवरुदध करें</string>
     <string name="blocked_messages_title">अवरुद्ध संदेश</string>
     <string name="blocked_messages_empty">आपके अवरुद्ध संदेश यहां दिखाई देंगे</string>
-    <string name="blocking_block_title">अवरुदध करें</string>
-    <string name="blocking_unblock_title">अनब्लॉक करें</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Continue to %s and block this number</item>
-        <item quantity="other">Continue to %s and block these numbers</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Continue to %s and allow this number</item>
-        <item quantity="other">Continue to %s and allow these numbers</item>
-    </plurals>
     <string name="about_title">जानकारी</string>
     <string name="about_version_title">संस्करण</string>
-    <string name="about_developer_title">विकासक</string>
     <string name="about_source_title">श्रोत कोड</string>
     <string name="about_changelog_title">बदलाव</string>
     <string name="about_contact_title">संपर्क</string>
     <string name="about_license_title">लाइसेंस</string>
-    <string name="about_copyright_title">कॉपीराइट</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">तैयार हो रहा है…</string>
@@ -405,8 +376,6 @@
     <string name="settings_unread_at_top_title">अपठित सबसे ऊपर</string>
     <string name="settings_unread_at_top_summary">अपठित वार्तालाप सबसे ऊपर दिखाएँ</string>
     <string name="settings_mms_weblink_title">संदेशों में लिंक प्रबंधन</string>
-    <string name="settings_disable_screenshots_title">स्क्रीनशॉट अक्षम करें</string>
-    <string name="settings_diable_screenshots_summary">अपने OS और अन्य ऐप्स को इस ऐप के स्क्रीनशॉट लेने से रोकें।</string>
     <string name="message_content_filters_title">संदेश सामग्री फ़िल्टर</string>
     <string name="message_content_filters_empty">आपके संदेश सामग्री फ़िल्टर यहाँ दिखाई देंगे</string>
     <string name="message_content_filters_add_cd">नया फ़िल्टर बनाएँ</string>

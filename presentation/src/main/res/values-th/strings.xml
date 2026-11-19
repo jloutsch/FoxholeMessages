@@ -79,7 +79,6 @@
     <string name="compose_title_selected">%d ถูกเลือก</string>
     <string name="compose_subtitle_results">%1$d ใน %2$d ของผลลัพท์</string>
     <string name="compose_send_group_title">ส่งเป็นข้อความกลุ่ม</string>
-    <string name="compose_send_group_summary">ผู้รับและการตอบกลับจะแสดงให้ทุกคนเห็นทุกคน</string>
     <string name="compose_messages_empty">การเริ่มต้นของการสนทนาของคุณ บอกกล่าวบางอย่างที่นี่</string>
     <string name="compose_vcard_label">นามบัตร</string>
     <string name="compose_scheduled_for">กำหนดการ</string>
@@ -157,11 +156,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Sending on December 23rd </string>
     <string name="scheduled_compose_cd">Schedule a message</string>
-    <string-array name="scheduled_options">
-        <item>Send now</item>
-        <item>Copy text</item>
-        <item>Delete</item>
-    </string-array>
     <string name="settings_category_appearance">ลักษณะที่ปรากฏ</string>
     <string name="settings_category_general">ทั่วไป</string>
     <string name="settings_category_qkreply">QK ตอบกลับ</string>
@@ -208,10 +202,6 @@
     <string name="settings_delivery_summary">ยืนยันว่า ส่งข้อความเรียบร้อยแล้ว</string>
     <string name="settings_signature_title">Signature</string>
     <string name="settings_signature_summary">Add a signature to the end of your messages</string>
-    <string name="settings_unicode_title">ลบอักษรพิเศษ accents</string>
-    <string name="settings_unicode_summary">ลบอักษรพิเศษ accents ออกจากข้อความ SMS ที่กำลังจะส่งออก</string>
-    <string name="settings_mobile_title">Mobile numbers only</string>
-    <string name="settings_mobile_summary">When composing a message, only show mobile numbers</string>
     <string name="settings_auto_delete">Delete old messages automatically</string>
     <string name="settings_auto_delete_dialog_message">Messages will be deleted after the specified number of days</string>
     <string name="settings_auto_delete_dialog_hint">Number of days</string>
@@ -233,13 +223,6 @@
     <string name="blocking_title">Blocking</string>
     <string name="blocking_drop_title">Drop messages</string>
     <string name="blocking_drop_summary">Drop incoming messages from blocked senders instead of hiding them</string>
-    <string name="blocking_manager_title">Blocking Manager</string>
-    <string name="blocking_manager_qksms_summary">Built-in blocking functionality in Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Block spam messages, numbers &amp; unknown calls with blacklist &amp; Schedule</string>
-    <string name="blocking_manager_call_control_summary">Automatically filter your calls and messages in one convenient place! Community IQ™ allows you to prevent unwanted messages from community known spammers</string>
-    <string name="blocking_manager_sia_summary">กรองข้อความจากหมายเลขที่ไม่พึงประสงค์ โดยใช้แอพควรตอบกลับหรือไม่</string>
-    <string name="blocking_manager_copy_title">Copy blocked numbers</string>
-    <string name="blocking_manager_copy_summary">Continue to %s and copy over your existing blocked numbers</string>
     <string name="blocked_numbers_title">Blocked numbers</string>
     <string name="blocked_numbers_empty">Your blocked numbers will appear here</string>
     <string name="blocked_numbers_add_cd">Block a new number</string>
@@ -248,22 +231,12 @@
     <string name="blocked_numbers_dialog_block">Block</string>
     <string name="blocked_messages_title">Blocked messages</string>
     <string name="blocked_messages_empty">Your blocked messages will appear here</string>
-    <string name="blocking_block_title">Block</string>
-    <string name="blocking_unblock_title">Unblock</string>
-    <plurals name="blocking_block_external">
-        <item quantity="other">Continue to %s and block these numbers</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="other">Continue to %s and allow these numbers</item>
-    </plurals>
     <string name="about_title">เกี่ยวกับ</string>
     <string name="about_version_title">เวอร์ชัน</string>
-    <string name="about_developer_title">นักพัฒนา</string>
     <string name="about_source_title">ซอสโค๊ด</string>
     <string name="about_changelog_title">บันทึกการเปลี่ยนแปลง</string>
     <string name="about_contact_title">ติดต่อ</string>
     <string name="about_license_title">สิทธิ์การใช้งาน</string>
-    <string name="about_copyright_title">ลิขสิทธิ์</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">กำลังโหลด…</string>

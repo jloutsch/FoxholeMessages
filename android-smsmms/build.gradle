@@ -28,7 +28,8 @@ android {
     }
 
     lint {
-        abortOnError false
+        // Vendored library: its existing findings are recorded here rather than fixed.
+        baseline = file("lint-baseline.xml")
     }
     namespace 'com.klinker.android.send_message'
 }

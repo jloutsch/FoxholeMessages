@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d Seçili</string>
     <string name="compose_subtitle_results">%1$d / %2$d sonuçlar</string>
     <string name="compose_send_group_title">Grup iletisi olarak gönder</string>
-    <string name="compose_send_group_summary">Alıcılar ve yanıtlar herkese görünür olacak</string>
     <string name="compose_messages_empty">Senin konuşma başlıyor. Güzel bir şey söyle!</string>
     <string name="compose_vcard_label">Kişi Kartı</string>
     <string name="compose_scheduled_for">Planlanan zaman:</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">23  Aralık\'ta gönder</string>
     <string name="scheduled_compose_cd">Bir ileti zamanla</string>
-    <string-array name="scheduled_options">
-        <item>Şimdi gönder</item>
-        <item>Metni kopyala</item>
-        <item>Sil</item>
-    </string-array>
     <string name="settings_category_appearance">Görünüm</string>
     <string name="settings_category_general">Genel</string>
     <string name="settings_category_qkreply">QK Yanıt</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">İletinizin sorunsuz gönderildiğinin onayını alın</string>
     <string name="settings_signature_title">İmza</string>
     <string name="settings_signature_summary">İletilerinizin sonuna bir imza ekleyin</string>
-    <string name="settings_unicode_title">Şeritli aksanlar</string>
-    <string name="settings_unicode_summary">Gönderilen SMS iletilerinden aksanlı karakterleri kaldır</string>
-    <string name="settings_mobile_title">Sadece cep telefonu numaraları</string>
-    <string name="settings_mobile_summary">Bir ileti oluştururken yalnızca cep telefon numaralarını göster</string>
     <string name="settings_auto_delete">Eski iletileri otomatik olarak sil</string>
     <string name="settings_auto_delete_dialog_message">Belirtilen sayıda gün geçtikten sonra iletiler silinecek</string>
     <string name="settings_auto_delete_dialog_hint">Gün sayısı</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">Engelleyici</string>
     <string name="blocking_drop_title">Havadan atılan iletiler</string>
     <string name="blocking_drop_summary">Engellenen gönderenlerden gelen iletileri gizlemek yerine iptal edin</string>
-    <string name="blocking_manager_title">Engelleme Yöneticisi</string>
-    <string name="blocking_manager_qksms_summary">Foxhole Messages\'de yerleşik engelleme işlevi</string>
-    <string name="blocking_manager_call_blocker_summary">İstenmeyen iletileri, numaraları ve kara listede olan bilinmeyen çağrıları ve Zamanlamaları engelle</string>
-    <string name="blocking_manager_call_control_summary">Aramalarınızı ve iletilerinizi uygun bir yerde otomatik olarak filtreleyin! Topluluk IQ™ bilinen istenmeyen mesajları önlemeye olanak sağlar</string>
-    <string name="blocking_manager_sia_summary">İstenmeyen numaralardan gelen iletileri otomatik olarak filtre</string>
-    <string name="blocking_manager_copy_title">Engellenen numaraları kopyala</string>
-    <string name="blocking_manager_copy_summary">Mevcut engellenen numaralarınızın üzerine %s kopyalamaya devam edin</string>
     <string name="blocked_numbers_title">Engellenen numaralar</string>
     <string name="blocked_numbers_empty">Engellenen numaralarınız burada görünecektir</string>
     <string name="blocked_numbers_add_cd">Yeni bir numarayı engelle</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">Engelle</string>
     <string name="blocked_messages_title">Engellenen iletiler</string>
     <string name="blocked_messages_empty">Engellenen iletileriniz burada görünecektir</string>
-    <string name="blocking_block_title">Engelle</string>
-    <string name="blocking_unblock_title">Engeli kaldır</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">%s\'ye devam edin ve bu sayıyı engelleyin</item>
-        <item quantity="other">%s\'ye devam edin ve bu sayıları engelleyin</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">%s\'ye devam edin ve bu sayıya izin verin</item>
-        <item quantity="other">%s\'ye devam edin ve bu sayılara izin verin</item>
-    </plurals>
     <string name="about_title">Hakkında</string>
     <string name="about_version_title">Sürüm</string>
-    <string name="about_developer_title">Geliştiriciler</string>
     <string name="about_source_title">Kaynak kodu</string>
     <string name="about_changelog_title">Yenilikler</string>
     <string name="about_contact_title">İletişim</string>
     <string name="about_license_title">Lisanslar</string>
-    <string name="about_copyright_title">Telif hakkı</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Yükleniyor…</string>
@@ -400,8 +371,6 @@
     <string name="settings_unread_at_top_title">Okunmamış en üstte</string>
     <string name="settings_unread_at_top_summary">Okunmamış sohbetleri en üstte göster</string>
     <string name="settings_mms_weblink_title">İletilerdeki bağlantıyı işleme şekli</string>
-    <string name="settings_disable_screenshots_title">Ekran görüntülerini devre dışı bırak</string>
-    <string name="settings_diable_screenshots_summary">İşletim sisteminizin ve diğer uygulamaların bu uygulamada ekran görüntüleri almalarını önleyin.</string>
     <string name="message_content_filters_title">İleti içerik filtreleri</string>
     <string name="message_content_filters_empty">İleti içerik filtreleriniz burada gözükecek</string>
     <string name="message_content_filters_add_cd">Yeni bir filtre oluştur</string>
@@ -446,6 +415,5 @@
     <string name="deduplicating_messages_finished">İletilerin tekilleştirilmesi tamamlandı!</string>
     <string name="deduplicating_messages_failed">İletilerin tekilleştirilmesi başarısız oldu, lütfen yeniden deneyin</string>
     <string name="deduplicating_messages_no_messages">Tekrar eden ileti bulunamadı.</string>
-    <string name="about_developer">Dünyanın dört bir yanından gelen harika insanlardan oluşan bir ekip!</string>
     <string name="notification_foreground_worker_channel_name">İleti alma işleyicisi bildirimi</string>
 </resources>

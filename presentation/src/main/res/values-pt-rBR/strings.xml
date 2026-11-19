@@ -80,7 +80,6 @@
     <string name="compose_title_selected">%d selecionada(s)</string>
     <string name="compose_subtitle_results">%1$d de %2$d resultados</string>
     <string name="compose_send_group_title">Enviar como mensagem de grupo</string>
-    <string name="compose_send_group_summary">Destinatários e respostas serão visíveis para todos</string>
     <string name="compose_messages_empty">Este é o início da sua conversa. Diga algo legal!</string>
     <string name="compose_vcard_label">Cartão de contato</string>
     <string name="compose_scheduled_for">Agendada para</string>
@@ -158,11 +157,6 @@
     <!--&#x200A; is a special character required at the end of this string to fix it's formatting in the app -->
     <string name="scheduled_empty_message_3_timestamp">Enviar no dia 23 de dezembro</string>
     <string name="scheduled_compose_cd">Agendar mensagem</string>
-    <string-array name="scheduled_options">
-        <item>Enviar agora</item>
-        <item>Copiar texto</item>
-        <item>Excluir</item>
-    </string-array>
     <string name="settings_category_appearance">Aparência</string>
     <string name="settings_category_general">Geral</string>
     <string name="settings_category_qkreply">Responder via Foxhole Messages</string>
@@ -209,10 +203,6 @@
     <string name="settings_delivery_summary">Confirme que as mensagens foram enviadas com sucesso</string>
     <string name="settings_signature_title">Assinatura</string>
     <string name="settings_signature_summary">Adicione uma assinatura ao final das suas mensagens</string>
-    <string name="settings_unicode_title">Remover acentos</string>
-    <string name="settings_unicode_summary">Remover acentos de caracteres em mensagens SMS enviadas</string>
-    <string name="settings_mobile_title">Somente números de celular</string>
-    <string name="settings_mobile_summary">Ao escrever uma mensagem, mostrar apenas os números de celular</string>
     <string name="settings_auto_delete">Excluir mensagens antigas automaticamente</string>
     <string name="settings_auto_delete_dialog_message">Mensagens serão excluídas após o número especificado de dias</string>
     <string name="settings_auto_delete_dialog_hint">Número de dias</string>
@@ -235,13 +225,6 @@
     <string name="blocking_title">Bloqueio</string>
     <string name="blocking_drop_title">Excluir mensagens</string>
     <string name="blocking_drop_summary">Excluir mensagens de remetentes bloqueados em vez de escondê-las</string>
-    <string name="blocking_manager_title">Gerenciador de Bloqueio</string>
-    <string name="blocking_manager_qksms_summary">Funcionalidade de bloqueio integrada no Foxhole Messages</string>
-    <string name="blocking_manager_call_blocker_summary">Bloquear mensagens de spam, números &amp; chamadas desconhecidas com lista negra &amp; Agendar</string>
-    <string name="blocking_manager_call_control_summary">Filtre automaticamente suas chamadas e mensagens num único lugar conveniente! O Community IQ™ permite que você evite mensagens indesejadas de spammers conhecidos pela comunidade</string>
-    <string name="blocking_manager_sia_summary">Automaticamente filtrar mensagens não solicitadas usando o aplicativo \"Should I Answer\"</string>
-    <string name="blocking_manager_copy_title">Copiar números bloqueados</string>
-    <string name="blocking_manager_copy_summary">Seguir para %s e copiar seus números bloqueados existentes</string>
     <string name="blocked_numbers_title">Números bloqueados</string>
     <string name="blocked_numbers_empty">Os seus números bloqueados aparecerão aqui</string>
     <string name="blocked_numbers_add_cd">Bloquear um novo número</string>
@@ -250,24 +233,12 @@
     <string name="blocked_numbers_dialog_block">Bloquear</string>
     <string name="blocked_messages_title">Mensagens bloqueadas</string>
     <string name="blocked_messages_empty">Suas mensagens bloqueadas aparecerão aqui</string>
-    <string name="blocking_block_title">Bloquear</string>
-    <string name="blocking_unblock_title">Desbloquear</string>
-    <plurals name="blocking_block_external">
-        <item quantity="one">Seguir para %s e bloquear este número</item>
-        <item quantity="other">Seguir para %s e bloquear estes números</item>
-    </plurals>
-    <plurals name="blocking_unblock_external">
-        <item quantity="one">Seguir para %s e permitir este número</item>
-        <item quantity="other">Seguir para %s e permitir estes números</item>
-    </plurals>
     <string name="about_title">Sobre</string>
     <string name="about_version_title">Versão</string>
-    <string name="about_developer_title">Desenvolvedor</string>
     <string name="about_source_title">Código fonte</string>
     <string name="about_changelog_title">Changelog</string>
     <string name="about_contact_title">Contato</string>
     <string name="about_license_title">Licença</string>
-    <string name="about_copyright_title">Copyright</string>
     <!-- Substitutions are for price and currency. Ex: Lifetime upgrade for $1.99 USD -->
     <!-- Substitutions are for price and currency. Ex: Unlock + donate for $4.99 USD -->
     <string name="widget_loading">Carregando…</string>
