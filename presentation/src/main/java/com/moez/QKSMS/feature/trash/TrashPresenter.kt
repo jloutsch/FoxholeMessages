@@ -24,6 +24,7 @@ import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.interactor.EmptyTrash
 import dev.octoshrimpy.quik.interactor.RestoreMessages
 import dev.octoshrimpy.quik.repository.MessageRepository
+import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class TrashPresenter @Inject constructor(
@@ -48,6 +49,7 @@ class TrashPresenter @Inject constructor(
                 .subscribe { messageId -> view.showDeleteForeverDialog(messageId) }
 
         view.confirmDeleteForeverIntent
+                .observeOn(Schedulers.io()) // Realm refuses writes on the main thread
                 .autoDisposable(view.scope())
                 .subscribe { messageId -> messageRepo.deleteMessages(listOf(messageId)) }
 
