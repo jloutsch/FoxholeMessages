@@ -18,7 +18,7 @@
  */
 // Android starts this for "reply with a message" on an incoming call, which needs a Service;
 // IntentService still runs on every version, and WorkManager can't receive that intent
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
 
 package dev.octoshrimpy.quik.service
 

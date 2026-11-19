@@ -1621,6 +1621,12 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
   `onBackPressedDispatcher.onBackPressed()`. Screens whose callback is always enabled (Main, Compose,
   Scheduled, Contacts and the Conductor screens) don't show the back-to-home preview animation; Back
   itself works. Showing it would mean enabling each callback only while it has something to close.
+- **Kotlin is 2.2.21** (K2 compiler) since #28, via 1.9.25. The root `build.gradle` sets `jvmTarget`
+  1.8 and `-Xannotation-default-target=param-property` for every module (annotations on constructor
+  `val`s go on the parameter and the property, Kotlin's future default). kapt and the Realm plugin
+  work unchanged. Checked on a release-style build (R8, 93% renamed) on the Note 10: app loads,
+  reactions render, a backup's field names match `backup-format-v1.json`. The old-Kotlin pins (okio,
+  unfurl, `androidx.core`) are #29.
 - **Compiler warnings** were taken to zero in 2.6.2; the few deprecated calls
   kept on purpose each carry a one-line reason at the call site. ExoPlayer is
   now Media3 1.1.1 (same release line; the gallery video player wasn't

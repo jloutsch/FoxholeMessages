@@ -96,10 +96,6 @@ android {
         targetCompatibility 1.8
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
     lint {
         // Findings that existed when lint started failing the build; only new ones fail it now.
         // Regenerate with ./gradlew :presentation:updateLintBaseline after fixing some.
