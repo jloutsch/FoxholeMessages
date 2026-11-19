@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.common.util
 
+import com.bumptech.glide.Glide
 import dev.octoshrimpy.quik.classifier.InboxTab
 import android.app.Notification
 import android.app.NotificationChannel
@@ -61,7 +62,6 @@ import dev.octoshrimpy.quik.classifier.OtpDetector
 import dev.octoshrimpy.quik.receiver.CopyCodeReceiver
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.util.Preferences
@@ -260,7 +260,7 @@ class NotificationManagerImpl @Inject constructor(
         val avatar = conversation.recipients.takeIf { it.size == 1 }
                 ?.first()?.contact?.photoUri
                 ?.let { photoUri ->
-                    GlideApp.with(context)
+                    Glide.with(context)
                             .asBitmap()
                             .circleCrop()
                             .load(photoUri)

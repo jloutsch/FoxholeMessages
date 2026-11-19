@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.common.widget
 
+import com.bumptech.glide.Glide
 import android.content.Context
 import android.os.Looper
 import android.util.AttributeSet
@@ -31,7 +32,6 @@ import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.databinding.AvatarViewBinding
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.model.Recipient
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.tryOrNull
 import javax.inject.Inject
 
@@ -106,14 +106,14 @@ class AvatarView @JvmOverloads constructor(
         layout.photo.setImageDrawable(null)
         photoUri?.let { photoUri ->
             if (Looper.myLooper() == Looper.getMainLooper()) {
-                GlideApp.with(layout.photo)
+                Glide.with(layout.photo)
                         .load(photoUri)
                         .into(layout.photo)
             } else {
                 // Off the main thread this view is being drawn straight into a shortcut icon. Glide's
                 // into() only runs on the main thread, and threw here, so the icon fell back to a
                 // generic one; load the photo now instead.
-                tryOrNull { GlideApp.with(context).load(photoUri).circleCrop().submit().get() }
+                tryOrNull { Glide.with(context).load(photoUri).circleCrop().submit().get() }
                         ?.let(layout.photo::setImageDrawable)
             }
         }

@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.widget
 
+import com.bumptech.glide.Glide
 import dev.octoshrimpy.quik.classifier.InboxTab
 import android.appwidget.AppWidgetManager
 import android.content.Context
@@ -42,7 +43,6 @@ import dev.octoshrimpy.quik.receiver.StartActivityFromWidgetReceiver
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.tryOrNull
 import javax.inject.Inject
@@ -140,7 +140,7 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
         }
 
         remoteViews.setImageViewBitmap(R.id.photo, null)
-        val futureGet = GlideApp.with(context)
+        val futureGet = Glide.with(context)
                 .asBitmap()
                 .load(contact?.photoUri)
                 .submit(48.dpToPx(context), 48.dpToPx(context))

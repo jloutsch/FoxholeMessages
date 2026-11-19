@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.gallery
 
+import com.bumptech.glide.Glide
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -31,7 +32,6 @@ import dev.octoshrimpy.quik.databinding.GalleryVideoPageBinding
 import dev.octoshrimpy.quik.extensions.isImage
 import dev.octoshrimpy.quik.extensions.isVideo
 import dev.octoshrimpy.quik.model.MmsPart
-import dev.octoshrimpy.quik.util.GlideApp
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import timber.log.Timber
@@ -94,12 +94,12 @@ class GalleryPagerAdapter @Inject constructor(private val context: Context) : Qk
                 val binding = GalleryImagePageBinding.bind(holder.itemView)
                 // We need to explicitly request a gif from glide for animations to work
                 when (part.getUri().let(contentResolver::getType)) {
-                    ContentType.IMAGE_GIF -> GlideApp.with(context)
+                    ContentType.IMAGE_GIF -> Glide.with(context)
                             .asGif()
                             .load(part.getUri())
                             .into(binding.image)
 
-                    else -> GlideApp.with(context)
+                    else -> Glide.with(context)
                             .asBitmap()
                             .load(part.getUri())
                             .into(binding.image)

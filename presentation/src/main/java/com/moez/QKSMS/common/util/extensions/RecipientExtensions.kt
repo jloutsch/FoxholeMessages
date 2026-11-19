@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.common.util.extensions
 
+import com.bumptech.glide.Glide
 import android.annotation.TargetApi
 import android.content.Context
 import android.graphics.Bitmap
@@ -22,7 +23,6 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.widget.QkTextView
 import dev.octoshrimpy.quik.model.Recipient
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.tryOrNull
 import timber.log.Timber
 
@@ -31,7 +31,7 @@ fun Recipient.getThemedIcon(context: Context, theme: Colors.Theme, width: Int, h
     var icon : IconCompat? = null
     val photoUri = contact?.photoUri
     if (photoUri != null) {
-        val req = GlideApp.with(context)
+        val req = Glide.with(context)
             .asBitmap()
             .circleCrop()
             .load(photoUri)

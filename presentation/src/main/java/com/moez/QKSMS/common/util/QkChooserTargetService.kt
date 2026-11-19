@@ -21,6 +21,7 @@
 
 package dev.octoshrimpy.quik.common.util
 
+import com.bumptech.glide.Glide
 import android.content.ComponentName
 import android.content.IntentFilter
 import android.graphics.drawable.Icon
@@ -32,7 +33,6 @@ import dev.octoshrimpy.quik.feature.compose.ComposeActivity
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.tryOrNull
 import javax.inject.Inject
 
@@ -55,7 +55,7 @@ class QkChooserTargetService : ChooserTargetService() {
         val icon = when (conversation.recipients.size) {
             1 -> {
                 val photoUri = conversation.recipients.first()?.contact?.photoUri
-                val request = GlideApp.with(this)
+                val request = Glide.with(this)
                         .asBitmap()
                         .circleCrop()
                         .load(photoUri)

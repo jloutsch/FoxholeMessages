@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import com.bumptech.glide.Glide
 import android.Manifest
 import android.animation.LayoutTransition
 import android.app.Activity
@@ -84,7 +85,6 @@ import dev.octoshrimpy.quik.feature.contacts.ContactsActivity
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.model.Recipient
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.tryOrNull
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -753,7 +753,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         }
 
         tryOrNull(true) {
-            GlideApp.with(this)
+            Glide.with(this)
                 .load(Uri.parse(backgroundUri))
                 .centerCrop()
                 .into(binding.backgroundImage)

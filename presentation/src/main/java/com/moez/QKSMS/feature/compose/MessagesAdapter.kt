@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import com.bumptech.glide.Glide
 import android.animation.ObjectAnimator
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -71,7 +72,6 @@ import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.databinding.MessageListItemInBinding
 import dev.octoshrimpy.quik.databinding.MessageListItemOutBinding
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.Preferences
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -525,7 +525,7 @@ class MessagesAdapter @Inject constructor(
 
                     thumbnail.setVisible(preview.thumbnailUrl != null)
                     if (preview.thumbnailUrl != null) {
-                        GlideApp.with(context)
+                        Glide.with(context)
                                 .load(preview.thumbnailUrl)
                                 .transform(CenterCrop(), RoundedCorners(8.dpToPx(context)))
                                 .into(thumbnail)
@@ -536,7 +536,7 @@ class MessagesAdapter @Inject constructor(
                     favicon.setVisible(preview.faviconUrl != null && displayHost != null)
                     host.setVisible(displayHost != null)
                     if (preview.faviconUrl != null) {
-                        GlideApp.with(context).load(preview.faviconUrl).into(favicon)
+                        Glide.with(context).load(preview.faviconUrl).into(favicon)
                     }
 
                     linkPreview.setOnClickListener {

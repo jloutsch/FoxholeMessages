@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose.part
 
+import com.bumptech.glide.Glide
 import android.content.Context
 import android.content.res.ColorStateList
 import android.media.AudioAttributes
@@ -42,7 +43,6 @@ import dev.octoshrimpy.quik.extensions.resourceExists
 import dev.octoshrimpy.quik.feature.compose.MessagesAdapter
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
-import dev.octoshrimpy.quik.util.GlideApp
 import io.reactivex.Observable
 import io.reactivex.Single
 import android.util.LruCache
@@ -330,7 +330,7 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
             } else {
                 binding.frame.layoutParams.height = binding.frame.layoutParams.width
                 setTint(null)
-                GlideApp.with(context)
+                Glide.with(context)
                     .asBitmap()
                     .load(embeddedPicture)
                     .override(binding.frame.layoutParams.width, binding.frame.layoutParams.height)
