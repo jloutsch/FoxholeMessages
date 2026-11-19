@@ -46,6 +46,15 @@
             app:widget="@layout/settings_theme_widget" />
 
         <dev.octoshrimpy.quik.common.widget.PreferenceView
+            android:id="@+id/systemColors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:summary="@string/settings_system_colors_summary"
+            app:title="@string/settings_system_colors_title"
+            app:widget="@layout/settings_switch_widget" />
+
+        <dev.octoshrimpy.quik.common.widget.PreferenceView
             android:id="@+id/night"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
