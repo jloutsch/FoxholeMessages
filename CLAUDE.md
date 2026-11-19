@@ -1644,6 +1644,12 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
   class may not write a final field outside its constructor (`IllegalAccessError`), which is why
   `Message.emojiReactions` is a `var`. `@LinkingObjects` fields (e.g. `MmsPart.messages`) stay `val`;
   Realm never writes them.
+- **Annotation processing is KSP** since #35 (Dagger, Glide, Moshi codegen). kapt runs only for Realm, in
+  `domain` and `presentation`; `data` has no kapt. Glide's KSP processor doesn't generate the `GlideApp`
+  API, so the code calls `Glide.with(...)` directly. Glide 4.16's generated
+  `GeneratedAppGlideModuleImpl` triggers one Kotlin warning ("will become an error"), outside our code:
+  a later Glide is the fix. **If KSP reports "… could not be resolved" for a Dagger-generated type**
+  (seen after changing a build type's settings), it's KSP's incremental processing: run a clean build.
 - **Compiler warnings** were taken to zero in 2.6.2; the few deprecated calls
   kept on purpose each carry a one-line reason at the call site. ExoPlayer is
   now Media3 1.1.1 (same release line; the gallery video player wasn't

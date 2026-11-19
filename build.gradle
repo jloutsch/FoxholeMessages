@@ -84,17 +84,3 @@ allprojects {
 tasks.register('clean', Delete) {
     delete rootProject.buildDir
 }
-
-subprojects {
-    afterEvaluate {
-        if (project.hasProperty('kapt')) {
-            kapt {
-                // we expect this closure to run over a org.jetbrains.kotlin.gradle.plugin.KaptExtension
-                javacOptions {
-                    option("-source", "8")
-                    option("-target", "8")
-                }
-            }
-        }
-    }
-}

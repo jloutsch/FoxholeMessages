@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose.part
 
+import com.bumptech.glide.Glide
 import android.content.Context
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkViewHolder
@@ -29,7 +30,6 @@ import dev.octoshrimpy.quik.extensions.isImage
 import dev.octoshrimpy.quik.extensions.isVideo
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
-import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.tryOrNull
 import javax.inject.Inject
 
@@ -59,7 +59,7 @@ class ImageBinder @Inject constructor(colors: Colors, private val context: Conte
         }
 
         tryOrNull(true) {
-            GlideApp.with(context).load(part.getUri()).fitCenter().into(binding.thumbnail)
+            Glide.with(context).load(part.getUri()).fitCenter().into(binding.thumbnail)
         }
     }
 

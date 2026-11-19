@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.feature.conversationinfo
 
+import com.bumptech.glide.Glide
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -16,7 +17,6 @@ import dev.octoshrimpy.quik.databinding.ConversationMediaListItemBinding
 import dev.octoshrimpy.quik.databinding.ConversationRecipientListItemBinding
 import dev.octoshrimpy.quik.extensions.isVideo
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.*
-import dev.octoshrimpy.quik.util.GlideApp
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import javax.inject.Inject
@@ -146,7 +146,7 @@ class ConversationInfoAdapter @Inject constructor(
                 val binding = ConversationMediaListItemBinding.bind(holder.itemView)
                 val part = item.value
 
-                GlideApp.with(context)
+                Glide.with(context)
                         .load(part.getUri())
                         .fitCenter()
                         .into(binding.thumbnail)
