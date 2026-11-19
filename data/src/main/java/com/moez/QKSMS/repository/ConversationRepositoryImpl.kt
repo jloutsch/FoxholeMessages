@@ -432,7 +432,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     // Trashes (soft-deletes) the conversation's messages rather than removing them outright -
     // matches how individual message deletion already works, so a deleted conversation is
-    // recoverable from Trash within the retention window (see PurgeTrashService). The
+    // recoverable from Trash within the retention window (see PurgeTrash). The
     // conversation row itself is kept (not deleted) with lastMessage/draft cleared, which is
     // enough for getConversationsBase's isNotNull("lastMessage") OR isNotEmpty("draft") filter to
     // hide it from every list; restoring any of its messages naturally brings it back via

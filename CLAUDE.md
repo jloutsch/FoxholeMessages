@@ -1165,6 +1165,14 @@ Rules that must **stay**, each for a real reflection dependency:
    between builds, orphaning already-scheduled work and registering a
    duplicate beside it. `HousekeepingWorker`/`ClassifyExistingMessagesWorker`
    use string literals for exactly this reason.
+4. **Periodic work re-registered at every app start must use `ExistingPeriodicWorkPolicy.KEEP`.**
+   On WorkManager 2.8.0, `UPDATE` ran the work again on every start (checked on the S23+ with
+   `RetentionWorker`). `HousekeepingWorker` still uses `UPDATE`; its idle-only constraint hides it.
+
+All scheduled work is WorkManager now: `RetentionWorker` replaced the `AutoDeleteService`/
+`OtpRetentionService`/`PurgeTrashService` JobServices after 2.6.2 (one worker, three unique-work
+names). `QKApplication` cancels their old JobScheduler jobs (ids 8120235–8120237) at start and
+schedules or cancels each retention job from its setting, which also covers upgrades.
 
 ### Realm performance rule for anything batch-shaped
 

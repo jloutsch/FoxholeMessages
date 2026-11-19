@@ -30,9 +30,9 @@ import dev.octoshrimpy.quik.classifier.Category
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.interactor.DeleteOldOtps
-import dev.octoshrimpy.quik.service.OtpRetentionService
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker
+import dev.octoshrimpy.quik.worker.RetentionWorker
 import io.reactivex.rxkotlin.plusAssign
 import javax.inject.Inject
 
@@ -131,9 +131,9 @@ class MessageSortingPresenter @Inject constructor(
             .subscribe { days ->
                 prefs.otpRetentionDays.set(days)
                 when (days) {
-                    0 -> OtpRetentionService.cancelJob(context)
+                    0 -> RetentionWorker.cancel(context, RetentionWorker.OTP_RETENTION)
                     else -> {
-                        OtpRetentionService.scheduleJob(context)
+                        RetentionWorker.schedule(context, RetentionWorker.OTP_RETENTION)
                         deleteOldOtps.execute(Unit)
                     }
                 }

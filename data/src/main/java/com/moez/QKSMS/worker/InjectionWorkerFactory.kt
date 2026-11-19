@@ -27,7 +27,9 @@ import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.classifier.MessageCategoryBackfill
 import dev.octoshrimpy.quik.classifier.MessageCategorizer
 import dev.octoshrimpy.quik.classifier.OtpDetector
+import dev.octoshrimpy.quik.interactor.DeleteOldMessages
 import dev.octoshrimpy.quik.interactor.DeleteOldOtps
+import dev.octoshrimpy.quik.interactor.PurgeTrash
 import dev.octoshrimpy.quik.interactor.UpdateBadge
 import dev.octoshrimpy.quik.manager.ActiveConversationManager
 import dev.octoshrimpy.quik.manager.NotificationManager
@@ -58,6 +60,8 @@ class InjectionWorkerFactory @Inject constructor(
     private val otpDetector: OtpDetector,
     private val messageCategoryBackfill: MessageCategoryBackfill,
     private val deleteOldOtps: DeleteOldOtps,
+    private val deleteOldMessages: DeleteOldMessages,
+    private val purgeTrash: PurgeTrash,
 
 ) : WorkerFactory() {
     override fun createWorker(
@@ -74,6 +78,11 @@ class InjectionWorkerFactory @Inject constructor(
         when (instance) {
             is HousekeepingWorker ->
                 instance.scheduledMessageRepository = scheduledMessageRepository
+            is RetentionWorker -> {
+                instance.deleteOldMessages = deleteOldMessages
+                instance.deleteOldOtps = deleteOldOtps
+                instance.purgeTrash = purgeTrash
+            }
             is ReceiveSmsWorker -> {
                 instance.conversationRepo  = conversationRepo
                 instance.blockingClient = blockingClient

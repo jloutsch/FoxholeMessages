@@ -24,7 +24,7 @@ import dev.octoshrimpy.quik.repository.MessageRepository
 import io.reactivex.Flowable
 import javax.inject.Inject
 
-// Soft-deletes (trashes) messages rather than removing them outright - see PurgeTrashService
+// Soft-deletes (trashes) messages rather than removing them outright - see PurgeTrash
 // for the actual permanent delete after the retention window.
 class DeleteMessages @Inject constructor(
     private val conversationRepo: ConversationRepository,
