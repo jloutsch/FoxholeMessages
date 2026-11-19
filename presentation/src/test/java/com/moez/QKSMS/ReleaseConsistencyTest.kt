@@ -2,7 +2,6 @@ package dev.octoshrimpy.quik
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dev.octoshrimpy.quik.manager.ChangelogManagerImpl.Changeset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -24,7 +23,7 @@ class ReleaseConsistencyTest {
     private val versionName = Regex("""^\s*versionName\s+['"]([^'"]+)['"]""", RegexOption.MULTILINE).find(gradle)!!.groupValues[1]
 
     // Same configuration as AppModule.provideMoshi, which ChangelogManagerImpl uses.
-    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    private val moshi = Moshi.Builder().build() // as AppModule: generated adapters only, no reflection
     private val changelog: List<Changeset> by lazy {
         val type = Types.newParameterizedType(List::class.java, Changeset::class.java)
         moshi.adapter<List<Changeset>>(type).fromJson(File("../data/src/main/assets/changelog.json").readText())!!

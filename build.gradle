@@ -46,6 +46,8 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.11.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // KSP's version is <Kotlin version>-<KSP release> and must match kotlin_version
+        classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:$kotlin_version-2.0.4"
         classpath "io.realm:realm-gradle-plugin:$realm_version"
     }
 }

@@ -19,6 +19,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.devtools.ksp'
 
 android {
     compileSdk 36
@@ -69,9 +70,6 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:1.2.1"
     androidTestImplementation "org.mockito:mockito-android:$mockito_version"
     testImplementation "junit:junit:$junit_version"
-    // The app's Moshi setup (AppModule.provideMoshi) uses KotlinJsonAdapterFactory; backup tests use the same.
-    testImplementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
-    testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     // coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
@@ -80,6 +78,10 @@ dependencies {
     implementation "com.f2prateek.rx.preferences2:rx-preferences:$rx_preferences_version"
     implementation "com.jakewharton.timber:timber:$timber_version"
     implementation "com.squareup.moshi:moshi:$moshi_version"
+    // Adapters for the backup and changelog types are generated at build time: no reflection, so
+    // R8 can't break them (it did, silently, in 2.3.1, and again under Kotlin 2 + Moshi 1.15).
+    // Through KSP: Moshi's kapt path can't read Kotlin 2.2 metadata.
+    ksp "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
     implementation "com.squareup.okhttp3:okhttp:$okhttp3_version"
     implementation 'io.michaelrocks:libphonenumber-android:8.13.47'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

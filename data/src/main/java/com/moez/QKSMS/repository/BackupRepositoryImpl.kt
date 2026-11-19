@@ -38,6 +38,7 @@ import com.google.android.mms.pdu_alt.PduPersister
 import com.google.android.mms.pdu_alt.RetrieveConf
 import com.google.android.mms.pdu_alt.SendReq
 import com.google.android.mms.smil.SmilHelper
+import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import dev.octoshrimpy.quik.common.util.extensions.now
 import dev.octoshrimpy.quik.model.BackupFile
@@ -74,6 +75,7 @@ class BackupRepositoryImpl @Inject constructor(
      * The shape of a backup file. [BackupJson] reads and writes it one message at a time rather
      * than through this class, but the keys and order are the same.
      */
+    @JsonClass(generateAdapter = true)
     data class Backup(
         val messageCount: Int = 0,
         val messages: List<BackupMessage> = listOf()
@@ -83,10 +85,12 @@ class BackupRepositoryImpl @Inject constructor(
      * Simpler version of [Backup] which allows us to read certain fields from the backup without
      * needing to parse the entire file
      */
+    @JsonClass(generateAdapter = true)
     data class BackupMetadata(
         val messageCount: Int = 0
     )
 
+    @JsonClass(generateAdapter = true)
     data class BackupMessage(
         val type: Int,
         val address: String,
@@ -111,6 +115,7 @@ class BackupRepositoryImpl @Inject constructor(
      * base64-encoded in [data]; text/SMIL parts carry their content in [text] instead, so the
      * (usually much larger) [data] field is left null for them.
      */
+    @JsonClass(generateAdapter = true)
     data class BackupPart(
         val contentType: String,
         val name: String?,

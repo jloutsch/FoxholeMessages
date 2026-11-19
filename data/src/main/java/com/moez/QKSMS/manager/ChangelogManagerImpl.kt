@@ -70,7 +70,7 @@ class ChangelogManagerImpl @Inject constructor(
         prefs.changelogVersion.set(context.versionCode)
     }
 
-    @JsonClass(generateAdapter = false)
+    @JsonClass(generateAdapter = true)
     data class Changeset(
         @Json(name = "added") val added: List<String>?,
         @Json(name = "improved") val improved: List<String>?,

@@ -1,7 +1,6 @@
 package dev.octoshrimpy.quik.repository
 
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dev.octoshrimpy.quik.repository.BackupRepositoryImpl.Backup
 import dev.octoshrimpy.quik.repository.BackupRepositoryImpl.BackupMessage
 import dev.octoshrimpy.quik.repository.BackupRepositoryImpl.BackupMetadata
@@ -21,7 +20,7 @@ import org.junit.Test
 class BackupFormatTest {
 
     // Same configuration as AppModule.provideMoshi.
-    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    private val moshi = Moshi.Builder().build() // as AppModule: generated adapters only, no reflection
     private val sample = javaClass.getResource("/backup/backup-format-v1.json")!!.readText()
 
     private val expected = Backup(
