@@ -2,39 +2,6 @@
 <issues format="6" by="lint 8.11.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.11.0)" variant="all" version="8.11.0">
 
     <issue
-        id="AutoDispose"
-        message="Missing Disposable handling: Apply AutoDispose or cache the Disposable instance manually and enable lenient mode."
-        errorLine1="        Single.fromCallable {"
-        errorLine2="        ^">
-        <location
-            file="src/main/java/com/moez/QKSMS/feature/blocking/BlockingController.kt"
-            line="105"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="AutoDispose"
-        message="Missing Disposable handling: Apply AutoDispose or cache the Disposable instance manually and enable lenient mode."
-        errorLine1="        Single.fromCallable {"
-        errorLine2="        ^">
-        <location
-            file="src/main/java/com/moez/QKSMS/feature/blocking/BlockingController.kt"
-            line="123"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="AutoDispose"
-        message="Missing Disposable handling: Apply AutoDispose or cache the Disposable instance manually and enable lenient mode."
-        errorLine1="        (0 until binding.preferences.childCount)"
-        errorLine2="        ^">
-        <location
-            file="src/main/java/com/moez/QKSMS/feature/settings/messagesorting/notifications/CategoryNotificationActivity.kt"
-            line="69"
-            column="9"/>
-    </issue>
-
-    <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
         errorLine1="                        .let { notificationManager.notify(NOTIFICATION_ID, it.build()) }"
