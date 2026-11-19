@@ -103,6 +103,9 @@ class SettingsPresenter @Inject constructor(
         disposables += prefs.autoColor.asObservable()
                 .subscribe { autoColor -> newState { copy(autoColor = autoColor) } }
 
+        disposables += prefs.systemColors.asObservable()
+                .subscribe { systemColors -> newState { copy(systemColors = systemColors) } }
+
         disposables += prefs.pinchToZoom.asObservable()
                 .subscribe { enabled -> newState { copy(pinchToZoomEnabled = enabled) } }
 
@@ -157,6 +160,8 @@ class SettingsPresenter @Inject constructor(
 
                     when (it.id) {
                         R.id.theme -> view.showThemePicker()
+
+                        R.id.systemColors -> prefs.systemColors.set(!prefs.systemColors.get())
 
                         R.id.night -> view.showNightModeDialog()
 
