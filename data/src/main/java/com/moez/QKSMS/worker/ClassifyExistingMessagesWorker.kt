@@ -19,6 +19,10 @@
 package dev.octoshrimpy.quik.worker
 
 import androidx.work.workDataOf
+import androidx.work.WorkInfo
+import io.reactivex.Observable
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.rx2.asObservable
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.ExistingWorkPolicy
@@ -44,6 +48,24 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         private const val WORKER_TAG = "ClassifyExistingMessagesWorker"
 
         private const val INPUT_FULL_RESORT = "fullResort"
+        private const val PROGRESS_DONE = "done"
+        private const val PROGRESS_TOTAL = "total"
+        private const val RESULT_SORTED = "sorted"
+
+        /** The latest sorting run, as the Message Sorting screen shows it. */
+        fun observeStatus(context: Context): Observable<SortStatus> =
+            WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(WORKER_TAG)
+                .map { infos -> statusOf(infos.lastOrNull()) }
+                .asObservable()
+
+        fun statusOf(info: WorkInfo?): SortStatus = when (info?.state) {
+            WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED, WorkInfo.State.RUNNING -> SortStatus.Running(
+                info.progress.getInt(PROGRESS_DONE, 0), info.progress.getInt(PROGRESS_TOTAL, 0)
+            )
+            WorkInfo.State.SUCCEEDED -> SortStatus.Finished(info.outputData.getInt(RESULT_SORTED, 0))
+            WorkInfo.State.FAILED -> SortStatus.Failed
+            WorkInfo.State.CANCELLED, null -> SortStatus.Idle
+        }
 
         /** [fullResort]: re-sort every message, not only ones never sorted (see MessageCategoryBackfill.run). */
         fun trigger(context: Context, fullResort: Boolean = false) {
@@ -63,6 +85,14 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         }
     }
 
+    sealed class SortStatus {
+        object Idle : SortStatus()
+        /** [total] is 0 until the messages to sort have been counted. */
+        data class Running(val done: Int, val total: Int) : SortStatus()
+        data class Finished(val sorted: Int) : SortStatus()
+        object Failed : SortStatus()
+    }
+
     @Inject lateinit var backfill: MessageCategoryBackfill
     @Inject lateinit var deleteOldOtps: DeleteOldOtps
     @Inject lateinit var notificationManager: NotificationManager
@@ -77,7 +107,11 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         val notificationManagerCompat = NotificationManagerCompat.from(applicationContext)
 
         Timber.v("running backfill")
-        val total = backfill.run(fullResort = inputData.getBoolean(INPUT_FULL_RESORT, false))
+        var sorted = 0
+        val total = backfill.run(fullResort = inputData.getBoolean(INPUT_FULL_RESORT, false)) { done, all ->
+            sorted = all
+            setProgressAsync(workDataOf(PROGRESS_DONE to done, PROGRESS_TOTAL to all))
+        }
 
         if (total > 0) {
             notificationManagerCompat.cancel(NOTIFICATION_ID)
@@ -97,7 +131,7 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         )
 
         Timber.v("finished")
-        Result.success()
+        Result.success(workDataOf(RESULT_SORTED to sorted))
     } catch (e: Throwable) {
         Timber.e(e, "failed")
         Result.failure()
