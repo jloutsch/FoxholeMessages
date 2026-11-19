@@ -298,7 +298,7 @@ class NotificationManagerImpl @Inject constructor(
             notification
                     .setLargeIcon(avatar)
                     .setContentTitle(conversation.getTitle())
-                    .setContentText(newest?.getText())
+                    .setContentText(newest.getText())
                     .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                     .setCustomContentView(codeView)
                     .setCustomBigContentView(codeView)
@@ -307,7 +307,7 @@ class NotificationManagerImpl @Inject constructor(
 
             // Copy it on arrival, once per message: this also runs whenever the conversation's
             // notification is rebuilt (e.g. after a delete)
-            if (newest != null && prefs.lastAutoCopiedCodeMessageId.get() != newest.id) {
+            if (prefs.lastAutoCopiedCodeMessageId.get() != newest.id) {
                 prefs.lastAutoCopiedCodeMessageId.set(newest.id)
                 Handler(Looper.getMainLooper()).post { CopyCodeReceiver.copy(context, code) }
             }

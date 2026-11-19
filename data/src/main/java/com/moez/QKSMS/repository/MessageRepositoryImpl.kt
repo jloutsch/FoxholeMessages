@@ -858,7 +858,18 @@ open class MessageRepositoryImpl @Inject constructor(
 
         Realm.getDefaultInstance().use { realm ->
             var managedMessage: Message? = null
-            realm.executeTransaction { managedMessage = realm.copyToRealmOrUpdate(message) }
+            realm.executeTransaction {
+                // Android announces this insert to our own sync, which can save the message first;
+                // reuse that row's id so the message isn't stored twice
+                if (providerContentId != 0L) {
+                    realm.where(Message::class.java)
+                        .equalTo("type", Message.TYPE_SMS)
+                        .equalTo("contentId", providerContentId)
+                        .findFirst()
+                        ?.let { synced -> message.id = synced.id }
+                }
+                managedMessage = realm.copyToRealmOrUpdate(message)
+            }
 
             managedMessage?.let { savedMessage ->
                 val parsedReaction = reactions.parseEmojiReaction(body)

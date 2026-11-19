@@ -320,27 +320,6 @@ class SyncRepositoryImpl @Inject constructor(
         // If we don't have a valid id, return null
         val contentId = tryOrNull(false) { ContentUris.parseId(uri) } ?: return null
 
-        // Check if the message already exists, so we can reuse the id. The row is about to be
-        // replaced wholesale by insertOrUpdate, so also keep what only this app stores on it -
-        // otherwise any provider change (e.g. another app or a car marking it read) would un-trash
-        // it and drop its star, category, OTP tag and reactions.
-        val existing = Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.where(Message::class.java)
-                .equalTo("type", type)
-                .equalTo("contentId", contentId)
-                .or()
-                .beginGroup()
-                .equalTo("id", messageId)
-                .and()
-                .equalTo("contentId", 0L)
-                .endGroup()
-                .findFirst()
-                ?.let { message ->
-                    Triple(message.id, AppOnlyMessageFields.of(message), realm.copyFromRealm(message.emojiReactions))
-                }
-        }
-
         // The uri might be something like content://mms/inbox/id
         // The box might change though, so we should just use the mms/id uri
         val stableUri = when (type) {
@@ -355,13 +334,6 @@ class SyncRepositoryImpl @Inject constructor(
 
             val columnsMap = CursorToMessage.MessageColumns(cursor)
             cursorToMessage.map(Pair(cursor, columnsMap)).apply {
-                // Applied before the first write: saveEmojiReaction below writes this object again.
-                existing?.let { (existingId, fields, existingReactions) ->
-                    this.id = existingId
-                    fields.applyTo(this)
-                    emojiReactions.addAll(existingReactions)
-                }
-
                 if (isMms()) {
                     parts = RealmList<MmsPart>().apply {
                         addAll(cursorToPart.getPartsCursor(contentId)?.map { cursorToPart.map(it) }.orEmpty())
@@ -371,14 +343,28 @@ class SyncRepositoryImpl @Inject constructor(
                 conversationRepo.getOrCreateConversation(threadId)
                 Realm.getDefaultInstance().use { realm ->
                     realm.executeTransaction {
-                        // Re-read what only this app stores inside the write itself. Android sends
-                        // this sync for our own inserts too, so it runs alongside ReceiveSmsWorker,
-                        // which may tag the message (code, category) after `existing` was read;
-                        // writing that older copy wiped the tags.
-                        existing?.let { (existingId, _, _) ->
-                            realm.where(Message::class.java).equalTo("id", existingId).findFirst()
-                                ?.let { current -> AppOnlyMessageFields.of(current).applyTo(this) }
-                        }
+                        // If the message is already saved, reuse its id and keep what only this app
+                        // stores on it (Trash, star, category, code tag, reactions); the row is
+                        // replaced wholesale. Looked up inside the write: Android sends this sync
+                        // for our own inserts too, so it runs alongside the receive path, and a
+                        // lookup made earlier missed a row or tags saved in between (the message
+                        // was then stored twice, or its tags were wiped). saveEmojiReaction below
+                        // writes this object again, so the fields stay on it.
+                        realm.where(Message::class.java)
+                            .equalTo("type", type)
+                            .equalTo("contentId", contentId)
+                            .or()
+                            .beginGroup()
+                            .equalTo("id", messageId)
+                            .and()
+                            .equalTo("contentId", 0L)
+                            .endGroup()
+                            .findFirst()
+                            ?.let { current ->
+                                this.id = current.id
+                                AppOnlyMessageFields.of(current).applyTo(this)
+                                emojiReactions.addAll(realm.copyFromRealm(current.emojiReactions))
+                            }
                         realm.insertOrUpdate(this)
                     }
                 }
