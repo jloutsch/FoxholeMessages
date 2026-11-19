@@ -213,6 +213,9 @@ dependencies {
     // Previews are off (no INTERNET permission; see CLAUDE.md), so this only has to compile.
     implementation "me.saket.unfurl:unfurl:1.7.0"
     implementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
+    // moshi-kotlin reads kotlin.Metadata through kotlin-reflect, which must match the compiler's
+    // Kotlin version (Moshi itself asks for an older one).
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     implementation "me.leolin:ShortcutBadger:1.1.22"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation project(":android-smsmms")

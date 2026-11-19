@@ -71,6 +71,7 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     // The app's Moshi setup (AppModule.provideMoshi) uses KotlinJsonAdapterFactory; backup tests use the same.
     testImplementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     // coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
