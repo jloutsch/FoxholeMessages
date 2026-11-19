@@ -26,7 +26,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.work.WorkerFactory
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dev.octoshrimpy.quik.blocking.BlockingClient
@@ -121,9 +120,8 @@ class AppModule(private var application: Application) {
     @Provides
     @Singleton
     fun provideMoshi(): Moshi {
-        return Moshi.Builder()
-                .add(KotlinJsonAdapterFactory())
-                .build()
+        // No KotlinJsonAdapterFactory: every Kotlin type parsed is @JsonClass(generateAdapter = true)
+        return Moshi.Builder().build()
     }
 
     @Provides

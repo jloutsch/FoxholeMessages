@@ -138,7 +138,11 @@
     <init>(android.content.Context, androidx.work.WorkerParameters);
 }
 
-# Moshi's reflective Kotlin adapter (KotlinJsonAdapterFactory, registered in AppModule) resolves a
+# Since #32 these types use generated adapters (@JsonClass(generateAdapter = true)) and AppModule no
+# longer registers KotlinJsonAdapterFactory, so nothing below depends on reflection any more. The
+# keeps stay as a cheap second line of defence (ProguardRulesTest checks them). History:
+#
+# Moshi's reflective Kotlin adapter (KotlinJsonAdapterFactory, then registered in AppModule) resolves a
 # class's properties through kotlin-reflect at runtime, so whatever property names R8 leaves behind
 # are the JSON keys it reads and writes. The Moshi rules near the top of this file only cover the
 # codegen path - they keep generated **JsonAdapter classes, and every type below is either

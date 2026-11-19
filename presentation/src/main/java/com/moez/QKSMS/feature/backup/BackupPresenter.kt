@@ -31,6 +31,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
+import timber.log.Timber
 import javax.inject.Inject
 
 class BackupPresenter @Inject constructor(
@@ -135,6 +136,7 @@ class BackupPresenter @Inject constructor(
                         val details = context.getString(R.string.backup_details, date, backupFile.messages)
                         newState { copy(selectedBackupDetails = details) }
                     } catch (e: Exception) {
+                        Timber.w(e, "Couldn't read the selected backup file")
                         newState { copy(showSelectedBackupError = true) }
                     }
                 }
