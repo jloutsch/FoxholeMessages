@@ -13,7 +13,7 @@ buildscript {
     ext.billing_version = '5.1.0'
     ext.conductor_version = '2.1.5'
     ext.coroutines_version = '1.4.3'
-    ext.dagger_version = "2.18"
+    ext.dagger_version = "2.57.2"
     ext.espresso_version = '3.1.0-alpha3'
     ext.media3_version = "1.1.1"
     ext.glide_version = "4.16.0"
