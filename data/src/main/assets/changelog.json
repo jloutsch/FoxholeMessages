@@ -1,5 +1,17 @@
 [
   {
+    "versionCode": 2264,
+    "versionName": "2.6.0",
+    "added": [
+      "One-time codes show in large type in their notification, including on the lock screen, with a Copy code button",
+      "The code is also copied to the clipboard automatically when it arrives, ready to paste",
+      "Choose the size (Large, Larger or Huge) or turn it off in Settings → Message Sorting → Code notification size"
+    ],
+    "fixed": [
+      "A newly received message could lose its code tag and inbox tab when Android re-synced it at the same moment, so the code wasn't recognised"
+    ]
+  },
+  {
     "versionCode": 2263,
     "versionName": "2.5.0",
     "added": [

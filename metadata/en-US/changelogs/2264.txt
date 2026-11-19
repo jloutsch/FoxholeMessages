@@ -1,0 +1,3 @@
+What's new in 2.6.0:
+- Added: one-time codes show in large type in their notification, including on the lock screen, and are copied automatically so you can paste them. Choose the size or turn it off in Settings → Message Sorting.
+- Fixed: a newly received message could lose its code tag and inbox tab when Android re-synced it at the same moment.
