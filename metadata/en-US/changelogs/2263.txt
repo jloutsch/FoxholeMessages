@@ -1,0 +1,4 @@
+What's new in 2.5.0:
+- Added: export/import of blocking rules, a choice of which tabs the widget shows, and unread badges in the widget.
+- Fixed: syncing could wipe stars, Trash and inbox tabs; large backups could fail and restores duplicated messages; forwarded pictures were dropped; failed texts stayed "Sending"; your last sent picture flashed while typing.
+- Plus smaller fixes to the speak widget, shortcuts and backups.

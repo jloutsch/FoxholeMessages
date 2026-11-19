@@ -1,5 +1,33 @@
 [
   {
+    "versionCode": 2263,
+    "versionName": "2.5.0",
+    "added": [
+      "Blocking rules can be exported to a file and imported again",
+      "Choose which inbox tabs the home-screen widget shows (Settings → Message Sorting → Widget shows)",
+      "Unread conversations in the home-screen widget show a badge with the unread count, like the inbox",
+      "Screen-reader labels on buttons that had none"
+    ],
+    "improved": [
+      "Backups are written and restored one message at a time, so large inboxes back up without running out of memory",
+      "Restoring a backup onto a phone that already has those messages no longer duplicates them",
+      "Inbox tabs sort by sender as well as wording, and your replies stay in the conversation's tab",
+      "Reactions from iPhones are recognised in German, Bulgarian and Malayalam",
+      "Home-screen shortcuts show contact photos, including for group conversations"
+    ],
+    "fixed": [
+      "Syncing messages could wipe stars, Trash and inbox tabs; removing duplicates and deleting old codes could delete real messages",
+      "Forwarding a picture message, or editing a scheduled one, dropped the picture, and scheduled messages could lose their pictures before sending",
+      "Texts that failed to send stayed on \"Sending\" forever",
+      "The last picture you sent flashed above the keyboard while typing",
+      "The \"speak unseen\" widget always said there were no messages",
+      "A failed backup said \"Finished!\"",
+      "\"Sort existing messages\" now re-sorts every message, as its dialog says",
+      "Trashed messages no longer count in unread badges or show in search, the media gallery or shortcuts",
+      "Per-category vibration and ringtone options, which had no effect, are hidden"
+    ]
+  },
+  {
     "versionCode": 2262,
     "versionName": "2.4.1",
     "added": [
