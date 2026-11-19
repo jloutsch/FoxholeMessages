@@ -1,5 +1,12 @@
 [
   {
+    "versionCode": 2265,
+    "versionName": "2.6.1",
+    "fixed": [
+      "A message arriving at the same moment Android re-synced it could be saved twice, or lose its code tag, inbox tab or reactions"
+    ]
+  },
+  {
     "versionCode": 2264,
     "versionName": "2.6.0",
     "added": [

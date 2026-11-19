@@ -1,0 +1,2 @@
+What's new in 2.6.1:
+- Fixed: a message arriving at the same moment Android re-synced it could be saved twice, or lose its code tag, inbox tab or reactions.
