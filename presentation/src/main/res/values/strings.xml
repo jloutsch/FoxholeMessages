@@ -306,6 +306,7 @@
     <string name="message_sorting_category_transactional">Transactional</string>
     <string name="message_sorting_category_unclassified">Unclassified</string>
     <string name="message_sorting_otp_retention_title">OTP message retention</string>
+    <string name="message_sorting_otp_notification_size_title">Code notification size</string>
     <string name="message_sorting_category_manage_header">Manage</string>
     <string name="message_sorting_sender_rules_title">Sender rules</string>
     <string name="message_sorting_sender_rules_summary">Manually set a category for specific senders</string>
@@ -593,6 +594,20 @@
         <item>0</item>
         <item>1</item>
         <item>2</item>
+    </integer-array>
+
+    <string-array name="otp_notification_size_labels">
+        <item>Off</item>
+        <item>Large</item>
+        <item>Larger</item>
+        <item>Huge</item>
+    </string-array>
+
+    <integer-array name="otp_notification_size_ids">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
     </integer-array>
 
     <string-array name="otp_retention_labels">

@@ -27,6 +27,7 @@ interface MessageSortingView : QkViewContract<MessageSortingState> {
     fun preferenceClicks(): Observable<PreferenceView>
     fun confirmSortExistingIntent(): Observable<*>
     fun otpRetentionSelected(): Observable<Int>
+    fun otpNotificationSizeSelected(): Observable<Int>
     /** Category names (see InboxTab) the user ticked in the widget-tabs picker. */
     fun widgetTabsSelected(): Observable<Set<String>>
 
@@ -34,6 +35,7 @@ interface MessageSortingView : QkViewContract<MessageSortingState> {
     fun showTrustedSenders()
     fun showSortExistingConfirmDialog()
     fun showOtpRetentionPicker()
+    fun showOtpNotificationSizePicker()
     fun showWidgetTabsPicker(categories: List<String>, labels: List<String>, selected: Set<String>)
 
 }

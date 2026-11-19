@@ -58,6 +58,14 @@ class MessageSortingPresenter @Inject constructor(
                 newState { copy(otpRetentionSummary = otpRetentionLabels[index], otpRetentionId = days) }
             }
 
+        val otpSizeLabels = context.resources.getStringArray(R.array.otp_notification_size_labels)
+        val otpSizeIds = context.resources.getIntArray(R.array.otp_notification_size_ids)
+        disposables += prefs.otpNotificationSize.asObservable()
+            .subscribe { size ->
+                val label = otpSizeLabels.getOrNull(otpSizeIds.indexOf(size)) ?: ""
+                newState { copy(otpNotificationSizeSummary = label, otpNotificationSizeId = size) }
+            }
+
         disposables += prefs.widgetTabs.asObservable()
             .subscribe { tabs ->
                 val summary = InboxTab.ALL.filter { it in tabs }.joinToString(", ", transform = ::tabLabel)
@@ -89,6 +97,7 @@ class MessageSortingPresenter @Inject constructor(
                     R.id.notificationsPromotional -> navigator.showCategoryNotificationSettings(Category.PROMOTIONAL.name)
                     R.id.notificationsTransactional -> navigator.showCategoryNotificationSettings(Category.TRANSACTIONAL.name)
                     R.id.otpRetention -> view.showOtpRetentionPicker()
+                    R.id.otpNotificationSize -> view.showOtpNotificationSizePicker()
                     R.id.widgetTabs -> view.showWidgetTabsPicker(
                         InboxTab.ALL, InboxTab.ALL.map(::tabLabel), prefs.widgetTabs.get()
                     )
@@ -112,6 +121,10 @@ class MessageSortingPresenter @Inject constructor(
                     widgetManager.sendDatasetChanged()
                 }
             }
+
+        view.otpNotificationSizeSelected()
+            .autoDisposable(view.scope())
+            .subscribe(prefs.otpNotificationSize::set)
 
         view.otpRetentionSelected()
             .autoDisposable(view.scope())

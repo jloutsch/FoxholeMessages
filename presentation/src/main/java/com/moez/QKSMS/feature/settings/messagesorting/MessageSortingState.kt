@@ -22,5 +22,7 @@ data class MessageSortingState(
     val autoSortEnabled: Boolean = true,
     val otpRetentionSummary: String = "Never",
     val widgetTabsSummary: String = "",
-    val otpRetentionId: Int = 0
+    val otpRetentionId: Int = 0,
+    val otpNotificationSizeSummary: String = "",
+    val otpNotificationSizeId: Int = 0
 )

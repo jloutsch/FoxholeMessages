@@ -89,6 +89,11 @@ class Preferences @Inject constructor(
         const val OTP_RETENTION_1_DAY = 1
         const val OTP_RETENTION_7_DAYS = 7
         const val OTP_RETENTION_30_DAYS = 30
+
+        const val OTP_NOTIFICATION_OFF = 0
+        const val OTP_NOTIFICATION_LARGE = 1
+        const val OTP_NOTIFICATION_LARGER = 2
+        const val OTP_NOTIFICATION_HUGE = 3
     }
 
     // Internal
@@ -157,6 +162,8 @@ class Preferences @Inject constructor(
     // make the database unopenable by the previous version.
     val emojiReparseVersion = rxPrefs.getInteger("fh_emojiReparseVersion", 0)
     val otpRetentionDays = rxPrefs.getInteger("fh_otpRetentionDays", OTP_RETENTION_NEVER)
+    // How large a one-time code is drawn in its notification; Off keeps the normal notification
+    val otpNotificationSize = rxPrefs.getInteger("fh_otpNotificationSize", OTP_NOTIFICATION_LARGE)
 
     /** Inbox tabs (category names, see InboxTab) whose conversations the home-screen widget lists. */
     val widgetTabs = rxPrefs.getStringSet("fh_widgetTabs", setOf("PERSONAL", "TRANSACTIONAL", "PROMOTIONAL"))

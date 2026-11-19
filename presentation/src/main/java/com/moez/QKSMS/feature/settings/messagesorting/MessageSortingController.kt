@@ -44,6 +44,7 @@ class MessageSortingController :
 
     @Inject override lateinit var presenter: MessageSortingPresenter
     @Inject lateinit var otpRetentionDialog: QkDialog
+    @Inject lateinit var otpNotificationSizeDialog: QkDialog
 
     private val confirmSortExistingSubject: Subject<Unit> = PublishSubject.create()
     private val widgetTabsSubject: Subject<Set<String>> = PublishSubject.create()
@@ -58,6 +59,7 @@ class MessageSortingController :
 
     override fun onViewCreated() {
         otpRetentionDialog.adapter.setData(R.array.otp_retention_labels, R.array.otp_retention_ids)
+        otpNotificationSizeDialog.adapter.setData(R.array.otp_notification_size_labels, R.array.otp_notification_size_ids)
     }
 
     override fun onAttach(view: View) {
@@ -72,6 +74,8 @@ class MessageSortingController :
         binding.otpRetention.summary = state.otpRetentionSummary
         binding.widgetTabs.summary = state.widgetTabsSummary
         otpRetentionDialog.adapter.selectedItem = state.otpRetentionId
+        binding.otpNotificationSize.summary = state.otpNotificationSizeSummary
+        otpNotificationSizeDialog.adapter.selectedItem = state.otpNotificationSizeId
     }
 
     override fun preferenceClicks(): Observable<PreferenceView> =
@@ -86,6 +90,10 @@ class MessageSortingController :
     override fun otpRetentionSelected(): Observable<Int> = otpRetentionDialog.adapter.menuItemClicks
 
     override fun showOtpRetentionPicker() = otpRetentionDialog.show(activity!!)
+
+    override fun otpNotificationSizeSelected(): Observable<Int> = otpNotificationSizeDialog.adapter.menuItemClicks
+
+    override fun showOtpNotificationSizePicker() = otpNotificationSizeDialog.show(activity!!)
 
     override fun widgetTabsSelected(): Observable<Set<String>> = widgetTabsSubject
 
