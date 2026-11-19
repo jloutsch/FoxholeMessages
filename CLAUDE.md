@@ -1100,7 +1100,7 @@ draft can be discarded.
 ## v2.x — Play Store release, obfuscation, and the traps found along the way
 
 The app is live on Google Play as of the 2.x line. Current shipped
-version is **`versionCode 2266` / `versionName '2.6.2'`**. (2.3.1 was
+version is **`versionCode 2267` / `versionName '2.7.0'`**. (2.3.1 was
 split across two versionCodes: the public GitHub release `v2.3.1`
 carries 2259, and 2260 is the same tree with `minSdk` raised, built as a
 draft for Play — see the minSdk note under Play Console notes.)
