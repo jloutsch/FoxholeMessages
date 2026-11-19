@@ -27,6 +27,8 @@ import androidx.core.net.toFile
 import dev.octoshrimpy.quik.util.FileUtils
 import java.util.UUID
 
+// MediaRecorder(Context) is the Android 12+ constructor, but a singleton object has no context to pass
+@Suppress("DEPRECATION")
 object MediaRecorderManager : MediaRecorder() {
 
     enum class RecordingState {

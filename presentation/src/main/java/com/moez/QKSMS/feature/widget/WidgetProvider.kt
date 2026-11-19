@@ -75,6 +75,9 @@ class WidgetProvider : AppWidgetProvider() {
         val appWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, WidgetProvider::class.java))
 
         // We need to update all Mms appwidgets on the home screen.
+        // Deprecated in Android 15 in favour of RemoteCollectionItems, which needs every row built
+        // up front; the adapter service still works on every version
+        @Suppress("DEPRECATION")
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.conversations)
     }
 
@@ -139,6 +142,7 @@ class WidgetProvider : AppWidgetProvider() {
                 .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 .putExtra("small_widget", smallWidget)
         intent.data = intent.toUri(Intent.URI_INTENT_SCHEME).toUri()
+        @Suppress("DEPRECATION") // see updateData
         remoteViews.setRemoteAdapter(R.id.conversations, intent)
 
         // compose new message image color and on click intent

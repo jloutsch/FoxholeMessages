@@ -37,14 +37,10 @@ class MessageUtilsActivity : QkThemedActivity() {
         setContentView(binding.root)
 
         router = Conductor.attachRouter(this, binding.container, savedInstanceState)
+        routeBackTo(router)
         if (!router.hasRootController()) {
             router.setRoot(RouterTransaction.with(MessageUtilsController()))
         }
     }
 
-    override fun onBackPressed() {
-        if (!router.handleBack()) {
-            super.onBackPressed()
-        }
-    }
 }

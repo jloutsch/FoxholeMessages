@@ -40,7 +40,7 @@ class TelephonyCompat {
         private fun extractAddrSpec(address: String): String {
             val match = NAME_ADDRESS_EMAIL_PATTERN.matcher(address)
             return if (match.matches()) {
-                match.group(2)
+                match.group(2) ?: address
             } else address
         }
 

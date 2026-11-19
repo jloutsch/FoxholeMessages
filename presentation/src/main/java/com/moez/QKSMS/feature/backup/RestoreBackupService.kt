@@ -35,6 +35,7 @@ import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import androidx.core.app.ServiceCompat
 
 
 class RestoreBackupService : Service() {
@@ -108,7 +109,7 @@ class RestoreBackupService : Service() {
     }
 
     private fun stop() {
-        stopForeground(true)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 

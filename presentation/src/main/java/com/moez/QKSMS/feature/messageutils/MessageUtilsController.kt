@@ -86,7 +86,7 @@ class MessageUtilsController : QkController<MessageUtilsControllerBinding, Messa
             }
         }
 
-        binding!!.autoDelete.summary = when (state.autoDelete) {
+        binding.autoDelete.summary = when (state.autoDelete) {
             0 -> context.getString(R.string.settings_auto_delete_never)
             else -> context.resources.getQuantityString(
                 R.plurals.settings_auto_delete_summary, state.autoDelete, state.autoDelete)

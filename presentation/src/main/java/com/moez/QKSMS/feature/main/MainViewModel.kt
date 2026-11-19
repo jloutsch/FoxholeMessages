@@ -69,6 +69,7 @@ import timber.log.Timber
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 class MainViewModel @Inject constructor(
     context: Context,
@@ -291,6 +292,7 @@ class MainViewModel @Inject constructor(
         // Show changelog
         if (changelogManager.didUpdate()) {
             if (Locale.getDefault().language.startsWith("en")) {
+                @OptIn(DelicateCoroutinesApi::class) // shown once after an update
                 GlobalScope.launch(Dispatchers.Main) {
                     val changelog = changelogManager.getChangelog()
                     changelogManager.markChangelogSeen()
@@ -536,7 +538,7 @@ class MainViewModel @Inject constructor(
                             ?.takeIf { conversation -> conversation.recipients.size == 1 }
                             ?.recipients?.first()
                             ?.takeIf { recipient -> recipient.contact == null } != null
-                    val pin = conversations.sumBy { if (it.pinned) -1 else 1 } >= 0
+                    val pin = conversations.count { it.pinned } * 2 <= conversations.size // at most half pinned
                     val read = when (conversations.size) {
                         0    -> false
                         1    -> conversations[0].unread
@@ -556,7 +558,6 @@ class MainViewModel @Inject constructor(
                         }
 
                         is Searching -> {} // Ignore
-                        else -> {}
                     }
                 }
                 .autoDisposable(view.scope())

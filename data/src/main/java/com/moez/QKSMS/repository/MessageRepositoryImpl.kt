@@ -539,9 +539,7 @@ open class MessageRepositoryImpl @Inject constructor(
 
         if (attachments.isNotEmpty()) {
             Timber.v("has attachments")
-            val smsManager = subId.takeIf { it != -1 }
-                ?.let(SmsManagerFactory::createSmsManager)
-                ?: SmsManager.getDefault()
+            val smsManager = SmsManagerFactory.createSmsManager(subId) // -1 gives the default SIM
 
             val maxWidth = smsManager.carrierConfigValues
                 .getInt(SmsManager.MMS_CONFIG_MAX_IMAGE_WIDTH)

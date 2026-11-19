@@ -33,6 +33,7 @@ import dev.octoshrimpy.quik.common.widget.QkEditText
 import dev.octoshrimpy.quik.common.widget.QkTextView
 import dev.octoshrimpy.quik.util.Preferences
 import javax.inject.Inject
+import androidx.core.content.ContextCompat
 
 
 
@@ -62,8 +63,8 @@ class TextViewStyler @Inject constructor(
 
         fun applyEditModeAttributes(textView: TextView, attrs: AttributeSet?) {
             textView.run {
-                var colorAttr = 0
-                var textSizeAttr = 0
+                var colorAttr: Int
+                var textSizeAttr: Int
 
                 when (this) {
                     is QkTextView -> context.obtainStyledAttributes(attrs, R.styleable.QkTextView).run {
@@ -102,8 +103,8 @@ class TextViewStyler @Inject constructor(
     }
 
     fun applyAttributes(textView: TextView, attrs: AttributeSet?) {
-        var colorAttr = 0
-        var textSizeAttr = 0
+        var colorAttr: Int
+        var textSizeAttr: Int
 
         if (!prefs.systemFont.get()) {
             fontProvider.getLato { lato ->
@@ -137,7 +138,7 @@ class TextViewStyler @Inject constructor(
         setTextSize(textView, textSizeAttr)
 
         if (textView is EditText) {
-            val drawable = textView.resources.getDrawable(R.drawable.cursor).apply { setTint(colors.theme().theme) }
+            val drawable = ContextCompat.getDrawable(textView.context, R.drawable.cursor)!!.apply { setTint(colors.theme().theme) }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 textView.textCursorDrawable = drawable
             }

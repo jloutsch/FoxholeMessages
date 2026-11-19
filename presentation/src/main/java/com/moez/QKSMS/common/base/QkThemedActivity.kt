@@ -23,7 +23,6 @@ import android.app.ActivityManager
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
-import android.view.View
 import androidx.core.view.iterator
 import androidx.lifecycle.Lifecycle
 import com.uber.autodispose.android.lifecycle.scope
@@ -45,6 +44,7 @@ import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import androidx.core.view.WindowCompat
 
 /**
  * Base activity that automatically applies any necessary theme theme settings and colors
@@ -110,19 +110,29 @@ abstract class QkThemedActivity : QkActivity() {
         // We can only set light nav bar on API 27 in attrs, but we can do it in API 26 here
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
             val night = !resolveThemeBoolean(R.attr.isLightTheme)
-            window.decorView.systemUiVisibility = if (night) 0 else
-                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            WindowCompat.getInsetsController(window, window.decorView).run {
+                isAppearanceLightStatusBars = !night
+                isAppearanceLightNavigationBars = !night
+            }
         }
 
         // Some devices don't let you modify android.R.attr.navigationBarColor
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            @Suppress("DEPRECATION") // ignored once the app draws behind the bars; still used below that
             window.navigationBarColor = resolveThemeColor(android.R.attr.windowBackground)
         }
 
         // Set the color for the recent apps title
         val toolbarColor = resolveThemeColor(R.attr.colorPrimary)
-        val icon = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
-        val taskDesc = ActivityManager.TaskDescription(getString(R.string.app_name), icon, toolbarColor)
+        val taskDesc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityManager.TaskDescription.Builder()
+                .setLabel(getString(R.string.app_name))
+                .setPrimaryColor(toolbarColor)
+                .build()
+        } else {
+            val icon = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
+            @Suppress("DEPRECATION") ActivityManager.TaskDescription(getString(R.string.app_name), icon, toolbarColor)
+        }
         setTaskDescription(taskDesc)
     }
 

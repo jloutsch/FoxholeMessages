@@ -47,18 +47,18 @@ class ConversationInfoAdapter @Inject constructor(
                 val binding = ConversationRecipientListItemBinding.inflate(inflater, parent, false)
                 QkViewHolder(binding.root).apply {
                     itemView.setOnClickListener {
-                        val item = getItem(adapterPosition) as? ConversationInfoRecipient
+                        val item = getItem(bindingAdapterPosition) as? ConversationInfoRecipient
                         item?.value?.id?.run(recipientClicks::onNext)
                     }
 
                     itemView.setOnLongClickListener {
-                        val item = getItem(adapterPosition) as? ConversationInfoRecipient
+                        val item = getItem(bindingAdapterPosition) as? ConversationInfoRecipient
                         item?.value?.id?.run(recipientLongClicks::onNext)
                         true
                     }
 
                     binding.theme.setOnClickListener {
-                        val item = getItem(adapterPosition) as? ConversationInfoRecipient
+                        val item = getItem(bindingAdapterPosition) as? ConversationInfoRecipient
                         item?.value?.id?.run(themeClicks::onNext)
                     }
                 }
@@ -86,7 +86,7 @@ class ConversationInfoAdapter @Inject constructor(
                 val binding = ConversationMediaListItemBinding.inflate(inflater, parent, false)
                 QkViewHolder(binding.root).apply {
                     itemView.setOnClickListener {
-                        val item = getItem(adapterPosition) as? ConversationInfoMedia
+                        val item = getItem(bindingAdapterPosition) as? ConversationInfoMedia
                         item?.value?.id?.run(mediaClicks::onNext)
                     }
                 }

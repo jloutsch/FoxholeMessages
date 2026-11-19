@@ -36,7 +36,7 @@ class TrustedSendersAdapter : QkRealmAdapter<TrustedSender, QkBindingViewHolder<
         val binding = TrustedSenderListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.remove.setOnClickListener {
-                val sender = getItem(adapterPosition) ?: return@setOnClickListener
+                val sender = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 removeSender.onNext(sender)
             }
         }

@@ -39,6 +39,7 @@ import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
+import androidx.core.content.ContextCompat
 
 class ConversationItemTouchCallback @Inject constructor(
     colors: Colors,
@@ -147,7 +148,7 @@ class ConversationItemTouchCallback @Inject constructor(
         val action = if (direction == ItemTouchHelper.RIGHT) rightAction else leftAction
         val archivingImmediately = action == Preferences.SWIPE_ACTION_ARCHIVE && !prefs.confirmArchive.get()
         if (!archivingImmediately) {
-            adapter?.notifyItemChanged(viewHolder.adapterPosition)
+            adapter?.notifyItemChanged(viewHolder.bindingAdapterPosition)
         }
     }
 
@@ -163,7 +164,7 @@ class ConversationItemTouchCallback @Inject constructor(
             else -> null
         }
 
-        return res?.let(context.resources::getDrawable)
+        return res?.let { ContextCompat.getDrawable(context, it) }
                 ?.apply { setTint(tint) }
                 ?.toBitmap(iconLength, iconLength)
     }

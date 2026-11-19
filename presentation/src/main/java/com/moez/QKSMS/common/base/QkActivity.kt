@@ -35,6 +35,11 @@ import dev.octoshrimpy.quik.util.Preferences
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
 import javax.inject.Inject
+import android.content.Intent
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import com.bluelinelabs.conductor.Router
 
 abstract class QkActivity : AppCompatActivity() {
     @Inject lateinit var prefs: Preferences
@@ -86,12 +91,37 @@ abstract class QkActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                onBackPressed()
+                onBackPressedDispatcher.onBackPressed()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    /** Runs [action] on Back (gesture, button or the toolbar arrow) instead of closing the screen. */
+    protected fun onBack(action: () -> Unit) {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = action()
+        })
+    }
+
+    /** Back steps through [router]'s screens first, then closes this one as it always has. */
+    protected fun routeBackTo(router: Router) {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (router.handleBack()) return
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        })
+    }
+
+    /** Starts another app's screen for a result; [onOk] gets its data unless the user cancelled. */
+    protected fun launcherForResult(onOk: (Intent?) -> Unit): ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) onOk(result.data)
+        }
 
     override fun setContentView(layoutResID: Int) {
         super.setContentView(layoutResID)

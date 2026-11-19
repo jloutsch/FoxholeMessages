@@ -117,6 +117,7 @@ class SpeakManager @Inject constructor (private val context: Context) {
                         audioManager?.abandonAudioFocusRequest(audioFocusRequest!!)
                 }
 
+                @Deprecated("Deprecated in Java")
                 override fun onError(utteranceId: String) {
                     currentSessionId = null
 

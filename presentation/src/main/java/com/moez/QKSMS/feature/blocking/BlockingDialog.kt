@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.blocking
 
-import android.app.Activity
 import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.interactor.MarkBlocked
 import dev.octoshrimpy.quik.interactor.MarkUnblocked
@@ -27,6 +26,7 @@ import dev.octoshrimpy.quik.util.Preferences
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 // TODO: Once we have a custom dialog based on conductor, turn this into a controller
 class BlockingDialog @Inject constructor(
@@ -37,7 +37,9 @@ class BlockingDialog @Inject constructor(
     private val markUnblocked: MarkUnblocked
 ) {
 
-    fun show(activity: Activity, conversationIds: List<Long>, block: Boolean) = GlobalScope.launch {
+    // Fire-and-forget: the block must finish even if the screen that asked for it closes
+    @OptIn(DelicateCoroutinesApi::class)
+    fun show(conversationIds: List<Long>, block: Boolean) = GlobalScope.launch {
         val addresses = conversationIds.toLongArray()
                 .let { conversationRepo.getConversations(*it) }
                 .flatMap { conversation -> conversation.recipients }

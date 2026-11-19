@@ -34,8 +34,8 @@ class ContactsActivityModule {
 
     @Provides
     fun provideChips(activity: ContactsActivity): HashMap<String, String?> {
-        return activity.intent.extras?.getSerializable(ContactsActivity.CHIPS_KEY)
-                ?.let { serializable -> serializable as? HashMap<String, String?> }
+        @Suppress("DEPRECATION", "UNCHECKED_CAST") // see ComposeActivity.selectContactLauncher
+        return activity.intent.extras?.getSerializable(ContactsActivity.CHIPS_KEY) as? HashMap<String, String?>
                 ?: hashMapOf()
     }
 

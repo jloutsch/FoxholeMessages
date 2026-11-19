@@ -38,6 +38,7 @@ open class QkContextMenuRecyclerView<ADAPTER_VALUE_TYPE, VIEW_HOLDER_VALUE_TYPE>
     override fun getContextMenuInfo() = contextMenuInfo
 
     override fun getChildViewHolder(child: View): ViewHolder<VIEW_HOLDER_VALUE_TYPE>? {
+        @Suppress("UNCHECKED_CAST")
         return super.getChildViewHolder(child) as ViewHolder<VIEW_HOLDER_VALUE_TYPE>
     }
 
@@ -51,6 +52,7 @@ open class QkContextMenuRecyclerView<ADAPTER_VALUE_TYPE, VIEW_HOLDER_VALUE_TYPE>
         return super.showContextMenuForChild(originalView, x, y)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun saveContextMenuInfo(originalView: View) {
         contextMenuInfo = ContextMenuInfo(
             (adapter as Adapter<ADAPTER_VALUE_TYPE, *, *>).contextMenuValue,

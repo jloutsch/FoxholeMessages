@@ -36,7 +36,7 @@ class BlockedNumbersAdapter : QkRealmAdapter<BlockedNumber, QkBindingViewHolder<
         val binding = BlockedNumberListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.unblock.setOnClickListener {
-                val number = getItem(adapterPosition) ?: return@setOnClickListener
+                val number = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 unblockAddress.onNext(number.id)
             }
         }

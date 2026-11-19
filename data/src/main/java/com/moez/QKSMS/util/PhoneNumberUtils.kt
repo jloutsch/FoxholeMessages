@@ -45,6 +45,9 @@ class PhoneNumberUtils @Inject constructor(context: Context) {
             return true
         }
 
+        // The Context overload applies each carrier's strict/loose setting, which would change which
+        // numbers count as the same person; this keeps the loose match the app has always used
+        @Suppress("DEPRECATION")
         if (PhoneNumberUtils.compare(first, second)) {
             val matchType = phoneNumberUtil.isNumberMatch(normalizedFirst, normalizedSecond)
             if (matchType >= PhoneNumberUtil.MatchType.SHORT_NSN_MATCH) {

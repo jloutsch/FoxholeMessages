@@ -89,7 +89,7 @@ class QkEditText @JvmOverloads constructor(context: Context, attrs: AttributeSet
                     ContentType.IMAGE_GIF))
         }
 
-        val callback = InputConnectionCompat.OnCommitContentListener { inputContentInfo, flags, opts ->
+        val callback = InputConnectionCompat.OnCommitContentListener { inputContentInfo, flags, _ ->
             val grantReadPermission = flags and InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION != 0
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 && grantReadPermission) {
@@ -104,6 +104,9 @@ class QkEditText @JvmOverloads constructor(context: Context, attrs: AttributeSet
             true
         }
 
+        // The replacement routes keyboard images through OnReceiveContentListener, which also
+        // takes over paste; kept as is so pasting and keyboard GIFs behave as they always have
+        @Suppress("DEPRECATION")
         return InputConnectionCompat.createWrapper(inputConnection, editorInfo, callback)
     }
 

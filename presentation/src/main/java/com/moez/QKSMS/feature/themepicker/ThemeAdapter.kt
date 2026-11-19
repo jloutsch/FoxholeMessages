@@ -83,7 +83,7 @@ class ThemeAdapter @Inject constructor(
         binding.palette.removeAllViews()
         binding.palette.setPadding(swatchPadding, swatchPadding, swatchPadding, swatchPadding)
 
-        (palette.subList(0, 5) + palette.subList(5, 10).reversed())
+        (palette.subList(0, 5) + palette.subList(5, 10).asReversed())
                 .mapIndexed { index, color ->
                     val itemBinding = ThemeListItemBinding.inflate(LayoutInflater.from(context), binding.palette, false)
 

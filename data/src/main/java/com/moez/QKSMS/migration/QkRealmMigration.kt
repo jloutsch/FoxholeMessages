@@ -107,7 +107,7 @@ class QkRealmMigration @Inject constructor(
 
         if (version == 7L) {
             realm.schema.get("Conversation")
-                ?.addRealmObjectField("lastMessage", realm.schema.get("Message"))
+                ?.addRealmObjectField("lastMessage", realm.schema.get("Message")!!)
                 ?.removeField("count")
                 ?.removeField("date")
                 ?.removeField("snippet")
@@ -137,7 +137,7 @@ class QkRealmMigration @Inject constructor(
             realm.schema.create("ContactGroup")
                 .addField("id", Long::class.java, FieldAttribute.PRIMARY_KEY, FieldAttribute.REQUIRED)
                 .addField("title", String::class.java, FieldAttribute.REQUIRED)
-                .addRealmListField("contacts", realm.schema.get("Contact"))
+                .addRealmListField("contacts", realm.schema.get("Contact")!!)
 
             realm.schema.get("PhoneNumber")
                 ?.addField("id", Long::class.java, FieldAttribute.PRIMARY_KEY, FieldAttribute.REQUIRED)

@@ -310,15 +310,15 @@ class ConversationRepositoryImpl @Inject constructor(
         createConversationFromCp(threadId, sendAsGroup)
 
 
-    override fun getConversation(recipients: Collection<String>): Conversation? =
+    override fun getConversation(addresses: Collection<String>): Conversation? =
         Realm.getDefaultInstance().use { realm ->
             realm.refresh()
             realm.where(Conversation::class.java)
                 .findAll()
-                .filter { conversation -> conversation.recipients.size == recipients.size }
+                .filter { conversation -> conversation.recipients.size == addresses.size }
                 .find { conversation ->
                     conversation.recipients.map { it.address }.all { recipientAddress ->
-                        recipients.any { phoneNumberUtils.compare(it, recipientAddress) }
+                        addresses.any { phoneNumberUtils.compare(it, recipientAddress) }
                     }
                 }
                 ?.let { realm.copyFromRealm(it) }

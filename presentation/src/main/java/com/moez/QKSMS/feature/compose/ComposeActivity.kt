@@ -101,6 +101,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import androidx.core.os.BundleCompat
 
 
 class ComposeActivity : QkThemedActivity(), ComposeView {
@@ -173,6 +174,41 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
     private var cameraDestination: Uri? = null
 
+    private val selectContactLauncher = launcherForResult { data ->
+        // The typed getSerializableExtra is unreliable on Android 13 and its compat helper needs a
+        // newer androidx.core than this Kotlin version can read
+        @Suppress("DEPRECATION", "UNCHECKED_CAST")
+        val chips = data?.getSerializableExtra(ContactsActivity.CHIPS_KEY) as? HashMap<String, String?>
+        chipsSelectedIntent.onNext(chips ?: hashMapOf())
+    }
+
+    private val takePhotoLauncher = launcherForResult {
+        cameraDestination?.let(attachAnyFileSelectedIntent::onNext)
+    }
+
+    private val attachFileLauncher = launcherForResult { data ->
+        data?.clipData?.itemCount
+            ?.let { count -> 0 until count }
+            ?.mapNotNull { i -> data.clipData?.getItemAt(i)?.uri }
+            ?.forEach(attachAnyFileSelectedIntent::onNext)
+            ?: data?.data?.let(attachAnyFileSelectedIntent::onNext)
+    }
+
+    private val attachContactLauncher = launcherForResult { data ->
+        data?.data?.let(contactSelectedIntent::onNext)
+    }
+
+    private val speechLauncher = launcherForResult { data ->
+        // check returned results are good
+        val match = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+        if ((match !== null) && (match.size > 0) && (!match[0].isNullOrEmpty())) {
+            // populate message box with data returned by STT, set cursor to end, and focus
+            binding.message.append(match[0])
+            binding.message.setSelection(binding.message.text?.length ?: 0)
+            binding.message.requestFocus()
+        }
+    }
+
     // Tracked here rather than read off the state each render, so opening/closing the search bar is
     // handled once on the transition instead of on every unrelated state emission
     private var searchBarVisible = false
@@ -194,6 +230,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         super.onCreate(savedInstanceState)
         binding = ComposeActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        onBack { backPressedIntent.onNext(Unit) }
         showBackButton(true)
         viewModel.bindView(this)
 
@@ -641,7 +678,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
                     null
                 )
             }
-            .setNegativeButton(R.string.messageLinkHandling_dialog_negative) { _, _ -> { } }
+            .setNegativeButton(R.string.messageLinkHandling_dialog_negative) { _, _ -> }
             .show()
     }
 
@@ -685,7 +722,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         val intent = Intent(Intent.ACTION_PICK)
             .setType(ContactsContract.Contacts.CONTENT_TYPE)
 
-        startActivityForResult(Intent.createChooser(intent, null), ComposeView.ATTACH_CONTACT_REQUEST_CODE)
+        attachContactLauncher.launch(Intent.createChooser(intent, null))
     }
 
     override fun showContacts(sharing: Boolean, chips: List<Recipient>) {
@@ -694,7 +731,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         val intent = Intent(this, ContactsActivity::class.java)
             .putExtra(ContactsActivity.SHARING_KEY, sharing)
             .putExtra(ContactsActivity.CHIPS_KEY, serialized)
-        startActivityForResult(intent, ComposeView.SELECT_CONTACT_REQUEST_CODE)
+        selectContactLauncher.launch(intent)
     }
 
     override fun startSpeechRecognition() {
@@ -703,7 +740,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             }
             try {
-                startActivityForResult(intent, ComposeView.SPEECH_RECOGNITION_REQUEST_CODE)
+                speechLauncher.launch(intent)
             } catch (e: ActivityNotFoundException) {
                 Toast.makeText(this, getString(R.string.error_stt_toast), Toast.LENGTH_SHORT).show()
             }
@@ -743,17 +780,17 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             .putExtra(MediaStore.EXTRA_OUTPUT, cameraDestination)
-        startActivityForResult(Intent.createChooser(intent, null), ComposeView.TAKE_PHOTOS_REQUEST_CODE)
+        takePhotoLauncher.launch(Intent.createChooser(intent, null))
     }
 
-    override fun requestGallery(mimeType: String, requestCode: Int) {
+    override fun requestGallery(mimeType: String) {
         val intent = Intent(Intent.ACTION_PICK)
             .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
             .putExtra(Intent.EXTRA_LOCAL_ONLY, false)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             .setType(mimeType)
-        startActivityForResult(Intent.createChooser(intent, null), requestCode)
+        attachFileLauncher.launch(Intent.createChooser(intent, null))
     }
 
     override fun setDraft(draft: String) {
@@ -833,59 +870,15 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         return true
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode != Activity.RESULT_OK)
-            return
-
-        when (requestCode) {
-            ComposeView.SELECT_CONTACT_REQUEST_CODE -> {
-                chipsSelectedIntent.onNext(data?.getSerializableExtra(ContactsActivity.CHIPS_KEY)
-                    ?.let { serializable -> serializable as? HashMap<String, String?> }
-                    ?: hashMapOf())
-            }
-
-            ComposeView.TAKE_PHOTOS_REQUEST_CODE -> {
-                cameraDestination?.let(attachAnyFileSelectedIntent::onNext)
-            }
-
-            ComposeView.ATTACH_FILE_REQUEST_CODE -> {
-                data?.clipData?.itemCount
-                    ?.let { count -> 0 until count }
-                    ?.mapNotNull { i -> data.clipData?.getItemAt(i)?.uri }
-                    ?.forEach(attachAnyFileSelectedIntent::onNext)
-                    ?: data?.data?.let(attachAnyFileSelectedIntent::onNext)
-            }
-
-            ComposeView.ATTACH_CONTACT_REQUEST_CODE -> {
-                data?.data?.let(contactSelectedIntent::onNext)
-            }
-
-            ComposeView.SPEECH_RECOGNITION_REQUEST_CODE -> {
-                // check returned results are good
-                val match = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                if ((match !== null) && (match.size > 0) && (!match[0].isNullOrEmpty())) {
-                    // populate message box with data returned by STT, set cursor to end, and focus
-                    binding.message.append(match[0])
-                    binding.message.setSelection(binding.message.text?.length ?: 0)
-                    binding.message.requestFocus()
-                }
-            }
-
-            else -> super.onActivityResult(requestCode, resultCode, data)
-        }
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putParcelable(ComposeView.CAMERA_DESTINATION_KEY, cameraDestination)
         super.onSaveInstanceState(outState)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        cameraDestination = savedInstanceState.getParcelable(ComposeView.CAMERA_DESTINATION_KEY)
+        cameraDestination = BundleCompat.getParcelable(savedInstanceState, ComposeView.CAMERA_DESTINATION_KEY, Uri::class.java)
         super.onRestoreInstanceState(savedInstanceState)
     }
-
-    override fun onBackPressed() = backPressedIntent.onNext(Unit)
 
     override fun focusMessage() {
         binding.message.requestFocus()

@@ -38,15 +38,10 @@ class ConversationInfoActivity : QkThemedActivity() {
         setContentView(binding.root)
 
         router = Conductor.attachRouter(this, binding.container, savedInstanceState)
+        routeBackTo(router)
         if (!router.hasRootController()) {
             val threadId = intent.extras?.getLong("threadId") ?: 0L
             router.setRoot(RouterTransaction.with(ConversationInfoController(threadId)))
-        }
-    }
-
-    override fun onBackPressed() {
-        if (!router.handleBack()) {
-            super.onBackPressed()
         }
     }
 

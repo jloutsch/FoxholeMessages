@@ -39,10 +39,10 @@ class TrashAdapter @Inject constructor() : QkRealmAdapter<Message, QkBindingView
         val binding = TrashListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.restore.setOnClickListener {
-                getItem(adapterPosition)?.let { message -> restoreClicks.onNext(message.id) }
+                getItem(bindingAdapterPosition)?.let { message -> restoreClicks.onNext(message.id) }
             }
             binding.deleteForever.setOnClickListener {
-                getItem(adapterPosition)?.let { message -> deleteForeverClicks.onNext(message.id) }
+                getItem(bindingAdapterPosition)?.let { message -> deleteForeverClicks.onNext(message.id) }
             }
         }
     }

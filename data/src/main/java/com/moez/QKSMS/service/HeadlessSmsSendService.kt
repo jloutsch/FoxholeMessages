@@ -16,6 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
+// Android starts this for "reply with a message" on an incoming call, which needs a Service;
+// IntentService still runs on every version, and WorkManager can't receive that intent
+@file:Suppress("DEPRECATION")
+
 package dev.octoshrimpy.quik.service
 
 import android.app.IntentService

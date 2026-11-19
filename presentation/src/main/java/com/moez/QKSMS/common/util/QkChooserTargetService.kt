@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
+// Direct Share for Android 7-9 (minSdk 24); Android 10+ ignores this service and uses sharing shortcuts
+@file:Suppress("DEPRECATION")
+
 package dev.octoshrimpy.quik.common.util
 
 import android.content.ComponentName

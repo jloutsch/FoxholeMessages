@@ -80,14 +80,14 @@ class ConversationsAdapter @Inject constructor(
 
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
-                val conversation = getItem(adapterPosition) ?: return@setOnClickListener
+                val conversation = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 when (toggleSelection(conversation.id, false)) {
                     true -> binding.root.isActivated = isSelected(conversation.id)
                     false -> navigator.showConversation(conversation.id)
                 }
             }
             binding.root.setOnLongClickListener {
-                val conversation = getItem(adapterPosition) ?: return@setOnLongClickListener true
+                val conversation = getItem(bindingAdapterPosition) ?: return@setOnLongClickListener true
                 toggleSelection(conversation.id)
                 binding.root.isActivated = isSelected(conversation.id)
                 true

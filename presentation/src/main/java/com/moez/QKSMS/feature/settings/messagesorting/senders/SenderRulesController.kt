@@ -84,7 +84,7 @@ class SenderRulesController :
 
     override fun showEditDialog(rule: SenderCategoryRule) {
         val checkedIndex = categories.indexOfFirst { it.name == rule.category }.coerceAtLeast(0)
-        val labels: Array<CharSequence> = categoryLabels.map { context.getString(it) as CharSequence }.toTypedArray()
+        val labels: Array<CharSequence> = categoryLabels.map<Int, CharSequence> { context.getString(it) }.toTypedArray()
 
         AlertDialog.Builder(activity!!)
             .setTitle(rule.address)

@@ -29,7 +29,6 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import androidx.core.net.toFile
-import com.google.android.exoplayer2.util.MimeTypes
 import com.moez.QKSMS.common.QkMediaPlayer
 import com.moez.QKSMS.contentproviders.MmsPartProvider
 import com.moez.QKSMS.manager.BluetoothMicManager
@@ -88,7 +87,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import java.util.concurrent.TimeUnit
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
@@ -99,6 +97,9 @@ import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Named
+import android.os.VibrationEffect
+import android.os.Build
+import io.reactivex.rxkotlin.withLatestFrom as withLatestFromBoth
 
 class ComposeViewModel @Inject constructor(
     @Named("query") private val query: String,
@@ -400,7 +401,7 @@ class ComposeViewModel @Inject constructor(
         // Show scheduled messages
         view.optionsItemIntent
             .filter {it == R.id.viewScheduledMessages}
-            .withLatestFrom(state, conversation)
+            .withLatestFromBoth(state, conversation)
             .autoDisposable(view.scope())
             .subscribe { (_, _, conversation) ->
                 navigator.showScheduled(conversation.id)
@@ -415,7 +416,7 @@ class ComposeViewModel @Inject constructor(
         // Open the phone dialer if the call button is clicked
         view.optionsItemIntent
             .filter { it == R.id.call }
-            .withLatestFrom(state, conversation)
+            .withLatestFromBoth(state, conversation)
             .mapNotNull { (_, state, conversation) ->
                 state.messages?.second?.lastOrNull { !it.isMe() }?.address // most recent non-me msg address
                     ?: conversation.recipients.firstOrNull()?.address  // first recipient in convo
@@ -457,7 +458,7 @@ class ComposeViewModel @Inject constructor(
                         Locale.getDefault()
                     ).format(System.currentTimeMillis())}.txt"
 
-                val mimeType = "${MimeTypes.BASE_TYPE_TEXT}/plain"
+                val mimeType = "text/plain"
 
                 // save all messages text to a file in cache
                 val (uri, e) = FileUtils.createAndWrite(
@@ -545,12 +546,13 @@ class ComposeViewModel @Inject constructor(
         view.optionsItemIntent
             .filter { it == R.id.forward }
             .withLatestFrom(view.messagesSelectedIntent) { _, messages ->
-                messages?.firstOrNull()?.let { messageRepo.getMessage(it) }?.let { message ->
+                messages.firstOrNull()?.let { messageRepo.getMessage(it) }?.let { message ->
                     navigator.showCompose(
                         message.getText(),
                         message.parts.filter { !it.isSmil() }.mapNotNull { it.getUri() }
                     )
                 }
+                Unit // RxJava rejects null; the message may be gone
             }
             .autoDisposable(view.scope())
             .subscribe { view.clearSelection() }
@@ -621,7 +623,7 @@ class ComposeViewModel @Inject constructor(
             .filter { permissionManager.hasStorage().also { if (!it) view.requestStoragePermission() } }
             .autoDisposable(view.scope())
             .subscribe {
-                val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
+                @Suppress("UNCHECKED_CAST") val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
                 val part = menuInfo.viewHolderValue
                 if (part != null)
                     saveImage.execute(part.id) {
@@ -645,7 +647,7 @@ class ComposeViewModel @Inject constructor(
             .filter { permissionManager.hasStorage().also { if (!it) view.requestStoragePermission() } }
             .autoDisposable(view.scope())
             .subscribe {
-                val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
+                @Suppress("UNCHECKED_CAST") val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
                 val part = menuInfo.viewHolderValue ?: return@subscribe
                 // getMessage() looks a Message up by its own id, but part.messageId holds the
                 // provider's message id (Message.contentId), so passing it here matched nothing
@@ -677,7 +679,7 @@ class ComposeViewModel @Inject constructor(
                 }
 
                 val threadMessages = message?.let { messageRepo.getMessagesSync(it.threadId).toList() }
-                val index = threadMessages?.indexOfFirst { m -> m.id == message?.id } ?: -1
+                val index = threadMessages?.indexOfFirst { m -> m.id == message.id } ?: -1
 
                 val group = mutableListOf<Message>()
                 if (threadMessages != null && index != -1) {
@@ -717,7 +719,7 @@ class ComposeViewModel @Inject constructor(
             .filter { it.itemId == R.id.share }
             .autoDisposable(view.scope())
             .subscribe {
-                val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
+                @Suppress("UNCHECKED_CAST") val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
                 if (menuInfo.viewHolderValue != null)
                     navigator.shareFile(
                         MmsPartProvider().getUriForMmsPartId(
@@ -732,7 +734,7 @@ class ComposeViewModel @Inject constructor(
             .filter { it.itemId == R.id.forward }
             .autoDisposable(view.scope())
             .subscribe {
-                val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
+                @Suppress("UNCHECKED_CAST") val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
                 if (menuInfo.viewHolderValue != null)
                     navigator.showCompose("", listOf(menuInfo.viewHolderValue.getUri()))
             }
@@ -742,7 +744,7 @@ class ComposeViewModel @Inject constructor(
             .filter { it.itemId == R.id.openExternally }
             .autoDisposable(view.scope())
             .subscribe {
-                val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
+                @Suppress("UNCHECKED_CAST") val menuInfo = it.menuInfo as QkContextMenuRecyclerView.ContextMenuInfo<Long, MmsPart>
                 if (menuInfo.viewHolderValue != null)
                     navigator.viewFile(
                         MmsPartProvider().getUriForMmsPartId(
@@ -757,6 +759,7 @@ class ComposeViewModel @Inject constructor(
             .observeOn(Schedulers.io())
             .withLatestFrom(conversation, state) { _, conversation, state ->
                 conversationRepo.updateSendAsGroup(conversation.id, !state.sendAsGroup)
+                Unit // RxJava rejects null, which the update returns when the conversation is gone
             }
             .autoDisposable(view.scope())
             .subscribe()
@@ -976,13 +979,13 @@ class ComposeViewModel @Inject constructor(
         view.attachImageFileIntent
             .doOnNext { newState { copy(attaching = false) } }
             .autoDisposable(view.scope())
-            .subscribe { view.requestGallery("image/*", ComposeView.ATTACH_FILE_REQUEST_CODE) }
+            .subscribe { view.requestGallery("image/*") }
 
         // pick any file from any provider apps
         view.attachAnyFileIntent
             .doOnNext { newState { copy(attaching = false) } }
             .autoDisposable(view.scope())
-            .subscribe { view.requestGallery("*/*", ComposeView.ATTACH_FILE_REQUEST_CODE) }
+            .subscribe { view.requestGallery("*/*") }
 
         // Choose a time to schedule the message
         view.scheduleIntent
@@ -1118,7 +1121,13 @@ class ComposeViewModel @Inject constructor(
                     }
 
                     if (subscription != null) {
-                        context.getSystemService<Vibrator>()?.vibrate(40)
+                        context.getSystemService<Vibrator>()?.let { vibrator ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                vibrator.vibrate(VibrationEffect.createOneShot(40, VibrationEffect.DEFAULT_AMPLITUDE))
+                            } else {
+                                @Suppress("DEPRECATION") vibrator.vibrate(40)
+                            }
+                        }
                         context.makeToast(context.getString(R.string.compose_sim_changed_toast,
                                 subscription.simSlotIndex + 1, subscription.displayName))
                     }
@@ -1387,7 +1396,7 @@ class ComposeViewModel @Inject constructor(
                 scheduled
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .doOnNext { scheduled ->
+            .doOnNext { _ ->
                 view.focusMessage()
 
                 if (showScheduledToast) {

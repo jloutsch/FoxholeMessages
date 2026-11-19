@@ -73,7 +73,7 @@ class MenuItemAdapter @Inject constructor(private val context: Context, private 
 
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
-                val menuItem = getItem(adapterPosition)
+                val menuItem = getItem(bindingAdapterPosition)
                 menuItemClicks.onNext(menuItem.actionId)
             }
         }

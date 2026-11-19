@@ -26,7 +26,7 @@
   ~ renders through the normal view hierarchy instead, at a minor performance cost that's
   ~ acceptable for this single full-screen video page.
   -->
-<com.google.android.exoplayer2.ui.PlayerView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.media3.ui.PlayerView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/video"
     android:layout_width="match_parent"

@@ -30,6 +30,7 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import dev.octoshrimpy.quik.util.tryOrNull
+import androidx.core.content.pm.PackageInfoCompat
 
 fun Context.getColorCompat(colorRes: Int): Int {
     //return black as a default color, in case an invalid color ID was passed in
@@ -87,7 +88,7 @@ val Context.versionCode: Int
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0)).longVersionCode.toInt()
         } else {
-            packageManager.getPackageInfo(packageName, 0).versionCode
+            PackageInfoCompat.getLongVersionCode(packageManager.getPackageInfo(packageName, 0)).toInt()
         }
     }
 val Context.jobScheduler: JobScheduler

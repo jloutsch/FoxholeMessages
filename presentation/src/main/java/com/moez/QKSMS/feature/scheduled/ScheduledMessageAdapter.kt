@@ -61,12 +61,12 @@ class ScheduledMessageAdapter @Inject constructor(
 
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
-                val message = getItem(adapterPosition) ?: return@setOnClickListener
+                val message = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 if (toggleSelection(message.id, false))
                     binding.root.isActivated = isSelected(message.id)
             }
             binding.root.setOnClickListener {
-                val message = getItem(adapterPosition) ?: return@setOnClickListener
+                val message = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 toggleSelection(message.id)
                 binding.root.isActivated = isSelected(message.id)
             }

@@ -36,11 +36,11 @@ class SenderRulesAdapter : QkRealmAdapter<SenderCategoryRule, QkBindingViewHolde
         val binding = SenderRuleListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
-                val rule = getItem(adapterPosition) ?: return@setOnClickListener
+                val rule = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 editRule.onNext(rule)
             }
             binding.remove.setOnClickListener {
-                val rule = getItem(adapterPosition) ?: return@setOnClickListener
+                val rule = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 removeRule.onNext(rule)
             }
         }

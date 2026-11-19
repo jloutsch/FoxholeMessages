@@ -34,12 +34,12 @@ import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import javax.inject.Inject
+import androidx.core.content.IntentCompat
 
 class CategoryNotificationActivity : QkThemedActivity(), CategoryNotificationView {
 
     companion object {
         const val EXTRA_CATEGORY = "category"
-        private const val RINGTONE_REQUEST_CODE = 124
     }
 
     private lateinit var binding: CategoryNotificationActivityBinding
@@ -51,6 +51,11 @@ class CategoryNotificationActivity : QkThemedActivity(), CategoryNotificationVie
 
     private val viewModel by lazy {
         ViewModelProviders.of(this, viewModelFactory)[CategoryNotificationViewModel::class.java]
+    }
+
+    private val ringtoneLauncher = launcherForResult { data ->
+        val uri = data?.let { IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java) }
+        ringtoneSelectedIntent.onNext(uri?.toString() ?: "")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,15 +91,7 @@ class CategoryNotificationActivity : QkThemedActivity(), CategoryNotificationVie
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, default)
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
-        startActivityForResult(intent, RINGTONE_REQUEST_CODE)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RINGTONE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val uri: Uri? = data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            ringtoneSelectedIntent.onNext(uri?.toString() ?: "")
-        }
+        ringtoneLauncher.launch(intent)
     }
 
 }

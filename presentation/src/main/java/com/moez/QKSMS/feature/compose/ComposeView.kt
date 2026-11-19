@@ -33,12 +33,6 @@ import io.reactivex.subjects.Subject
 interface ComposeView : QkView<ComposeState> {
 
     companion object {
-        const val SELECT_CONTACT_REQUEST_CODE = 0
-        const val TAKE_PHOTOS_REQUEST_CODE = 1
-        const val ATTACH_CONTACT_REQUEST_CODE = 3
-        const val ATTACH_FILE_REQUEST_CODE = 4
-        const val SPEECH_RECOGNITION_REQUEST_CODE = 5
-
         const val CAMERA_DESTINATION_KEY = "camera_destination"
     }
 
@@ -104,7 +98,7 @@ interface ComposeView : QkView<ComposeState> {
     fun themeChanged()
     fun showKeyboard()
     fun requestCamera()
-    fun requestGallery(mimeType: String, requestCode: Int)
+    fun requestGallery(mimeType: String)
     fun requestDatePicker()
     fun requestContact()
     fun setDraft(draft: String)

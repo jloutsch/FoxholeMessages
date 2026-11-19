@@ -26,6 +26,7 @@ import dev.octoshrimpy.quik.util.Preferences
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 class QkMigration @Inject constructor(
     private val context: Context,
@@ -34,6 +35,7 @@ class QkMigration @Inject constructor(
     private val qksmsBlockingClient: QksmsBlockingClient
 ) {
 
+    @OptIn(DelicateCoroutinesApi::class) // one-off at startup, not tied to any screen
     fun performMigration() {
         GlobalScope.launch {
             val oldVersion = prefs.version.get()
@@ -51,6 +53,7 @@ class QkMigration @Inject constructor(
         prefs.changelogVersion.set(prefs.version.get())
 
         // Migrate from old SIA preference to blocking manager preference
+        @Suppress("DEPRECATION") // the migration is the one place it should be read
         if (prefs.sia.get()) {
             prefs.blockingManager.set(Preferences.BLOCKING_MANAGER_SIA)
             prefs.sia.delete()

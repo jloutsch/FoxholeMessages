@@ -223,7 +223,7 @@ class NotificationManagerImpl @Inject constructor(
             notification.setSound(ringtone)
 
     // Tell the notification if it's a group message
-        val messagingStyle = NotificationCompat.MessagingStyle("Me")
+        val messagingStyle = NotificationCompat.MessagingStyle(Person.Builder().setName("Me").build())
         if (conversation.recipients.size >= 2) {
             messagingStyle.isGroupConversation = true
             messagingStyle.conversationTitle = conversation.getTitle()
@@ -463,6 +463,9 @@ class NotificationManagerImpl @Inject constructor(
         if (prefs.wakeScreen(threadId).get()) {
             context.getSystemService<PowerManager>()?.let { powerManager ->
                 if (!powerManager.isInteractive) {
+                    // No replacement lets a notification turn the screen on (Android points to
+                    // full-screen activities instead), and these still work
+                    @Suppress("DEPRECATION")
                     val flags = PowerManager.SCREEN_DIM_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP
                     val wakeLock = powerManager.newWakeLock(flags, context.packageName)
                     wakeLock.acquire(5000)

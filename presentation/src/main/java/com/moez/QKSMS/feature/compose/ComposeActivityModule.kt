@@ -30,6 +30,7 @@ import dev.octoshrimpy.quik.injection.ViewModelKey
 import dev.octoshrimpy.quik.model.Attachment
 import timber.log.Timber
 import javax.inject.Named
+import androidx.core.content.IntentCompat
 
 @Module
 class ComposeActivityModule {
@@ -92,15 +93,15 @@ class ComposeActivityModule {
         val internal = InternalIntent.isInternal(activity.intent)
         when {
             activity.intent.action == Intent.ACTION_SEND -> {
-                activity.intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.run(uris::add)
+                IntentCompat.getParcelableExtra(activity.intent, Intent.EXTRA_STREAM, Uri::class.java)?.run(uris::add)
             }
             activity.intent.action == Intent.ACTION_SEND_MULTIPLE -> {
-                activity.intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.run(uris::addAll)
+                IntentCompat.getParcelableArrayListExtra(activity.intent, Intent.EXTRA_STREAM, Uri::class.java)?.run(uris::addAll)
             }
             // Forward and "edit scheduled message" pass attachments without a share action. They
             // used to be ignored here, so forwarding a picture sent only its text (fork issue #1).
             internal -> {
-                activity.intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.run(uris::addAll)
+                IntentCompat.getParcelableArrayListExtra(activity.intent, Intent.EXTRA_STREAM, Uri::class.java)?.run(uris::addAll)
             }
         }
         // Our own links point at this app's data by design; only outside shares are checked.

@@ -86,7 +86,7 @@ class RadioPreferenceView @JvmOverloads constructor(
                 intArrayOf(-android.R.attr.state_checked))
 
         val themeColor = when (isInEditMode) {
-            true -> context.resources.getColor(R.color.tools_theme)
+            true -> context.getColor(R.color.tools_theme)
             false -> colors.theme().theme
         }
         val textSecondary = context.resolveThemeColor(android.R.attr.textColorTertiary)

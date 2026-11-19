@@ -148,7 +148,7 @@ class SyncRepositoryImpl @Inject constructor(
 
                 // Sync message parts
                 partsCursor?.use {
-                    partsCursor.forEach { cursor ->
+                    partsCursor.forEach { _ ->
                         tryOrNull {
                             val part = cursorToPart.map(partsCursor)
                             realm.insertOrUpdate(part)
@@ -261,9 +261,7 @@ class SyncRepositoryImpl @Inject constructor(
                 // Now that we have all the messages, we can scan for emoji reactions
                 reactions.deleteAndReparseAllEmojiReactions(
                     realm,
-                    onProgress = { progress ->
-                        syncProgress.onNext(progress)
-                    })
+                    onProgress = syncProgress::onNext)
 
                 realm.insert(SyncLog())
             }, {

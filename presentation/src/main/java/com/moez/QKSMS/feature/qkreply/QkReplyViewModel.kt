@@ -37,7 +37,6 @@ import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.ActiveSubscriptionObservable
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
@@ -45,6 +44,7 @@ import io.realm.RealmResults
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Named
+import io.reactivex.rxkotlin.withLatestFrom as withLatestFromBoth
 
 class QkReplyViewModel @Inject constructor(
     @Named("threadId") private val threadId: Long,
@@ -123,7 +123,7 @@ class QkReplyViewModel @Inject constructor(
         // Call
         view.menuItemIntent
             .filter { id -> id == R.id.call }
-            .withLatestFrom(state, conversation)
+            .withLatestFromBoth(state, conversation)
             .mapNotNull { (_, state, conversation) ->
                 state.data?.second?.lastOrNull { !it.isMe() }?.address // most recent non-me msg address
                     ?: conversation.recipients.firstOrNull()?.address  // first recipient in convo

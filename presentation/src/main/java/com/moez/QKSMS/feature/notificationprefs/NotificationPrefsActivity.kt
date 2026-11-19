@@ -42,6 +42,7 @@ import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import javax.inject.Inject
+import androidx.core.content.IntentCompat
 
 class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
 
@@ -58,6 +59,11 @@ class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
 
     private val viewModel by lazy {
         ViewModelProviders.of(this, viewModelFactory)[NotificationPrefsViewModel::class.java]
+    }
+
+    private val ringtoneLauncher = launcherForResult { data ->
+        val uri = data?.let { IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java) }
+        ringtoneSelectedIntent.onNext(uri?.toString() ?: "")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -132,20 +138,12 @@ class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, default)
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
-        startActivityForResult(intent, 123)
+        ringtoneLauncher.launch(intent)
     }
 
     override fun showActionDialog(selected: Int) {
         actionsDialog.adapter.selectedItem = selected
         actionsDialog.show(this)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
-            val uri: Uri? = data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            ringtoneSelectedIntent.onNext(uri?.toString() ?: "")
-        }
     }
 
 }

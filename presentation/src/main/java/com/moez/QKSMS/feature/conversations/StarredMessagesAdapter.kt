@@ -56,7 +56,7 @@ class StarredMessagesAdapter @Inject constructor(
 
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
-                val message = getItem(adapterPosition) ?: return@setOnClickListener
+                val message = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 navigator.showConversation(message.threadId)
             }
         }

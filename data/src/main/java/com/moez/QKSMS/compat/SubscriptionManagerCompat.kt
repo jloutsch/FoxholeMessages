@@ -22,8 +22,9 @@ import android.content.Context
 import android.telephony.SubscriptionManager
 import dev.octoshrimpy.quik.manager.PermissionManager
 import javax.inject.Inject
+import android.os.Build
 
-class SubscriptionManagerCompat @Inject constructor(context: Context, private val permissions: PermissionManager) {
+class SubscriptionManagerCompat @Inject constructor(private val context: Context, private val permissions: PermissionManager) {
 
     private val subscriptionManager: SubscriptionManager?
         get() = field?.takeIf { permissions.hasPhone() }
@@ -45,11 +46,15 @@ class SubscriptionManagerCompat @Inject constructor(context: Context, private va
         }
 
     init {
-        subscriptionManager = SubscriptionManager.from(context)
+        subscriptionManager = context.getSystemService(SubscriptionManager::class.java)
     }
 
     fun addOnSubscriptionsChangedListener(listener: OnSubscriptionsChangedListener) {
-        subscriptionManager?.addOnSubscriptionsChangedListener(listener.listener)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            subscriptionManager?.addOnSubscriptionsChangedListener(context.mainExecutor, listener.listener)
+        } else {
+            @Suppress("DEPRECATION") subscriptionManager?.addOnSubscriptionsChangedListener(listener.listener)
+        }
     }
 
     fun removeOnSubscriptionsChangedListener(listener: OnSubscriptionsChangedListener) {

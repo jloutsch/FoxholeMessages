@@ -185,18 +185,18 @@ class MessagesAdapter @Inject constructor(
 
         return QkViewHolder(view).apply {
             view.setOnClickListener {
-                getItem(adapterPosition)?.let {
+                getItem(bindingAdapterPosition)?.let {
                     when (toggleSelection(it.id, false)) {
                         true -> view.isActivated = isSelected(it.id)
                         false -> {
                             expanded[it.id] = status.visibility != View.VISIBLE
-                            notifyItemChanged(adapterPosition)
+                            notifyItemChanged(bindingAdapterPosition)
                         }
                     }
                 }
             }
             view.setOnLongClickListener {
-                getItem(adapterPosition)?.let {
+                getItem(bindingAdapterPosition)?.let {
                     toggleSelection(it.id)
                     view.isActivated = isSelected(it.id)
                 }
@@ -344,7 +344,7 @@ class MessagesAdapter @Inject constructor(
 
         val subject = message.getCleansedSubject()
 
-        var isMsgTextTruncated = false
+        var isMsgTextTruncated: Boolean
 
         // get message text to display, which may need to be truncated
         val displayText = subject.joinTo(message.getText(false), "\n").let {

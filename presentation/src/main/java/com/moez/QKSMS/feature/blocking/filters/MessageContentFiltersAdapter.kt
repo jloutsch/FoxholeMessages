@@ -37,7 +37,7 @@ class MessageContentFiltersAdapter : QkRealmAdapter<MessageContentFilter, QkBind
         val binding = MessageContentFilterListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.removeFilter.setOnClickListener {
-                val filter = getItem(adapterPosition) ?: return@setOnClickListener
+                val filter = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 removeMessageContentFilter.onNext(filter.id)
             }
         }

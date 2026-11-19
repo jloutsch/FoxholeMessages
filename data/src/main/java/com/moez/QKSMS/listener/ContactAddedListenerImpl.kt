@@ -26,6 +26,7 @@ import android.provider.ContactsContract
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
+import android.os.Looper
 
 /**
  * Listens for a contact being added, and then syncs it to Realm
@@ -42,7 +43,7 @@ class ContactAddedListenerImpl @Inject constructor(
         return ContactContentObserver(context).observable
     }
 
-    private class ContactContentObserver(context: Context) : ContentObserver(Handler()) {
+    private class ContactContentObserver(context: Context) : ContentObserver(Handler(Looper.getMainLooper())) {
 
         private val subject = BehaviorSubject.createDefault(Unit)
 

@@ -62,6 +62,9 @@ class BluetoothMicManager(
     private var hadFirstStickyIntent: Boolean = false
     private var closed: Boolean = false
 
+// The Android 12+ replacement (setCommunicationDevice) routes audio differently and needs a
+    // Bluetooth headset to verify; SCO still works on every version
+    @Suppress("DEPRECATION")
     fun close() {
         if (closed)
             return
@@ -74,6 +77,7 @@ class BluetoothMicManager(
 
     // note: caller may get connected() callback before this method returns if this method is
     // called from a non-UI thread and the UI thread processes a sticky sco_audio_state_connected
+    @Suppress("DEPRECATION") // see close()
     fun startBluetoothDevice() {
         device = null
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager

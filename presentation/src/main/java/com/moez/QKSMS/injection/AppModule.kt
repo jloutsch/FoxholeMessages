@@ -22,7 +22,6 @@ import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.content.SharedPreferences
-import android.preference.PreferenceManager
 import androidx.lifecycle.ViewModelProvider
 import androidx.work.WorkerFactory
 import com.f2prateek.rx.preferences2.RxSharedPreferences
@@ -109,7 +108,8 @@ class AppModule(private var application: Application) {
     @Provides
     @Singleton
     fun provideSharedPreferences(context: Context): SharedPreferences {
-        return PreferenceManager.getDefaultSharedPreferences(context)
+        // The same file PreferenceManager.getDefaultSharedPreferences used, so existing settings carry over
+        return context.getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)
     }
 
     @Provides

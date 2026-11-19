@@ -179,6 +179,7 @@ class MainActivity : QkThemedActivity(), MainView {
         super.onCreate(savedInstanceState)
         binding = MainActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        onBack { backPressedSubject.onNext(NavItem.BACK) }
         viewModel.bindView(this)
         onNewIntentIntent.onNext(intent)
 
@@ -332,7 +333,6 @@ class MainActivity : QkThemedActivity(), MainView {
             is Inbox -> tabPages.getOrNull(binding.tabPager.currentItem)?.adapter?.itemCount ?: 0
             is Archived -> conversationsAdapter.itemCount
             is Searching -> searchAdapter.itemCount
-            else -> 0
         }
 
         binding.toolbar.menu.apply {
@@ -404,8 +404,6 @@ class MainActivity : QkThemedActivity(), MainView {
                 conversationsAdapter.updateData(state.page.data)
                 binding.empty.setText(R.string.archived_empty_text)
             }
-
-            else -> {}
         }
 
         binding.drawer.inbox.isActivated = state.page is Inbox
@@ -534,7 +532,7 @@ class MainActivity : QkThemedActivity(), MainView {
     override fun themeChanged() = binding.recyclerView.scrapViews()
 
     override fun showBlockingDialog(conversations: List<Long>, block: Boolean) {
-        blockingDialog.show(this, conversations, block)
+        blockingDialog.show(conversations, block)
     }
 
     override fun showDeleteDialog(conversations: List<Long>) {
@@ -618,8 +616,6 @@ class MainActivity : QkThemedActivity(), MainView {
 
     override fun onOptionsItemSelected(item: MenuItem) =
         optionsItemIntent.onNext(item.itemId).let { true }
-
-    override fun onBackPressed() = backPressedSubject.onNext(NavItem.BACK)
 
     override fun drawerToggled(opened: Boolean) {
         if (opened) {
