@@ -31,4 +31,13 @@ class OtpDetector @Inject constructor() {
     fun isOtp(body: String): Boolean =
         keywordPattern.containsMatchIn(body) && codePattern.containsMatchIn(body)
 
+    /**
+     * The code itself: the first 4-8 digit number after the keyword ("On 2026-11-18 your code is
+     * 482193" must not give 2026), else the first one anywhere ("482193 is your code").
+     */
+    fun extractCode(body: String): String? {
+        val afterKeyword = keywordPattern.find(body)?.range?.last?.plus(1) ?: 0
+        return (codePattern.find(body, afterKeyword) ?: codePattern.find(body))?.value
+    }
+
 }

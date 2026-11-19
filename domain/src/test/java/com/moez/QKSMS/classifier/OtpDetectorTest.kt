@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.classifier
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -43,5 +44,23 @@ class OtpDetectorTest {
         // Ordinary messages like this ARE tagged; OtpRetentionRule must keep them safe (contacts,
         // starred, sent) rather than relying on this detector being precise.
         assertTrue(detector.isOtp("The door code is 4821, come on up"))
+
+    @Test
+    fun extractsTheCode() {
+        assertEquals("123456", detector.extractCode("Your verification code is 123456"))
+        assertEquals(null, detector.extractCode("no digits here"))
+    }
+
+    @Test
+    fun skipsNumbersBeforeTheKeyword() =
+        assertEquals("482193", detector.extractCode("On 2026-11-18 your code is 482193"))
+
+    @Test
+    fun findsCodeBeforeTheKeyword() =
+        assertEquals("482193", detector.extractCode("482193 is your verification code"))
+
+    @Test
+    fun findsPrefixedCode() =
+        assertEquals("482193", detector.extractCode("G-482193 is your Google verification code"))
 
 }
