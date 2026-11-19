@@ -1629,9 +1629,17 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
   with Kotlin 1.7.21.
 - **Custom inbox tabs** (roadmap item 4 above) remains deliberately
   deferred.
-- **`IllegalArgumentException: You must call this method on a background
-  thread`** fires repeatedly from the shortcut-creation path
-  (`ShortcutManagerImpl`, via an RxJava main-thread scheduler — almost
-  certainly a Glide `.get()` for the conversation avatar). It's caught
-  and the shortcut still pushes, so it's cosmetic, but it's real and
-  unfixed; it shows up several times per session in any captured log.
+- **Conversation notifications and direct share** (#43): message notifications are already
+  conversation notifications (`MessagingStyle` + `setShortcutInfo` with a long-lived per-thread
+  shortcut). Android's people service lists Foxhole threads as conversations alongside WhatsApp. On
+  Samsung One UI 9 there's no "Conversations" heading and long-press shows only Mute and settings,
+  for WhatsApp too, so there's nothing more to do there. The thread shortcuts are now sharing
+  shortcuts (`share-target` in every build type's `shortcuts.xml`, category
+  `ShortcutManagerImpl.SHARE_TARGET_CATEGORY`), which puts recent threads in the share sheet;
+  `ComposeActivityModule` takes the thread id from the shortcut id. Verified on the S23+. Bubbles
+  were skipped: QRF Reply covers replying over other apps.
+- **Shortcut avatars and the Glide main-thread error**: fixed in `b3d98b10`. `SendNewMessage` used
+  to build the thread's shortcut on the main thread, where Glide's blocking `.get()` throws
+  `IllegalArgumentException: You must call this method on a background thread` and the shortcut fell
+  back to initials. It now builds shortcuts before switching to the main thread. Not seen in the Note
+  10's log on 2026-11-19.

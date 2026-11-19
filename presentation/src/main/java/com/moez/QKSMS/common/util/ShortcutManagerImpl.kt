@@ -42,6 +42,11 @@ class ShortcutManagerImpl @Inject constructor(
     private val colors: Colors
 ) : dev.octoshrimpy.quik.manager.ShortcutManager {
 
+    companion object {
+        /** Declared by the share-target in res/xml/shortcuts.xml (every build type's copy). */
+        const val SHARE_TARGET_CATEGORY = "dev.octoshrimpy.quik.SHARE_TARGET"
+    }
+
     override fun updateBadge() {
         val count = messageRepo.getUnreadCount().toInt()
         ShortcutBadger.applyCount(context, count)
@@ -117,6 +122,7 @@ class ShortcutManagerImpl @Inject constructor(
             .setIntent(intent)
             .setPersons(persons)
             .setLongLived(true)
+            .setCategories(setOf(SHARE_TARGET_CATEGORY))
             .build()
 
         return sc

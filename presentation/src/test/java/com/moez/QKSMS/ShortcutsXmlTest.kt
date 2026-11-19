@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik
 
+import dev.octoshrimpy.quik.common.util.ShortcutManagerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -35,6 +36,21 @@ class ShortcutsXmlTest {
         for (sourceSet in listOf("main", "debug", "fdroid")) {
             val cls = Regex("""targetClass="([^"]+)"""").find(shortcutsFor(sourceSet))!!.groupValues[1]
             assertTrue("$sourceSet shortcuts.xml targetClass $cls", runCatching { Class.forName(cls, false, javaClass.classLoader) }.isSuccess)
+        }
+    }
+
+    // Android's docs require a conversation notification's shortcut to be a sharing shortcut: one
+    // whose category a share-target declares. A mismatched name here fails silently.
+    @Test
+    fun conversationShortcutCategoryIsAShareTarget() {
+        for (sourceSet in listOf("main", "debug", "fdroid")) {
+            val xml = shortcutsFor(sourceSet)
+            val shareTarget = Regex("""<share-target[\s\S]*?</share-target>""").find(xml)?.value
+            assertTrue("$sourceSet shortcuts.xml has no share-target", shareTarget != null)
+            assertTrue(
+                "$sourceSet share-target lacks category ${ShortcutManagerImpl.SHARE_TARGET_CATEGORY}",
+                shareTarget!!.contains("""android:name="${ShortcutManagerImpl.SHARE_TARGET_CATEGORY}"""")
+            )
         }
     }
 }

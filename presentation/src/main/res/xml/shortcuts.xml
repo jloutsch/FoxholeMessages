@@ -40,4 +40,14 @@
 
     </shortcut>
 
+    <!-- Makes the per-thread shortcuts (ShortcutManagerImpl) sharing shortcuts. Android's docs
+         require that for a notification to count as a conversation, and it lets the share sheet
+         offer a thread directly (ComposeActivityModule reads the thread from the shortcut id). -->
+    <share-target android:targetClass="dev.octoshrimpy.quik.feature.compose.ComposeActivity">
+        <data android:mimeType="text/plain" />
+        <data android:mimeType="image/*" />
+        <data android:mimeType="video/*" />
+        <category android:name="dev.octoshrimpy.quik.SHARE_TARGET" />
+    </share-target>
+
 </shortcuts>

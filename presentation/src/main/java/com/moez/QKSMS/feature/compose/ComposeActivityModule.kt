@@ -21,6 +21,7 @@ package dev.octoshrimpy.quik.feature.compose
 import dev.octoshrimpy.quik.common.util.InternalIntent
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.ViewModel
 import dagger.Module
 import dagger.Provides
@@ -41,7 +42,11 @@ class ComposeActivityModule {
 
     @Provides
     @Named("threadId")
-    fun provideThreadId(activity: ComposeActivity): Long = activity.intent.extras?.getLong("threadId") ?: 0L
+    fun provideThreadId(activity: ComposeActivity): Long =
+        activity.intent.extras?.getLong("threadId")?.takeIf { it != 0L }
+            // Direct share: the conversation picked in the share sheet is a shortcut whose id is the thread id
+            ?: activity.intent.getStringExtra(ShortcutManagerCompat.EXTRA_SHORTCUT_ID)?.toLongOrNull()
+            ?: 0L
 
     @Provides
     @Named("addresses")
