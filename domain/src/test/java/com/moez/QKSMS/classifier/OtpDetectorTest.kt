@@ -63,4 +63,13 @@ class OtpDetectorTest {
     fun findsPrefixedCode() =
         assertEquals("482193", detector.extractCode("G-482193 is your Google verification code"))
 
+    @Test
+    fun ignoresPhoneNumbersAfterTheKeyword() =
+        assertEquals("123456",
+            detector.extractCode("123456 is your Chase verification code. Questions? Call 1-800-935-9935"))
+
+    @Test
+    fun picksTheNumberNearestTheKeyword() =
+        assertEquals("482193", detector.extractCode("482193 is your code. Reply STOP to 12345"))
+
 }

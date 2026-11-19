@@ -32,12 +32,34 @@ class OtpDetector @Inject constructor() {
         keywordPattern.containsMatchIn(body) && codePattern.containsMatchIn(body)
 
     /**
-     * The code itself: the first 4-8 digit number after the keyword ("On 2026-11-18 your code is
-     * 482193" must not give 2026), else the first one anywhere ("482193 is your code").
+     * The code itself: the 4-8 digit number nearest a keyword, on either side, ignoring pieces of
+     * dates and phone numbers ("On 2026-11-18 your code is 482193", "482193 is your code. Call
+     * 1-800-935-9935"). It's shown large and copied, so a wrong pick gets pasted.
+     * shortcut: a number nearer the keyword than the code still wins ("PIN for order 12345678: 4821").
      */
     fun extractCode(body: String): String? {
-        val afterKeyword = keywordPattern.find(body)?.range?.last?.plus(1) ?: 0
-        return (codePattern.find(body, afterKeyword) ?: codePattern.find(body))?.value
+        val keywords = keywordPattern.findAll(body).map { it.range }.toList()
+        return codePattern.findAll(body)
+            .filterNot { candidate -> isPartOfLongerNumber(body, candidate.range) }
+            .minByOrNull { candidate ->
+                keywords.minOfOrNull { keyword -> distance(candidate.range, keyword) } ?: candidate.range.first
+            }
+            ?.value
+    }
+
+    // A digit group joined to other digits by '-', '.' or '/' (dates, phone numbers). A letter
+    // prefix like "G-482193" doesn't count.
+    private fun isPartOfLongerNumber(body: String, range: IntRange): Boolean {
+        val joined = setOf('-', '.', '/')
+        val before = body.getOrNull(range.first - 1) in joined && body.getOrNull(range.first - 2)?.isDigit() == true
+        val after = body.getOrNull(range.last + 1) in joined && body.getOrNull(range.last + 2)?.isDigit() == true
+        return before || after
+    }
+
+    private fun distance(a: IntRange, b: IntRange): Int = when {
+        a.last < b.first -> b.first - a.last
+        b.last < a.first -> a.first - b.last
+        else -> 0
     }
 
 }
