@@ -18,8 +18,8 @@
  */
 package dev.octoshrimpy.quik.repository
 
-import androidx.test.InstrumentationRegistry
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

@@ -24,8 +24,8 @@ android {
     compileSdk 36
 
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     defaultConfig {
@@ -64,13 +64,11 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxkotlin:$rxkotlin_version"
 
     // testing
-    androidTestImplementation("androidx.test.espresso:espresso-core:$espresso_version", {
-        exclude group: "com.android.support", module: "support-annotations"
-    })
+    // On-device tests (src/androidTest); the plain unit tests use JUnit only.
+    androidTestImplementation "androidx.test:runner:$androidx_testrunner_version"
+    androidTestImplementation "androidx.test.ext:junit:1.2.1"
     androidTestImplementation "org.mockito:mockito-android:$mockito_version"
-    testImplementation "androidx.test:runner:$androidx_testrunner_version"
     testImplementation "junit:junit:$junit_version"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
     // The app's Moshi setup (AppModule.provideMoshi) uses KotlinJsonAdapterFactory; backup tests use the same.
     testImplementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
 

@@ -92,8 +92,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     lint {
@@ -124,8 +124,8 @@ configurations {
 
 dependencies {
     // lifecycle
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
 
     // androidx
     implementation "androidx.appcompat:appcompat:$androidx_appcompat_version"
@@ -192,15 +192,9 @@ dependencies {
 
 
     // testing
-    androidTestImplementation("androidx.test.espresso:espresso-core:$espresso_version", {
-        exclude group: "com.android.support", module: "support-annotations"
-    })
-    androidTestImplementation "org.mockito:mockito-android:$mockito_version"
-    testImplementation "androidx.test:runner:$androidx_testrunner_version"
     testImplementation "junit:junit:$junit_version"
     // Android's org.json is only a stub in plain JVM unit tests; use the real library there.
     testImplementation "org.json:json:20240303"
-    testImplementation "org.mockito:mockito-core:$mockito_version"
 
     // moshi
     implementation "com.squareup.moshi:moshi:$moshi_version"

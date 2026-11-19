@@ -24,7 +24,6 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import com.jakewharton.rxbinding2.view.clicks
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.common.base.QkThemedActivity
@@ -50,7 +49,7 @@ class CategoryNotificationActivity : QkThemedActivity(), CategoryNotificationVie
     override val ringtoneSelectedIntent: Subject<String> = PublishSubject.create()
 
     private val viewModel by lazy {
-        ViewModelProviders.of(this, viewModelFactory)[CategoryNotificationViewModel::class.java]
+        ViewModelProvider(this, viewModelFactory)[CategoryNotificationViewModel::class.java]
     }
 
     private val ringtoneLauncher = launcherForResult { data ->
