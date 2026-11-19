@@ -109,11 +109,59 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/name"
             android:layout_alignParentStart="true"
+            android:layout_alignWithParentIfMissing="true"
+            android:layout_toStartOf="@id/unread"
             android:clickable="false"
             android:lines="1"
             android:singleLine="true"
             android:textSize="14sp"
             tools:text="@tools:sample/lorem" />
+
+        <!-- The inbox's unread badge. A home-screen widget can't tint a background, so the
+             coloured circle is an image under the count, pinned to the count's edges (a
+             FrameLayout didn't stretch it, leaving a thin line). -->
+        <RelativeLayout
+            android:id="@+id/unread"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/date"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="2dp"
+            android:clickable="false"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:id="@+id/unreadBackground"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignStart="@+id/unreadCount"
+                android:layout_alignTop="@+id/unreadCount"
+                android:layout_alignEnd="@+id/unreadCount"
+                android:layout_alignBottom="@+id/unreadCount"
+                android:clickable="false"
+                android:scaleType="fitXY"
+                android:src="@drawable/circle"
+                tools:tint="@color/tools_theme" />
+
+            <TextView
+                android:id="@+id/unreadCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="20dp"
+                android:minHeight="20dp"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="3" />
+
+        </RelativeLayout>
 
     </RelativeLayout>
 

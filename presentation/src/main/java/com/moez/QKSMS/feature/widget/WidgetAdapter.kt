@@ -40,6 +40,8 @@ import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.PhoneNumber
 import dev.octoshrimpy.quik.receiver.StartActivityFromWidgetReceiver
 import dev.octoshrimpy.quik.repository.ConversationRepository
+import dev.octoshrimpy.quik.repository.MessageRepository
+import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.tryOrNull
@@ -55,6 +57,8 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
     @Inject lateinit var colors: Colors
     @Inject lateinit var conversationRepo: ConversationRepository
     @Inject lateinit var dateFormatter: DateFormatter
+    @Inject lateinit var messageRepo: MessageRepository
+    @Inject lateinit var phoneNumberUtils: PhoneNumberUtils
     @Inject lateinit var prefs: Preferences
 
     private val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
@@ -166,6 +170,18 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
         remoteViews.setTextColor(R.id.snippet, if (conversation.unread) textPrimary else textTertiary)
         remoteViews.setTextViewText(R.id.snippet,
             italicText(boldText(snippet, conversation.unread), conversation.draft.isNotEmpty()))
+
+        // Unread badge, coloured and counted the same way as the inbox's
+        remoteViews.setViewVisibility(R.id.unread, if (conversation.unread) View.VISIBLE else View.GONE)
+        if (conversation.unread) {
+            val lastMessage = conversation.lastMessage
+            val recipient = conversation.recipients.find { recipient ->
+                lastMessage != null && phoneNumberUtils.compare(recipient.address, lastMessage.address)
+            } ?: conversation.recipients.firstOrNull()
+            remoteViews.setInt(R.id.unreadBackground, "setColorFilter", colors.theme(recipient).theme)
+            remoteViews.setTextViewText(R.id.unreadCount,
+                messageRepo.getUnreadCountForConversation(conversation.id).toString())
+        }
 
         // set fill-in intent to be used for current item
         remoteViews.setOnClickFillInIntent(
