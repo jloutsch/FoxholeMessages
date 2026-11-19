@@ -164,6 +164,9 @@ class Preferences @Inject constructor(
     val otpRetentionDays = rxPrefs.getInteger("fh_otpRetentionDays", OTP_RETENTION_NEVER)
     // How large a one-time code is drawn in its notification; Off keeps the normal notification
     val otpNotificationSize = rxPrefs.getInteger("fh_otpNotificationSize", OTP_NOTIFICATION_LARGE)
+    // The last code message copied to the clipboard on arrival, so a rebuilt notification doesn't
+    // copy it again over something the user has copied since
+    val lastAutoCopiedCodeMessageId = rxPrefs.getLong("fh_lastAutoCopiedCodeMessageId", 0L)
 
     /** Inbox tabs (category names, see InboxTab) whose conversations the home-screen widget lists. */
     val widgetTabs = rxPrefs.getStringSet("fh_widgetTabs", setOf("PERSONAL", "TRANSACTIONAL", "PROMOTIONAL"))

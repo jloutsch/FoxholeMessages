@@ -11,6 +11,8 @@ Inspired by Mezo SMS, which shows codes in a large, size-selectable notification
 
 - For incoming messages tagged as codes (`Message.isOtp`), the notification shows the code itself in
   large type, plus a **Copy code** action that copies just the digits.
+- The code is also **copied to the clipboard automatically** when it arrives, once per message (added
+  at the user's request after the first device test; the button stays for copying it again).
 - Every other message notifies exactly as it does now.
 - The code shows on the **lock screen** in full, including for categories where message previews are
   hidden: turning the setting on is the user asking for that.
@@ -50,8 +52,8 @@ One picker under Settings → Message Sorting, next to "OTP message retention":
 
 ## Left to the builder (calls made, can be overridden)
 
-- Text sizes about 32 / 40 / 48 sp. Android caps the height of the floating (heads-up) view; check on
-  a device that Huge isn't clipped and shrink it if it is.
+- Text sizes 24 / 30 / 36 sp. (First built at 32 / 40 / 48; the user found Huge too big on the S23+
+  and asked for all three one step smaller.)
 - Code extraction (`OtpDetector.extractCode`, removed as unused earlier on 2026-11-18) comes back,
   with a unit test.
 - Copy goes through a broadcast receiver, the way the notification's other actions do.

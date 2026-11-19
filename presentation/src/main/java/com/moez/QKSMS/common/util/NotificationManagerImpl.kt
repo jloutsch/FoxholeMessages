@@ -26,6 +26,10 @@ import android.app.PendingIntent
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.util.TypedValue
+import android.widget.RemoteViews
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.net.Uri
@@ -53,6 +57,8 @@ import dev.octoshrimpy.quik.receiver.MessageMarkReceiver
 import dev.octoshrimpy.quik.receiver.RemoteMessagingReceiver
 import dev.octoshrimpy.quik.receiver.SpeakThreadsReceiver
 import dev.octoshrimpy.quik.repository.ContactRepository
+import dev.octoshrimpy.quik.classifier.OtpDetector
+import dev.octoshrimpy.quik.receiver.CopyCodeReceiver
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.GlideApp
@@ -76,7 +82,8 @@ class NotificationManagerImpl @Inject constructor(
     private val permissions: PermissionManager,
     private val phoneNumberUtils: PhoneNumberUtils,
     private val contactRepo: ContactRepository,
-    private val shortcutManager: ShortcutManager
+    private val shortcutManager: ShortcutManager,
+    private val otpDetector: OtpDetector
 ) : dev.octoshrimpy.quik.manager.NotificationManager {
 
     companion object {
@@ -267,7 +274,49 @@ class NotificationManagerImpl @Inject constructor(
             prefs.categoryPreviews(category).get() -> prefs.notificationPreviews(threadId).get()
             else -> Preferences.NOTIFICATION_PREVIEWS_NONE
         }
-        when (previewMode) {
+        // A one-time code is drawn large instead (Settings > Message Sorting > Code notification
+        // size), and shown on the lock screen even where previews are hidden: turning the setting
+        // on asks for that. Only when the newest unread message is the code.
+        val newest = messages.last()
+        val code = newest?.takeIf { it.isOtp }?.let { otpDetector.extractCode(it.getText()) }
+        val codeTextSize = when (prefs.otpNotificationSize.get()) {
+            Preferences.OTP_NOTIFICATION_LARGE -> 24f
+            Preferences.OTP_NOTIFICATION_LARGER -> 30f
+            Preferences.OTP_NOTIFICATION_HUGE -> 36f
+            else -> null
+        }
+        if (code != null && codeTextSize != null) {
+            val codeView = RemoteViews(context.packageName, R.layout.notification_otp_code).apply {
+                setTextViewText(R.id.sender, conversation.getTitle())
+                setTextViewText(R.id.code, code)
+                setTextViewTextSize(R.id.code, TypedValue.COMPLEX_UNIT_SP, codeTextSize)
+            }
+            val copyIntent = Intent(context, CopyCodeReceiver::class.java)
+                    .putExtra(CopyCodeReceiver.EXTRA_CODE, code)
+            val copyPI = PendingIntent.getBroadcast(context, threadId.toInt(), copyIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            notification
+                    .setLargeIcon(avatar)
+                    .setContentTitle(conversation.getTitle())
+                    .setContentText(newest?.getText())
+                    .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                    .setCustomContentView(codeView)
+                    .setCustomBigContentView(codeView)
+                    .setCustomHeadsUpContentView(codeView)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+
+            // Copy it on arrival, once per message: this also runs whenever the conversation's
+            // notification is rebuilt (e.g. after a delete)
+            if (newest != null && prefs.lastAutoCopiedCodeMessageId.get() != newest.id) {
+                prefs.lastAutoCopiedCodeMessageId.set(newest.id)
+                Handler(Looper.getMainLooper()).post { CopyCodeReceiver.copy(context, code) }
+            }
+            notification
+                    .addAction(NotificationCompat.Action.Builder(R.drawable.ic_content_copy_black_24dp,
+                            context.getString(R.string.notification_copy_code), copyPI)
+                            .setShowsUserInterface(false)
+                            .build())
+        } else when (previewMode) {
             Preferences.NOTIFICATION_PREVIEWS_ALL -> {
                 notification
                         .setLargeIcon(avatar)
