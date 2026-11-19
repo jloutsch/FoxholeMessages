@@ -784,7 +784,10 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     }
 
     override fun requestGallery(mimeType: String) {
-        val intent = Intent(Intent.ACTION_PICK)
+        // PICK with "*/*" isn't a file request: on Android 17 only the system contacts picker
+        // answers it, so "Attach any file" opened that and closed. GET_CONTENT is the file one.
+        val intent = (if (mimeType == "*/*") Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE)
+                      else Intent(Intent.ACTION_PICK))
             .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
             .putExtra(Intent.EXTRA_LOCAL_ONLY, false)
