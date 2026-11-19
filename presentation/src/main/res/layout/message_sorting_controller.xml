@@ -99,6 +99,16 @@
             app:title="@string/message_sorting_sort_existing_title"
             app:summary="@string/message_sorting_sort_existing_summary" />
 
+        <ProgressBar
+            android:id="@+id/sortProgress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="56dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </ScrollView>

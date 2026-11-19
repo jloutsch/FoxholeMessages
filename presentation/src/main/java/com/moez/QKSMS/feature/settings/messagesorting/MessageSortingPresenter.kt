@@ -33,6 +33,7 @@ import dev.octoshrimpy.quik.interactor.DeleteOldOtps
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker
 import dev.octoshrimpy.quik.worker.RetentionWorker
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.plusAssign
 import javax.inject.Inject
 
@@ -65,6 +66,10 @@ class MessageSortingPresenter @Inject constructor(
                 val label = otpSizeLabels.getOrNull(otpSizeIds.indexOf(size)) ?: ""
                 newState { copy(otpNotificationSizeSummary = label, otpNotificationSizeId = size) }
             }
+
+        disposables += ClassifyExistingMessagesWorker.observeStatus(context)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { status -> newState { copy(sortStatus = status) } }
 
         disposables += prefs.widgetTabs.asObservable()
             .subscribe { tabs ->
