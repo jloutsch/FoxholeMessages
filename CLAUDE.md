@@ -1167,7 +1167,7 @@ Rules that must **stay**, each for a real reflection dependency:
    use string literals for exactly this reason.
 4. **Periodic work re-registered at every app start must use `ExistingPeriodicWorkPolicy.KEEP`.**
    On WorkManager 2.8.0, `UPDATE` ran the work again on every start (checked on the S23+ with
-   `RetentionWorker`). `HousekeepingWorker` still uses `UPDATE`; its idle-only constraint hides it.
+   `RetentionWorker`). `HousekeepingWorker` uses `KEEP` too since #50.
 
 All scheduled work is WorkManager now: `RetentionWorker` replaced the `AutoDeleteService`/
 `OtpRetentionService`/`PurgeTrashService` JobServices after 2.6.2 (one worker, three unique-work
