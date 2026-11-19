@@ -1606,13 +1606,13 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
 - **Empty `Conversation` rows** aren't cleaned up after all their
   messages are purged from Trash. Harmless — already invisible via the
   `lastMessage`/`draft` filter.
-- **Predictive back** is still opted out via
-  `enableOnBackInvokedCallback="false"`, but since 2.6.2 every screen already
-  handles Back through `OnBackPressedCallback` (`QkActivity.onBack` /
-  `routeBackTo` for Conductor screens) and nothing overrides `onBackPressed`.
-  Don't call `onBackPressed()` directly: the dispatcher's fallback skips
-  subclass overrides, so use `onBackPressedDispatcher.onBackPressed()`.
-  What's left is turning the opt-out off and checking the animation.
+- **Predictive back** is on (the `enableOnBackInvokedCallback="false"` opt-out was removed after 2.6.2).
+  Every screen handles Back through `OnBackPressedCallback` (`QkActivity.onBack` / `routeBackTo` for
+  Conductor screens); nothing overrides `onBackPressed`, and with predictive back on the system never
+  calls it or sends `KEYCODE_BACK`. Don't call `onBackPressed()` directly: use
+  `onBackPressedDispatcher.onBackPressed()`. Screens whose callback is always enabled (Main, Compose,
+  Scheduled, Contacts and the Conductor screens) don't show the back-to-home preview animation; Back
+  itself works. Showing it would mean enabling each callback only while it has something to close.
 - **Compiler warnings** were taken to zero in 2.6.2; the few deprecated calls
   kept on purpose each carry a one-line reason at the call site. ExoPlayer is
   now Media3 1.1.1 (same release line; the gallery video player wasn't
