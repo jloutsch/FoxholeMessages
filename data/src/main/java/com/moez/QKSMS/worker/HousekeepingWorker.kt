@@ -45,7 +45,7 @@ class HousekeepingWorker(appContext: Context, workerParams: WorkerParameters)
             // don't check return value because, well, we can't do much about a failure
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORKER_TAG,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingPeriodicWorkPolicy.KEEP, // UPDATE re-runs it on every app start (CLAUDE.md, WorkManager trap 4)
                 PeriodicWorkRequest.Builder(
                     HousekeepingWorker::class.java,
                     1,
@@ -81,7 +81,7 @@ class HousekeepingWorker(appContext: Context, workerParams: WorkerParameters)
 
         removeSavedMessagesTexts(twoHoursAgo)
 
-        removeOrphanedComposeDelayCancelledAttachments(twoHoursAgo)
+        removeOrphanedComposeDelayCancelledAttachments(applicationContext.cacheDir, twoHoursAgo)
 
         return Result.success()
     }
@@ -121,12 +121,12 @@ class HousekeepingWorker(appContext: Context, workerParams: WorkerParameters)
                     (entry.lastModified() < removeOlderThan)
         }?.forEach { it.delete() }  // delete message text file
 
-    private fun removeOrphanedComposeDelayCancelledAttachments(removeOlderThan: Long) =
-        // find dirs in cache dir
-        applicationContext.cacheDir.listFiles { entry ->
-            entry.isDirectory &&
-                    entry.name.startsWith(Constants.DELAY_CANCELLED_CACHED_ATTACHMENTS_FILE_PREFIX)
-                    (entry.lastModified() < removeOlderThan)
-        }?.forEach { it.deleteRecursively() }  // recursively delete dir
-
 }
+
+internal fun removeOrphanedComposeDelayCancelledAttachments(cacheDir: File, removeOlderThan: Long) =
+    // find dirs in cache dir
+    cacheDir.listFiles { entry ->
+        entry.isDirectory &&
+                entry.name.startsWith(Constants.DELAY_CANCELLED_CACHED_ATTACHMENTS_FILE_PREFIX) &&
+                entry.lastModified() < removeOlderThan
+    }?.forEach { it.deleteRecursively() }  // recursively delete dir
