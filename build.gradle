@@ -18,7 +18,7 @@ buildscript {
     ext.media3_version = "1.1.1"
     ext.glide_version = "4.16.0"
     ext.junit_version = '4.12'
-    ext.kotlin_version = '1.9.25'
+    ext.kotlin_version = '2.2.21'
     ext.lifecycle_version = '2.1.0'
     ext.material_version = '1.6.1'
     ext.mockito_version = '2.18.3'
@@ -77,7 +77,11 @@ allprojects {
     // Kotlin 1.8+ compiles for the JDK running Gradle (17) unless told otherwise, and the build
     // refuses Kotlin and Java targets that differ. Java is 1.8 in every module, so Kotlin is too.
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions.jvmTarget = "1.8"
+        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+        // An annotation on a constructor `val` (Moshi's @Json, Dagger's @Named) goes on the
+        // parameter and the property, which becomes Kotlin's default in a later release. Moshi's
+        // reflective adapter and Dagger read the parameter either way.
+        compilerOptions.freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }
 

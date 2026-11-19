@@ -17,7 +17,7 @@
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
 // Direct Share for Android 7-9 (minSdk 24); Android 10+ ignores this service and uses sharing shortcuts
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
 
 package dev.octoshrimpy.quik.common.util
 

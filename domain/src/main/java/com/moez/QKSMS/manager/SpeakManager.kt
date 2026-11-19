@@ -58,7 +58,7 @@ class SpeakManager @Inject constructor (private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 // init audio manager and audio focus request first time through only
                 localAudioManager =
-                    context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
                 if (localAudioManager === null)
                     return null
 
@@ -117,7 +117,8 @@ class SpeakManager @Inject constructor (private val context: Context) {
                         audioManager?.abandonAudioFocusRequest(audioFocusRequest!!)
                 }
 
-                @Deprecated("Deprecated in Java")
+                // Abstract in UtteranceProgressListener, so it has to be overridden even though deprecated
+                @Suppress("OVERRIDE_DEPRECATION")
                 override fun onError(utteranceId: String) {
                     currentSessionId = null
 
