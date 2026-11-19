@@ -50,7 +50,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
@@ -101,6 +100,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import androidx.core.content.IntentCompat
 import androidx.core.os.BundleCompat
 
 
@@ -175,10 +175,9 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     private var cameraDestination: Uri? = null
 
     private val selectContactLauncher = launcherForResult { data ->
-        // The typed getSerializableExtra is unreliable on Android 13 and its compat helper needs a
-        // newer androidx.core than this Kotlin version can read
-        @Suppress("DEPRECATION", "UNCHECKED_CAST")
-        val chips = data?.getSerializableExtra(ContactsActivity.CHIPS_KEY) as? HashMap<String, String?>
+        @Suppress("UNCHECKED_CAST")
+        val chips = data?.let { IntentCompat.getSerializableExtra(it, ContactsActivity.CHIPS_KEY, HashMap::class.java) }
+                as? HashMap<String, String?>
         chipsSelectedIntent.onNext(chips ?: hashMapOf())
     }
 
@@ -672,11 +671,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             .setPositiveButton(
                 R.string.messageLinkHandling_dialog_positive
             ) { _, _ ->
-                ContextCompat.startActivity(
-                    this,
-                    Intent(Intent.ACTION_VIEW).setData(uri),
-                    null
-                )
+                startActivity(Intent(Intent.ACTION_VIEW).setData(uri))
             }
             .setNegativeButton(R.string.messageLinkHandling_dialog_negative) { _, _ -> }
             .show()

@@ -19,6 +19,7 @@
 package dev.octoshrimpy.quik.feature.contacts
 
 import androidx.lifecycle.ViewModel
+import androidx.core.content.IntentCompat
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoMap
@@ -34,8 +35,9 @@ class ContactsActivityModule {
 
     @Provides
     fun provideChips(activity: ContactsActivity): HashMap<String, String?> {
-        @Suppress("DEPRECATION", "UNCHECKED_CAST") // see ComposeActivity.selectContactLauncher
-        return activity.intent.extras?.getSerializable(ContactsActivity.CHIPS_KEY) as? HashMap<String, String?>
+        @Suppress("UNCHECKED_CAST")
+        return IntentCompat.getSerializableExtra(activity.intent, ContactsActivity.CHIPS_KEY, HashMap::class.java)
+                as? HashMap<String, String?>
                 ?: hashMapOf()
     }
 

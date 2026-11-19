@@ -132,6 +132,9 @@ dependencies {
     implementation "androidx.emoji2:emoji2-bundled:$androidx_emoji2_version"
     implementation "androidx.constraintlayout:constraintlayout:$androidx_constraintlayout_version"
     implementation "androidx.core:core-ktx:$androidx_core_version"
+    // androidx.core 1.12+ brings Lifecycle 2.6, which activity 1.6 (from appcompat) wasn't built
+    // against: Kotlin then says the dialogs don't implement LifecycleOwner.lifecycle. 1.7+ matches.
+    implementation "androidx.activity:activity:1.7.2"
     implementation "androidx.viewpager2:viewpager2:$androidx_viewpager_version"
     implementation "com.google.android.material:material:$material_version"
     implementation("androidx.work:work-runtime-ktx:$androidx_work_version")
@@ -213,13 +216,8 @@ dependencies {
     implementation "com.jakewharton.timber:timber:$timber_version"
 
     // link previews (thumbnail/title/description unfurling for URLs in messages)
-    // Pinned to 1.7.0: newer releases are built with Kotlin 2.2, whose class metadata
-    // this project's Kotlin 1.7.21 compiler can't read. 1.7.0 was built with Kotlin 1.7.10
-    // (matches this project) and has the same simple Unfurler/UnfurlResult API.
+    // Previews are off (no INTERNET permission; see CLAUDE.md), so this only has to compile.
     implementation "me.saket.unfurl:unfurl:1.7.0"
-    // unfurl brings in OkHttp, which asks for an okio this Kotlin version can't read. See
-    // okio_version in the root build.gradle.
-    implementation("com.squareup.okio:okio") { version { strictly okio_version } }
     implementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
     implementation "me.leolin:ShortcutBadger:1.1.22"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
