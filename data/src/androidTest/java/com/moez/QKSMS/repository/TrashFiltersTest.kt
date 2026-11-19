@@ -1,8 +1,8 @@
 package dev.octoshrimpy.quik.repository
 
 import android.content.Context
-import androidx.test.InstrumentationRegistry
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import dev.octoshrimpy.quik.filter.ContactFilter
 import dev.octoshrimpy.quik.filter.ConversationFilter
@@ -46,7 +46,7 @@ class TrashFiltersTest {
 
     @Before
     fun setUp() {
-        context = InstrumentationRegistry.getTargetContext()
+        context = InstrumentationRegistry.getInstrumentation().targetContext
         Realm.init(context)
         Realm.setDefaultConfiguration(RealmConfiguration.Builder().inMemory().name("trash-filters-test").build())
         holder = Realm.getDefaultInstance()

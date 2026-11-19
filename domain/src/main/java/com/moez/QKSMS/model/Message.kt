@@ -79,7 +79,7 @@ open class Message : RealmObject() {
     var textContentType: String = ""
     var parts: RealmList<MmsPart> = RealmList()
     var isEmojiReaction: Boolean = false
-    val emojiReactions: RealmList<EmojiReaction> = RealmList()
+    var emojiReactions: RealmList<EmojiReaction> = RealmList() // var: Realm writes it through a setter, which a Java 11 class may not do to a final field
 
     var sendAsGroup: Boolean = false
 

@@ -1627,6 +1627,12 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
   work unchanged. Checked on a release-style build (R8, 93% renamed) on the Note 10: app loads,
   reactions render, a backup's field names match `backup-format-v1.json`. The old-Kotlin pins (okio,
   unfurl, `androidx.core`) are #29.
+- **Java 11 everywhere** since #31 (every module's `compileOptions` and Kotlin's `jvmTarget`): current
+  AndroidX (WorkManager 2.12) ships Java 11 inline code. Consequence for Realm models: **no `val`
+  fields Realm writes**. Realm's transformer turns field writes into `realmSet$…` calls, and a Java 11
+  class may not write a final field outside its constructor (`IllegalAccessError`), which is why
+  `Message.emojiReactions` is a `var`. `@LinkingObjects` fields (e.g. `MmsPart.messages`) stay `val`;
+  Realm never writes them.
 - **Compiler warnings** were taken to zero in 2.6.2; the few deprecated calls
   kept on purpose each carry a one-line reason at the call site. ExoPlayer is
   now Media3 1.1.1 (same release line; the gallery video player wasn't
