@@ -28,7 +28,6 @@ import android.os.HandlerThread
 import android.provider.Telephony
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import dev.octoshrimpy.quik.extensions.forEach
-import dev.octoshrimpy.quik.extensions.insertOrUpdate
 import dev.octoshrimpy.quik.extensions.map
 import dev.octoshrimpy.quik.manager.KeyManager
 import dev.octoshrimpy.quik.mapper.CursorToContact
@@ -370,7 +369,19 @@ class SyncRepositoryImpl @Inject constructor(
                 }
 
                 conversationRepo.getOrCreateConversation(threadId)
-                insertOrUpdate()
+                Realm.getDefaultInstance().use { realm ->
+                    realm.executeTransaction {
+                        // Re-read what only this app stores inside the write itself. Android sends
+                        // this sync for our own inserts too, so it runs alongside ReceiveSmsWorker,
+                        // which may tag the message (code, category) after `existing` was read;
+                        // writing that older copy wiped the tags.
+                        existing?.let { (existingId, _, _) ->
+                            realm.where(Message::class.java).equalTo("id", existingId).findFirst()
+                                ?.let { current -> AppOnlyMessageFields.of(current).applyTo(this) }
+                        }
+                        realm.insertOrUpdate(this)
+                    }
+                }
 
                 val text = getText(false)
                 val parsedReaction = reactions.parseEmojiReaction(text)
