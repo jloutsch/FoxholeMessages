@@ -18,7 +18,7 @@ buildscript {
     ext.media3_version = "1.1.1"
     ext.glide_version = "4.16.0"
     ext.junit_version = '4.12'
-    ext.kotlin_version = '1.7.21'
+    ext.kotlin_version = '1.9.25'
     ext.lifecycle_version = '2.1.0'
     ext.material_version = '1.6.1'
     ext.mockito_version = '2.18.3'
@@ -72,6 +72,12 @@ allprojects {
             url "https://jitpack.io"
             content { includeGroupByRegex "com\\.github\\..*" }
         }
+    }
+
+    // Kotlin 1.8+ compiles for the JDK running Gradle (17) unless told otherwise, and the build
+    // refuses Kotlin and Java targets that differ. Java is 1.8 in every module, so Kotlin is too.
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions.jvmTarget = "1.8"
     }
 }
 
