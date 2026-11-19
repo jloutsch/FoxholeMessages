@@ -52,7 +52,6 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.flexbox.FlexboxLayoutManager
@@ -170,7 +169,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
     private var seekBarUpdater: Disposable? = null
 
-    private val viewModel by lazy { ViewModelProviders.of(this, viewModelFactory)[ComposeViewModel::class.java] }
+    private val viewModel by lazy { ViewModelProvider(this, viewModelFactory)[ComposeViewModel::class.java] }
 
     private var cameraDestination: Uri? = null
 
