@@ -33,6 +33,7 @@ import dev.octoshrimpy.quik.common.util.extensions.resolveThemeBoolean
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.extensions.Optional
 import dev.octoshrimpy.quik.extensions.asObservable
+import kotlinx.coroutines.rx2.asObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository

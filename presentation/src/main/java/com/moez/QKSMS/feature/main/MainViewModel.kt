@@ -62,7 +62,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
-import io.realm.RealmResults
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -100,12 +99,12 @@ class MainViewModel @Inject constructor(
     private val syncMessages: SyncMessages
 ) : QkViewModel<MainView, MainState>(
     MainState(
-        page = Inbox(),
-        tabData = buildTabData(conversationRepo, prefs.unreadAtTop.get()),
-        starredMessages = messageRepo.getStarredMessages(),
-        tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)
+        page = Inbox()
     )
 ) {
+
+    // The archived list arrives continuously; kept so opening Archived shows it at once
+    private var latestArchived: List<Conversation>? = null
     companion object {
         // Bump to re-run the emoji reaction reparse once on every device's next launch
         private const val EMOJI_REPARSE_VERSION = 4
@@ -128,6 +127,24 @@ class MainViewModel @Inject constructor(
                 .subscribe { syncing -> newState { copy(syncing = syncing) } }
 
         // Show the rating UI
+        // Inbox tabs, Starred and Archived follow the database live, re-queried when the
+        // "unread at top" setting changes
+        disposables += prefs.unreadAtTop.asObservable()
+            .distinctUntilChanged()
+            .switchMap { unreadAtTop -> observeTabData(conversationRepo, unreadAtTop) }
+            .subscribe { tabData -> newState { copy(tabData = tabData) } }
+
+        disposables += messageRepo.getStarredMessages().asObservable()
+            .subscribe { starred -> newState { copy(starredMessages = starred) } }
+
+        disposables += prefs.unreadAtTop.asObservable()
+            .distinctUntilChanged()
+            .switchMap { unreadAtTop -> conversationRepo.getConversations(unreadAtTop, true).asObservable() }
+            .subscribe { archived ->
+                newState { if (page is Archived) copy(page = page.copy(data = archived)) else this }
+                latestArchived = archived
+            }
+
         disposables += ratingManager.shouldShowRating
                 .subscribe { show -> newState { copy(showRating = show) } }
 
@@ -211,20 +228,7 @@ class MainViewModel @Inject constructor(
             .debounce(400, TimeUnit.MILLISECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .withLatestFrom(state) { _, state ->
-                if (state.page is Inbox)
-                    newState {
-                        copy(
-                            page = Inbox(),
-                            tabData = buildTabData(conversationRepo, prefs.unreadAtTop.get()),
-                            starredMessages = messageRepo.getStarredMessages(),
-                            tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)
-                        )
-                    }
-                else if (state.page is Archived)
-                    newState {
-                        // Was Inbox(...), which switched the screen to Inbox while showing archived data.
-                        copy(page = Archived(data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true)))
-                    }
+                if (state.page is Inbox) newState { copy(page = Inbox()) }
             }
             .autoDisposable(view.scope())
             .subscribe()
@@ -401,7 +405,7 @@ class MainViewModel @Inject constructor(
                 .doOnNext { drawerItem ->
                     when (drawerItem) {
                         NavItem.INBOX -> newState { copy(page = Inbox()) }
-                        NavItem.ARCHIVED -> newState { copy(page = Archived(data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true))) }
+                        NavItem.ARCHIVED -> newState { copy(page = Archived(data = latestArchived)) }
                         else -> Unit
                     }
                 }
@@ -680,20 +684,13 @@ class MainViewModel @Inject constructor(
         // Recompute the tab unread-count badges whenever any tab's conversation list changes (a
         // message read/unread, a new message arriving, or a conversation being moved to another
         // tab via "Move to..."), instead of only on resume, so a moved conversation's unread
-        // badge follows it immediately. tabData's RealmResults are already live (findAllAsync),
+        // badge follows it immediately. tabData's lists are already live (a new list on every change),
         // this just derives the counts from that same live data instead of a one-off snapshot.
         // Tied to the view, not the ViewModel: bindView runs again on every rotation, and
         // `disposables +=` piled up one more copy of this (4 count queries per change) each time.
         state
             .map { it.tabData to it.starredMessages }
             .distinctUntilChanged()
-            .switchMap { (tabData, starred) ->
-                // Starred lives outside tabData, so it needs merging in separately or its badge
-                // never updates. Mapped to Unit so the two result types can share one stream.
-                val sources = tabData.values.filterNotNull().map { it.asObservable().map { _ -> Unit } } +
-                        listOfNotNull(starred?.asObservable()?.map { _ -> Unit })
-                Observable.merge(sources)
-            }
             .observeOn(Schedulers.io())
             .autoDisposable(view.scope())
             .subscribe {
@@ -707,13 +704,7 @@ class MainViewModel @Inject constructor(
             .observeOn(Schedulers.io())
             .autoDisposable(view.scope())
             .subscribe {
-                newState {
-                    copy(
-                        tabData = buildTabData(conversationRepo, prefs.unreadAtTop.get()),
-                        starredMessages = messageRepo.getStarredMessages(),
-                        tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)
-                    )
-                }
+                newState { copy(tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)) }
             }
     }
 
@@ -722,12 +713,18 @@ class MainViewModel @Inject constructor(
 // Message sorting: conversations are bucketed into tabs by category, rather than through the
 // MainPage sealed class, since tabs coexist with whichever page is showing. Starred is excluded
 // here - it lists messages, not conversations, and is carried separately in MainState.
-private fun buildTabData(conversationRepo: ConversationRepository, unreadAtTop: Boolean): Map<Tab, RealmResults<Conversation>?> =
-    Tab.values()
-        .filter { tab -> tab.category != null }
-        .associateWith { tab ->
-            conversationRepo.getConversationsByCategory(unreadAtTop, requireNotNull(tab.category))
+private fun observeTabData(conversationRepo: ConversationRepository, unreadAtTop: Boolean): Observable<Map<Tab, List<Conversation>?>> {
+    val tabs = Tab.values().filter { tab -> tab.category != null }
+    val sources = tabs.map { tab ->
+        conversationRepo.getConversationsByCategory(unreadAtTop, requireNotNull(tab.category)).asObservable()
+    }
+    return Observable.combineLatest(sources) { lists ->
+        tabs.indices.associate { index ->
+            @Suppress("UNCHECKED_CAST") // combineLatest hands back an Array<Any>
+            tabs[index] to (lists[index] as List<Conversation>)
         }
+    }
+}
 
 private fun buildTabUnreadCounts(
     conversationRepo: ConversationRepository,

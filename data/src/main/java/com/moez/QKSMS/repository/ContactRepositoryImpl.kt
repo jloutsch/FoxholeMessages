@@ -39,11 +39,8 @@ class ContactRepositoryImpl @Inject constructor(
     private val context: Context
 ) : ContactRepository {
 
-    override fun getContacts(): RealmResults<Contact> {
-        val realm = Realm.getDefaultInstance()
-        return realm.where(Contact::class.java)
-                .sort("name")
-                .findAll()
+    override fun getContacts(): List<Contact> = Realm.getDefaultInstance().use { realm ->
+        realm.copyFromRealm(realm.where(Contact::class.java).sort("name").findAll())
     }
 
     override fun getUnmanagedContact(lookupKey: String): Contact? {

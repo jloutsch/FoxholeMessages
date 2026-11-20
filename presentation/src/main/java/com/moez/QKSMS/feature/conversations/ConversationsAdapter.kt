@@ -28,7 +28,7 @@ import androidx.core.view.isVisible
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
@@ -45,7 +45,7 @@ class ConversationsAdapter @Inject constructor(
     private val messageRepo: MessageRepository,
     private val navigator: Navigator,
     private val phoneNumberUtils: PhoneNumberUtils
-) : QkRealmAdapter<Conversation, QkBindingViewHolder<ConversationListItemBinding>>() {
+) : QkListAdapter<Conversation, QkBindingViewHolder<ConversationListItemBinding>>(itemId = { it.id }) {
 
     var hasScheduledConversation: Set<Long> = emptySet()
         set(value) {

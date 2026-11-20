@@ -25,7 +25,6 @@ import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
 import io.reactivex.Flowable
 import io.reactivex.Observable
-import io.realm.RealmResults
 
 interface MessageRepository {
     sealed class DeduplicationProgress {
@@ -42,19 +41,19 @@ interface MessageRepository {
 
     val deduplicationProgress: Observable<DeduplicationProgress>
 
-    fun getMessages(threadId: Long, query: String = ""): RealmResults<Message>
+    fun getMessages(threadId: Long, query: String = ""): Flow<List<Message>>
 
-    fun getMessagesSync(threadId: Long, query: String = ""): RealmResults<Message>
+    fun getMessagesSync(threadId: Long, query: String = ""): List<Message>
 
     fun getMessage(messageId: Long): Message?
 
     fun getUnmanagedMessage(messageId: Long): Message?
 
-    fun getMessages(messageIds: Collection<Long>): RealmResults<Message>
+    fun getMessages(messageIds: Collection<Long>): List<Message>
 
     fun getMessageForPart(id: Long): Message?
 
-    fun getLastIncomingMessage(threadId: Long): RealmResults<Message>
+    fun getLastIncomingMessage(threadId: Long): Flow<List<Message>>
 
     fun getUnreadCount(): Long
 
@@ -88,13 +87,16 @@ interface MessageRepository {
      * relationship has been seen empty for a message whose MmsPart row provably existed. Passing
      * Message.id alone here silently matched nothing.
      */
-    fun getPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart>
+    fun getPartsForMessage(messageId: Long, contentId: Long): List<MmsPart>
 
     fun savePart(id: Long): Uri?
 
-    fun getUnreadUnseenMessages(threadId: Long): RealmResults<Message>
+    fun getUnreadUnseenMessages(threadId: Long): List<Message>
 
-    fun getUnreadMessages(threadId: Long): RealmResults<Message>
+    fun getUnreadMessages(threadId: Long): List<Message>
+
+    /** Live, for QRF Reply. */
+    fun observeUnreadMessages(threadId: Long): Flow<List<Message>>
 
     fun markAllSeen(): Int
 
@@ -210,7 +212,7 @@ interface MessageRepository {
      * messages rather than the conversations holding them: starring is a per-message action, so
      * surfacing the whole thread would defeat the point of it.
      */
-    fun getStarredMessages(): RealmResults<Message>
+    fun getStarredMessages(): Flow<List<Message>>
 
     fun getUnreadStarredCount(): Long
 }

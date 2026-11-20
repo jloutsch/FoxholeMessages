@@ -23,7 +23,6 @@ import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.SearchResult
 import dev.octoshrimpy.quik.repository.SyncRepository
-import io.realm.RealmResults
 
 data class MainState(
     val hasError: Boolean = false,
@@ -36,10 +35,10 @@ data class MainState(
     val contactPermission: Boolean = true,
     val notificationPermission: Boolean = true,
     val scheduledConversationIds: Set<Long> = emptySet(),
-    val tabData: Map<Tab, RealmResults<Conversation>?> = emptyMap(),
+    val tabData: Map<Tab, List<Conversation>?> = emptyMap(),
     // Starred is the one tab that lists messages rather than conversations, so it can't ride
     // along in tabData with the category tabs.
-    val starredMessages: RealmResults<Message>? = null,
+    val starredMessages: List<Message>? = null,
     val tabUnreadCounts: Map<Tab, Long> = emptyMap()
 )
 
@@ -60,6 +59,6 @@ data class Archived(
     val addContact: Boolean = false,
     val markPinned: Boolean = true,
     val markRead: Boolean = false,
-    val data: RealmResults<Conversation>? = null,
+    val data: List<Conversation>? = null,
     val selected: Int = 0
 ) : MainPage()

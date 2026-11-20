@@ -24,11 +24,10 @@ import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.SearchResult
 import io.reactivex.Completable
 import io.reactivex.Observable
-import io.realm.RealmResults
 
 interface ConversationRepository {
 
-    fun getConversations(unreadAtTop: Boolean, archived: Boolean = false): RealmResults<Conversation>
+    fun getConversations(unreadAtTop: Boolean, archived: Boolean = false): Flow<List<Conversation>>
 
     fun getConversationsSnapshot(unreadAtTop: Boolean): List<Conversation>
 
@@ -42,7 +41,7 @@ interface ConversationRepository {
 
     fun observeBlockedConversations(): Flow<List<Conversation>>
 
-    fun getConversationAsync(threadId: Long): Conversation
+    fun observeConversation(threadId: Long): Flow<Conversation?>
 
     fun getConversation(threadId: Long): Conversation?
 
@@ -52,11 +51,11 @@ interface ConversationRepository {
 
     fun getConversationAndLastSenderContactName(threadId: Long): Pair<Conversation?, String?>?
 
-    fun getConversations(vararg threadIds: Long): RealmResults<Conversation>
+    fun getConversations(vararg threadIds: Long): List<Conversation>
 
     fun getUnmanagedConversations(): Observable<List<Conversation>>
 
-    fun getRecipients(): RealmResults<Recipient>
+    fun getRecipients(): List<Recipient>
 
     fun getUnmanagedRecipients(): Observable<List<Recipient>>
 
@@ -88,7 +87,7 @@ interface ConversationRepository {
 
     fun deleteConversations(vararg threadIds: Long)
 
-    fun getConversationsByCategory(unreadAtTop: Boolean, category: String): RealmResults<Conversation>
+    fun getConversationsByCategory(unreadAtTop: Boolean, category: String): Flow<List<Conversation>>
 
     fun getUnreadCountByCategory(category: String): Long
 

@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.feature.qkreply
 
+import io.reactivex.Observable
+import kotlinx.coroutines.rx2.asObservable
+import kotlinx.coroutines.flow.filterNotNull
 import android.telephony.SmsMessage
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
@@ -40,7 +43,6 @@ import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
-import io.realm.RealmResults
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Named
@@ -59,15 +61,24 @@ class QkReplyViewModel @Inject constructor(
 ) : QkViewModel<QkReplyView, QkReplyState>(QkReplyState(threadId = threadId)) {
 
     private val conversation by lazy {
-        conversationRepo.getConversationAsync(threadId)
+        conversationRepo.observeConversation(threadId)
+                .filterNotNull()
                 .asObservable()
-                .filter { it.isLoaded }
-                .filter { it.isValid }
                 .distinctUntilChanged()
     }
 
-    private val messages: Subject<RealmResults<Message>> =
-            BehaviorSubject.createDefault(messageRepo.getUnreadMessages(threadId))
+    // Unread messages only, until "expand" asks for every message in the thread
+    private val showAll: Subject<Boolean> = BehaviorSubject.createDefault(false)
+
+    private val messages: Observable<List<Message>> by lazy {
+        showAll.distinctUntilChanged()
+                .switchMap { all ->
+                    val source = if (all) messageRepo.getMessages(threadId) else messageRepo.observeUnreadMessages(threadId)
+                    source.asObservable()
+                }
+                .replay(1)
+                .refCount()
+    }
 
     init {
         disposables += markRead
@@ -80,9 +91,6 @@ class QkReplyViewModel @Inject constructor(
                     newState { copy(data = Pair(conversation, messages)) }
                     messages
                 }
-                .switchMap { messages -> messages.asObservable() }
-                .filter { it.isLoaded }
-                .filter { it.isValid }
                 .filter { it.isEmpty() }
                 .subscribe { newState { copy(hasError = true) } }
 
@@ -135,16 +143,14 @@ class QkReplyViewModel @Inject constructor(
         // Show all messages
         view.menuItemIntent
                 .filter { id -> id == R.id.expand }
-                .map { messageRepo.getMessages(threadId) }
-                .doOnNext(messages::onNext)
+                .doOnNext { showAll.onNext(true) }
                 .autoDisposable(view.scope())
                 .subscribe { newState { copy(expanded = true) } }
 
         // Show unread messages only
         view.menuItemIntent
                 .filter { id -> id == R.id.collapse }
-                .map { messageRepo.getUnreadMessages(threadId) }
-                .doOnNext(messages::onNext)
+                .doOnNext { showAll.onNext(false) }
                 .autoDisposable(view.scope())
                 .subscribe { newState { copy(expanded = false) } }
 

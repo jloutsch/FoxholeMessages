@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import kotlinx.coroutines.flow.map
+import dev.octoshrimpy.quik.extensions.Optional
 import kotlinx.coroutines.rx2.asObservable
 import android.annotation.SuppressLint
 import android.content.Context
@@ -166,9 +168,11 @@ class ComposeViewModel @Inject constructor(
         // set shared attachments into state
         newState { copy(attachments = sharedAttachments) }
 
-        val initialConversation = threadId.takeIf { it != 0L }
-            ?.let(conversationRepo::getConversationAsync)
-            ?.asObservable()
+        // A deleted conversation arrives as null, which closes the screen (hasError)
+        val initialConversation: Observable<Conversation> = threadId.takeIf { it != 0L }
+            ?.let { id -> conversationRepo.observeConversation(id).map { Optional(it) }.asObservable() }
+            ?.doOnNext { conversation -> if (conversation.value == null) newState { copy(hasError = true) } }
+            ?.mapNotNull { conversation -> conversation.value }
             ?: Observable.empty()
 
         val selectedConversation = selectedChips
@@ -183,7 +187,6 @@ class ComposeViewModel @Inject constructor(
                 // monitors convos and triggers when wanted convo is present
                 conversationRepo.getConversations(false)
                     .asObservable()
-                    .filter { conversations -> conversations.isLoaded && conversations.isValid}
                     .mapNotNull { conversationRepo.getConversation(addresses) }
                     .doOnNext { newState { copy(loading = false) } }
             }
@@ -198,7 +201,6 @@ class ComposeViewModel @Inject constructor(
         // activity to shut down
         disposables += selectedConversation
             .mergeWith(initialConversation)
-            .filter { it.isLoaded }
             .filter { conversation ->
                 conversation.isValid.also { if (!it) newState { copy(hasError = true) } }
             }
@@ -234,13 +236,13 @@ class ComposeViewModel @Inject constructor(
         disposables += conversation
                 .distinctUntilChanged { conversation -> conversation.id }
                 .observeOn(AndroidSchedulers.mainThread())
-                .map { conversation ->
-                    val messages = messageRepo.getMessages(conversation.id)
-                    newState { copy(threadId = conversation.id, messages = Pair(conversation, messages)) }
-                    messages
+                .switchMap { conversation ->
+                    messageRepo.getMessages(conversation.id).asObservable().map { list -> conversation to list }
                 }
-                .switchMap { messages -> messages.asObservable() }
-                .subscribe(messages::onNext)
+                .subscribe { (conversation, list) ->
+                    newState { copy(threadId = conversation.id, messages = Pair(conversation, list)) }
+                    messages.onNext(list)
+                }
 
         disposables += conversation
                 .map { conversation -> conversation.getTitle() }
@@ -258,8 +260,6 @@ class ComposeViewModel @Inject constructor(
                 .switchMap<List<Message>> { (id, query) ->
                     if (query.isEmpty()) Observable.just(emptyList())
                     else messageRepo.getMessages(id, query).asObservable()
-                            .filter { messages -> messages.isLoaded }
-                            .filter { messages -> messages.isValid }
                 }
                 .subscribe(searchResults::onNext)
 
