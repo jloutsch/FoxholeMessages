@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
+import io.reactivex.rxkotlin.plusAssign
+import kotlinx.coroutines.rx2.asObservable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.common.base.QkPresenter
@@ -27,9 +29,12 @@ import javax.inject.Inject
 
 class SenderRulesPresenter @Inject constructor(
     private val senderRuleRepo: SenderCategoryRuleRepository
-) : QkPresenter<SenderRulesView, SenderRulesState>(
-    SenderRulesState(rules = senderRuleRepo.getRules())
-) {
+) : QkPresenter<SenderRulesView, SenderRulesState>(SenderRulesState()) {
+
+    init {
+        disposables += senderRuleRepo.getRules().asObservable()
+            .subscribe { list -> newState { copy(rules = list) } }
+    }
 
     override fun bindIntents(view: SenderRulesView) {
         super.bindIntents(view)

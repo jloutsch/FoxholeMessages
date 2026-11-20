@@ -19,8 +19,7 @@
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
 import dev.octoshrimpy.quik.model.SenderCategoryRule
-import io.realm.RealmResults
 
 data class SenderRulesState(
-    val rules: RealmResults<SenderCategoryRule>? = null
+    val rules: List<SenderCategoryRule>? = null
 )

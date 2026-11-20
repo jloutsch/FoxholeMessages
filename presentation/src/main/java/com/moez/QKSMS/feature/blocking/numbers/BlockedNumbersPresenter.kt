@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.numbers
 
+import io.reactivex.rxkotlin.plusAssign
+import kotlinx.coroutines.rx2.asObservable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.common.base.QkPresenter
@@ -31,9 +33,12 @@ class BlockedNumbersPresenter @Inject constructor(
     private val blockingRepo: BlockingRepository,
     private val conversationRepo: ConversationRepository,
     private val markUnblocked: MarkUnblocked
-) : QkPresenter<BlockedNumbersView, BlockedNumbersState>(
-        BlockedNumbersState(numbers = blockingRepo.getBlockedNumbers())
-) {
+) : QkPresenter<BlockedNumbersView, BlockedNumbersState>(BlockedNumbersState()) {
+
+    init {
+        disposables += blockingRepo.getBlockedNumbers().asObservable()
+            .subscribe { list -> newState { copy(numbers = list) } }
+    }
 
     override fun bindIntents(view: BlockedNumbersView) {
         super.bindIntents(view)

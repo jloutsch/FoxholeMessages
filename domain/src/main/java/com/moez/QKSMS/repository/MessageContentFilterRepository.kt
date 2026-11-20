@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.MessageContentFilter
 import dev.octoshrimpy.quik.model.MessageContentFilterData
-import io.realm.RealmResults
 
 interface MessageContentFilterRepository {
 
     fun createFilter(data: MessageContentFilterData)
 
-    fun getMessageContentFilters(): RealmResults<MessageContentFilter>
+    fun getMessageContentFilters(): Flow<List<MessageContentFilter>>
 
     fun exportFilters(): List<MessageContentFilterData>
 

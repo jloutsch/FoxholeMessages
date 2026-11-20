@@ -18,18 +18,19 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.TrustedSender
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import io.realm.Realm
-import io.realm.RealmResults
 import javax.inject.Inject
 
 class TrustedSenderRepositoryImpl @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils
 ) : TrustedSenderRepository {
 
-    override fun getTrustedSenders(): RealmResults<TrustedSender> =
-        Realm.getDefaultInstance().where(TrustedSender::class.java).findAllAsync()
+    override fun getTrustedSenders(): Flow<List<TrustedSender>> =
+        Realm.getDefaultInstance().let { realm -> realm.where(TrustedSender::class.java).asLiveList(realm) }
 
     override fun isTrusted(address: String): Boolean =
         Realm.getDefaultInstance().use { realm ->
