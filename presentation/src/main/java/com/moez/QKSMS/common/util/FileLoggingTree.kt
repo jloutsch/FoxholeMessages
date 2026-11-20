@@ -23,11 +23,11 @@ import android.net.Uri
 import android.util.Log
 import dev.octoshrimpy.quik.util.FileUtils
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,12 +45,16 @@ class FileLoggingTree @Inject constructor(
 
     private var logFileUri: Uri? = null
 
+    // One thread writes every line, in order. A task per line on Schedulers.io() started a new
+    // thread whenever the previous lines were still waiting on the file, and a full sync logs one
+    // line per message: thousands of threads, until Android refused more and the app crashed.
+    private val writer = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "FileLoggingTree") }
+
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         if (!prefs.logging.get()) return
 
-        Schedulers.io().scheduleDirect {
-            synchronized(this) {    // one thread can access file at a time
-                val logItem =
+        // Built now, so the time is when the line was logged rather than when it was written
+        val logItem =
                     "${    // date/time
                         SimpleDateFormat(
                             "yyyy-MM-dd HH:mm:ss:SSS",
@@ -73,6 +77,7 @@ class FileLoggingTree @Inject constructor(
                         Log.getStackTraceString(t)
                     }\n"
 
+        writer.execute {
                 // if uri of log file not yet determined, get one now
                 if (logFileUri == null) {
                     val filename = "FoxholeMessages-log-${
@@ -101,7 +106,6 @@ class FileLoggingTree @Inject constructor(
                     else if (e is Exception)
                         Log.e(TAG, "Error while logging into file", e)
                 }
-            }
         }
     }
 }
