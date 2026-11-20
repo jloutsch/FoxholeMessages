@@ -29,6 +29,12 @@ interface KeyManager {
     fun reset()
 
     /**
+     * Drops what the counter knows, so the next id starts above the highest id actually saved.
+     * Called when a sync that [reset] the counter fails and its changes are rolled back.
+     */
+    fun forget()
+
+    /**
      * Returns a valid ID that can be used to store a new message
      */
     fun newId(): Long

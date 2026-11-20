@@ -18,8 +18,6 @@ class ProguardRulesTest {
         .joinToString("\n")
 
     private val required = mapOf(
-        "-keep class dev.octoshrimpy.quik.model.** { *; }" to
-            "Realm finds model classes and fields by their exact names",
         "-keep class * extends androidx.work.Worker {\n<init>(android.content.Context, androidx.work.WorkerParameters);\n}" to
             "WorkManager re-creates queued work by the class name it saved; renamed Workers orphan scheduled work",
         "-keep class kotlin.Metadata { *; }" to

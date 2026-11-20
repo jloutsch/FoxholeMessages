@@ -1,5 +1,13 @@
 [
   {
+    "versionCode": 2269,
+    "versionName": "2.9.0",
+    "improved": [
+      "Smaller download: the old database library is gone, now that 2.8.0 moved your data to the new one",
+      "Removes the old database files from your phone"
+    ]
+  },
+  {
     "versionCode": 2268,
     "versionName": "2.8.0",
     "added": [

@@ -99,17 +99,19 @@ class SyncRepositoryImpl @Inject constructor(
             .subscribe({}, { error -> Timber.e(error, "syncMessages Failed") })
     }
 
-    /**
-     * The full sync, on the calling thread (not the main thread); throws if it fails. The Room
-     * importer waits on this. Two at once are safe: their transactions run one after the other.
-     */
+    /** The full sync, on the calling thread (not the main thread); throws if it fails. */
     @Suppress("CheckResult") // the dedupe below is fire and forget, like the sync itself
-    fun syncMessagesNow() {
+    private fun syncMessagesNow() {
         val oldBlockedSenders = rxPrefs.getStringSet("pref_key_blocked_senders")
 
         syncProgress.onNext(SyncRepository.SyncProgress.Running(0, 0, true))
         try {
             database.runInTransaction { rebuildFromProvider(oldBlockedSenders.get()) }
+        } catch (e: Exception) {
+            // The rebuild reset the id counter to 0, but its rollback brought the old rows back:
+            // without this, later saves would reuse their ids and overwrite them
+            keys.forget()
+            throw e
         } finally {
             syncProgress.onNext(SyncRepository.SyncProgress.Idle)
         }
