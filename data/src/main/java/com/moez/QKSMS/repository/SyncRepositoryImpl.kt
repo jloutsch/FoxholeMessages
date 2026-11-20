@@ -91,50 +91,57 @@ class SyncRepositoryImpl @Inject constructor(
     // Fire and forget: runs once in the background for the app's lifetime, nothing to cancel
     @Suppress("CheckResult")
     override fun syncMessages() {
-
-        val oldBlockedSenders = rxPrefs.getStringSet("pref_key_blocked_senders")
-
         // If the sync is already running, don't try to do another one
         if (syncProgress.blockingFirst() is SyncRepository.SyncProgress.Running) return
-        syncProgress.onNext(SyncRepository.SyncProgress.Running(0, 0, true))
 
-        Completable.fromAction { database.runInTransaction { rebuildFromProvider(oldBlockedSenders.get()) } }
+        Completable.fromAction { syncMessagesNow() }
             .subscribeOn(Schedulers.io())
-            .subscribe({
-                oldBlockedSenders.delete()
-                syncProgress.onNext(SyncRepository.SyncProgress.Idle)
+            .subscribe({}, { error -> Timber.e(error, "syncMessages Failed") })
+    }
 
-                // Only once the sync has committed, so the dedupe's own writes see the new rows
-                if (rxPrefs.getBoolean("autoDeduplicateMessages").get()) {
-                    DeduplicateMessages(messageRepo.get(), conversationRepo)
-                        .buildObservable(Unit)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe { result ->
-                            when (result) {
-                                is MessageRepository.DeduplicationResult.NoDuplicates -> {
-                                    Timber.i("No duplicate messages found.")
-                                }
-                                is MessageRepository.DeduplicationResult.Success -> {
-                                    Timber.i("Moved ${result.trashedCount} duplicate messages to Trash")
-                                }
-                                is MessageRepository.DeduplicationResult.Failure -> {
-                                    Timber.e(result.error, "Deduplication failed")
-                                }
-                            }
+    /**
+     * The full sync, on the calling thread (not the main thread); throws if it fails. The Room
+     * importer waits on this. Two at once are safe: their transactions run one after the other.
+     */
+    @Suppress("CheckResult") // the dedupe below is fire and forget, like the sync itself
+    fun syncMessagesNow() {
+        val oldBlockedSenders = rxPrefs.getStringSet("pref_key_blocked_senders")
+
+        syncProgress.onNext(SyncRepository.SyncProgress.Running(0, 0, true))
+        try {
+            database.runInTransaction { rebuildFromProvider(oldBlockedSenders.get()) }
+        } finally {
+            syncProgress.onNext(SyncRepository.SyncProgress.Idle)
+        }
+        oldBlockedSenders.delete()
+
+        // Only once the sync has committed, so the dedupe's own writes see the new rows
+        if (rxPrefs.getBoolean("autoDeduplicateMessages").get()) {
+            DeduplicateMessages(messageRepo.get(), conversationRepo)
+                .buildObservable(Unit)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { result ->
+                    when (result) {
+                        is MessageRepository.DeduplicationResult.NoDuplicates -> {
+                            Timber.i("No duplicate messages found.")
                         }
+                        is MessageRepository.DeduplicationResult.Success -> {
+                            Timber.i("Moved ${result.trashedCount} duplicate messages to Trash")
+                        }
+                        is MessageRepository.DeduplicationResult.Failure -> {
+                            Timber.e(result.error, "Deduplication failed")
+                        }
+                    }
                 }
+        }
 
-                // A full sync imports messages that have no category yet (every message, on a
-                // fresh install or after clearing data). Sort them now instead of leaving them all
-                // in Personal until the user finds "Sort existing messages". Only unsorted messages
-                // are touched, unless the sorting rules changed (see MessageCategoryBackfill).
-                if (rxPrefs.getBoolean("fh_autoSortEnabled", true).get()) {
-                    ClassifyExistingMessagesWorker.trigger(context)
-                }
-            }, { error ->
-                Timber.e(error, "syncMessages Failed")
-                syncProgress.onNext(SyncRepository.SyncProgress.Idle)
-            })
+        // A full sync imports messages that have no category yet (every message, on a
+        // fresh install or after clearing data). Sort them now instead of leaving them all
+        // in Personal until the user finds "Sort existing messages". Only unsorted messages
+        // are touched, unless the sorting rules changed (see MessageCategoryBackfill).
+        if (rxPrefs.getBoolean("fh_autoSortEnabled", true).get()) {
+            ClassifyExistingMessagesWorker.trigger(context)
+        }
     }
 
     /** Replaces the messages, conversations, recipients and contacts with the provider's. Call inside a transaction. */

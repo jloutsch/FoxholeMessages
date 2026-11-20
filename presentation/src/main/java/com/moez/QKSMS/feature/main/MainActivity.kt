@@ -446,6 +446,14 @@ class MainActivity : QkThemedActivity(), MainView {
             }
         }
 
+        // The one-time move into the new database runs a full sync; say why it's happening
+        if (state.movingData) {
+            syncingBinding.root.isVisible = true
+            syncingBinding.syncingLabel.setText(R.string.main_moving_data)
+            if (state.syncing is SyncRepository.SyncProgress.Idle) syncingBinding.syncingProgress.isIndeterminate = true
+            snackbarBinding.root.isVisible = false
+        }
+
         when {
             !state.defaultSms -> {
                 snackbarBinding.snackbarTitle.setText(R.string.main_default_sms_title)

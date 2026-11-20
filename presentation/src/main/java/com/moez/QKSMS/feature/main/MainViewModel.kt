@@ -64,6 +64,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import dev.octoshrimpy.quik.migration.ImportState
+import dev.octoshrimpy.quik.migration.RealmImporter
 import javax.inject.Inject
 import kotlinx.coroutines.DelicateCoroutinesApi
 
@@ -92,7 +94,8 @@ class MainViewModel @Inject constructor(
     private val ratingManager: RatingManager,
     private val reactions: EmojiReactionRepository,
     private val syncContacts: SyncContacts,
-    private val syncMessages: SyncMessages
+    private val syncMessages: SyncMessages,
+    private val realmImporter: RealmImporter
 ) : QkViewModel<MainView, MainState>(
     MainState(
         page = Inbox()
@@ -115,6 +118,12 @@ class MainViewModel @Inject constructor(
         disposables += markUnarchived
         disposables += syncContacts
         disposables += syncMessages
+
+        // Show "Moving your data…" while the one-time Room import runs
+        disposables += realmImporter.state.asObservable()
+                .map { importState -> importState is ImportState.Running }
+                .distinctUntilChanged()
+                .subscribe { moving -> newState { copy(movingData = moving) } }
 
         // Show the syncing UI
         disposables += syncRepository.syncProgress
