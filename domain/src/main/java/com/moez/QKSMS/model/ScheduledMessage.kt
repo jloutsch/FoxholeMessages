@@ -18,29 +18,29 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity
 open class ScheduledMessage(
     @PrimaryKey var id: Long = 0,
     var date: Long = 0,
     var subId: Int = -1,
-    var recipients: RealmList<String> = RealmList(),
+    var recipients: List<String> = emptyList(),
     var sendAsGroup: Boolean = true,
     var body: String = "",
-    var attachments: RealmList<String> = RealmList(),
+    var attachments: List<String> = emptyList(),
     var conversationId: Long = 0
-) : RealmObject() {
+) {
 
     fun copy(
         id: Long = this.id,
         date: Long = this.date,
         subId: Int = this.subId,
-        recipients: RealmList<String> = this.recipients,
+        recipients: List<String> = this.recipients,
         sendAsGroup: Boolean = this.sendAsGroup,
         body: String = this.body,
-        attachments: RealmList<String> = this.attachments,
+        attachments: List<String> = this.attachments,
         conversationId: Long = this.conversationId
     ): ScheduledMessage {
 

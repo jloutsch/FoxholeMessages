@@ -24,12 +24,14 @@ import android.provider.Telephony.Mms
 import android.provider.Telephony.MmsSms
 import android.provider.Telephony.Sms
 import dev.octoshrimpy.quik.extensions.joinTo
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.Ignore
+import androidx.room.ColumnInfo
+import androidx.room.PrimaryKey
 
-open class Message : RealmObject() {
+@Entity(indices = [Index("category"), Index("deletedAt")])
+open class Message {
     companion object {
         const val TYPE_SMS = "sms"
         const val TYPE_MMS = "mms"
@@ -39,7 +41,7 @@ open class Message : RealmObject() {
 
     @PrimaryKey var id: Long = 0
 
-    @Index var threadId: Long = 0
+    @ColumnInfo(index = true) var threadId: Long = 0
 
     // The MMS-SMS content provider returns messages where duplicate ids can exist. This is because
     // SMS and MMS are stored in separate tables. We can't use these ids as our realm message id
@@ -77,9 +79,13 @@ open class Message : RealmObject() {
     var mmsStatus: Int = 0
     var subject: String = ""
     var textContentType: String = ""
-    var parts: RealmList<MmsPart> = RealmList()
+    /** Filled in by the repository (MmsPart.messageId == contentId for MMS); not stored here. */
+    @Ignore
+    var parts: List<MmsPart> = emptyList()
     var isEmojiReaction: Boolean = false
-    var emojiReactions: RealmList<EmojiReaction> = RealmList() // var: Realm writes it through a setter, which a Java 11 class may not do to a final field
+    /** Reactions on this message, filled in by the repository (EmojiReaction.targetMessageId); not stored here. */
+    @Ignore
+    var emojiReactions: List<EmojiReaction> = emptyList()
 
     var sendAsGroup: Boolean = false
 

@@ -50,7 +50,8 @@ import dev.octoshrimpy.quik.util.tryOrNull
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
-import io.realm.Realm
+import dev.octoshrimpy.quik.db.FoxholeDatabase
+import dev.octoshrimpy.quik.db.Relations
 import okio.buffer
 import okio.sink
 import okio.source
@@ -68,7 +69,9 @@ class BackupRepositoryImpl @Inject constructor(
     private val context: Context,
     private val moshi: Moshi,
     private val prefs: Preferences,
-    private val syncRepo: SyncRepository
+    private val syncRepo: SyncRepository,
+    private val database: FoxholeDatabase,
+    private val relations: Relations
 ) : BackupRepository {
 
     /**
@@ -168,15 +171,15 @@ class BackupRepositoryImpl @Inject constructor(
                     ?: throw Exception("Failed to open output stream")
 
             outputStream.sink().buffer().use { sink ->
-                Realm.getDefaultInstance().use { realm ->
-                    val messages = realm.where(Message::class.java).sort("date").findAll().createSnapshot()
+                run {
+                    val messages = database.messageDao().allOldestFirst()
                     val messageCount = messages.size
 
                     // MMS doesn't track its own recipient list per-message (Message.address is just
                     // the sender), so fall back to the parent conversation's current recipients -
                     // same as how the rest of the app already treats "the conversation" as the group
                     // of people.
-                    val conversationRecipients = realm.where(Conversation::class.java).findAll()
+                    val conversationRecipients = relations.conversations(database.conversationDao().all())
                             .associate { conversation ->
                                 conversation.id to conversation.recipients.map { recipient -> recipient.address }
                             }
@@ -185,6 +188,8 @@ class BackupRepositoryImpl @Inject constructor(
                     // and can be freed before the next one is read.
                     val backupMessages = messages.asSequence().mapIndexed { index, message ->
                         backupProgress.onNext(BackupRepository.Progress.Running(messageCount, index))
+                        // Parts are loaded one message at a time, as the message is written
+                        if (message.isMms()) message.parts = database.mmsPartDao().forMessage(message.contentId)
                         messageToBackupMessage(message, conversationRecipients[message.threadId] ?: listOf())
                     }
 
@@ -282,12 +287,9 @@ class BackupRepositoryImpl @Inject constructor(
         // What's already on the phone, so restoring doesn't create a second copy of each message.
         // The app's own copy mirrors the system store (trashed messages included, since Trash
         // doesn't remove them from it), and the keys match what messageToBackupMessage writes.
-        val alreadyPresent = Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            RestoreDuplicates(realm.where(Message::class.java).findAll().map { message ->
-                RestoreDuplicates.key(message.isMms(), message.boxId, message.address, message.date, message.body)
-            })
-        }
+        val alreadyPresent = RestoreDuplicates(database.messageDao().all().map { message ->
+            RestoreDuplicates.key(message.isMms(), message.boxId, message.address, message.date, message.body)
+        })
 
         // Each message is restored as soon as it's parsed, so only one is held in memory at a time
         try {

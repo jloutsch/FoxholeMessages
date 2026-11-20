@@ -196,13 +196,9 @@ class ComposeViewModel @Inject constructor(
 
 
         // Merges two potential conversation sources (constructor threadId and contact selection)
-        // into a single stream of conversations. If the conversation was deleted, notify the
-        // activity to shut down
+        // into a single stream of conversations. A deleted conversation is handled above.
         disposables += selectedConversation
             .mergeWith(initialConversation)
-            .filter { conversation ->
-                conversation.isValid.also { if (!it) newState { copy(hasError = true) } }
-            }
             .subscribe(conversation::onNext)
 
         if (addresses.isNotEmpty())
@@ -358,9 +354,8 @@ class ComposeViewModel @Inject constructor(
                                 .asSequence()
                                 .filter { recipient -> recipient.contact?.lookupKey == lookupKey }
                                 .firstOrNull { recipient -> phoneNumberUtils.compare(recipient.address, address) }
-                                ?: Recipient(
-                                        address = address,
-                                        contact = lookupKey?.let(contactRepo::getUnmanagedContact))
+                                ?: Recipient(address = address).apply {
+                                        contact = lookupKey?.let(contactRepo::getUnmanagedContact) }
                     }
                 }
                 .autoDisposable(view.scope())
@@ -926,9 +921,7 @@ class ComposeViewModel @Inject constructor(
         Observables
                 .combineLatest(
                         view.activityVisibleIntent.distinctUntilChanged(),
-                        conversation.mapNotNull { conversation ->
-                            conversation.takeIf { it.isValid }?.id
-                        }.distinctUntilChanged())
+                        conversation.map { conversation -> conversation.id }.distinctUntilChanged())
                 { visible, threadId ->
                     when (visible) {
                         true -> {
@@ -946,7 +939,7 @@ class ComposeViewModel @Inject constructor(
         view.activityVisibleIntent
                 .filter { visible -> !visible }
                 .withLatestFrom(conversation) { _, conversation -> conversation }
-                .mapNotNull { conversation -> conversation.takeIf { it.isValid }?.id }
+                .map { conversation -> conversation.id }
                 .observeOn(Schedulers.io())
                 .withLatestFrom(view.textChangedIntent, state) { threadId, draftText, state ->
                     if (state.saveDraft)

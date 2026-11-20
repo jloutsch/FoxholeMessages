@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.injection
 
+import dev.octoshrimpy.quik.db.FoxholeDatabase
+import androidx.room.Room
 import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
@@ -116,6 +118,16 @@ class AppModule(private var application: Application) {
     fun provideRxPreferences(preferences: SharedPreferences): RxSharedPreferences {
         return RxSharedPreferences.create(preferences)
     }
+
+    @Provides
+    @Singleton
+    fun provideDatabase(context: Context): FoxholeDatabase =
+        // allowMainThreadQueries: many screens read synchronously on the main thread, as they did
+        // with Realm. Moving those reads off it is a follow-up; Room's writes here run in the
+        // repositories' background paths.
+        Room.databaseBuilder(context, FoxholeDatabase::class.java, "foxhole.db")
+            .allowMainThreadQueries()
+            .build()
 
     @Provides
     @Singleton

@@ -17,20 +17,20 @@ class ConversationSnippetTest {
 
     @Test
     fun copiedConversationKeepsTheReactionEmoji() {
-        val conversation = Conversation(lastMessage = reaction()).apply { lastReactionEmoji = "❤️" }
+        val conversation = Conversation().apply { lastMessage = reaction(); lastReactionEmoji = "❤️" }
         assertEquals("❤️ Loved “On my way!”", conversation.snippet)
     }
 
     @Test
     fun emojiAlreadyInTheTextIsNotRepeated() {
         val message = reaction().apply { body = "Reacted 🎉 to “hi”" }
-        val conversation = Conversation(lastMessage = message).apply { lastReactionEmoji = "🎉" }
+        val conversation = Conversation().apply { lastMessage = message; lastReactionEmoji = "🎉" }
         assertEquals("Reacted 🎉 to “hi”", conversation.snippet)
     }
 
     @Test
     fun plainMessageHasNoEmoji() {
         val message = Message().apply { type = "sms"; body = "On my way!" }
-        assertEquals("On my way!", Conversation(lastMessage = message).snippet)
+        assertEquals("On my way!", Conversation().apply { lastMessage = message }.snippet)
     }
 }

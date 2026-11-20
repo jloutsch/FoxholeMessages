@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.repository
 
-import dev.octoshrimpy.quik.model.EmojiSyncNeeded
 import javax.inject.Singleton
 import android.content.Context
 import com.squareup.moshi.Moshi
@@ -26,9 +25,10 @@ import dev.octoshrimpy.quik.manager.KeyManager
 import dev.octoshrimpy.quik.model.EmojiReaction
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.util.EmojiPatternStrings
-import io.realm.Case
-import io.realm.Realm
-import io.realm.Sort
+import dev.octoshrimpy.quik.db.FoxholeDatabase
+import dev.octoshrimpy.quik.db.Relations
+import io.reactivex.Completable
+import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -37,6 +37,8 @@ class EmojiReactionRepositoryImpl @Inject constructor(
     private val context: Context,
     private val keyManager: KeyManager,
     private val moshi: Moshi,
+    private val database: FoxholeDatabase,
+    private val relations: Relations,
 ) : EmojiReactionRepository {
     // Pattern table and matching live in EmojiReactionPatterns (unit-tested against the real
     // per-language files); this class only feeds it the files from the app's assets.
@@ -115,20 +117,13 @@ class EmojiReactionRepositoryImpl @Inject constructor(
      * Search for messages in the same thread with matching text content
      * We'll search recent messages first
      */
-    fun findTargetMessage(
-        reactionMessage: Message,
-        reaction: ParsedEmojiReaction,
-        realm: Realm
-    ): Message? {
-        if (reaction.targetsAttachment) return findAttachmentTarget(reactionMessage, realm)
+    fun findTargetMessage(reactionMessage: Message, reaction: ParsedEmojiReaction): Message? {
+        if (reaction.targetsAttachment) return findAttachmentTarget(reactionMessage)
 
         val threadId = reactionMessage.threadId
         val originalMessageText = reaction.originalMessage
         val startTime = System.currentTimeMillis()
-        val messages = realm.where(Message::class.java)
-            .equalTo("threadId", threadId)
-            .sort("date", Sort.DESCENDING)
-            .findAll()
+        val messages = relations.threadMessages(threadId, database.messageDao().inThreadNewestFirst(threadId))
         val endTime = System.currentTimeMillis()
         Timber.d("Found ${messages.size} messages as potential emoji targets in ${endTime - startTime}ms")
 
@@ -154,20 +149,9 @@ class EmojiReactionRepositoryImpl @Inject constructor(
      * almost certainly looking at. Bounded by the reaction's own date so that re-parsing an old
      * reaction doesn't attach it to a picture sent later.
      */
-    private fun findAttachmentTarget(reactionMessage: Message, realm: Realm): Message? {
-        val match = realm.where(Message::class.java)
-            .equalTo("threadId", reactionMessage.threadId)
-            .notEqualTo("id", reactionMessage.id)
-            .lessThanOrEqualTo("date", reactionMessage.date)
-            .beginGroup()
-                .beginsWith("parts.type", "image/", Case.INSENSITIVE)
-                .or()
-                .beginsWith("parts.type", "video/", Case.INSENSITIVE)
-                .or()
-                .beginsWith("parts.type", "audio/", Case.INSENSITIVE)
-            .endGroup()
-            .sort("date", Sort.DESCENDING)
-            .findFirst()
+    private fun findAttachmentTarget(reactionMessage: Message): Message? {
+        val match = database.messageDao()
+            .latestWithAttachment(reactionMessage.threadId, reactionMessage.id, reactionMessage.date)
 
         if (match == null) Timber.w("No attachment found in thread to attach reaction to")
         else Timber.d("Found attachment reaction target: message ID ${match.id}")
@@ -175,95 +159,72 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         return match
     }
 
-    private fun removeEmojiReaction(
-        reactionMessage: Message,
-        reaction: ParsedEmojiReaction,
-        targetMessage: Message?,
-        realm: Realm,
-    ) {
+    private fun removeEmojiReaction(reactionMessage: Message, reaction: ParsedEmojiReaction, targetMessage: Message?) {
         if (targetMessage == null) {
             Timber.w("Cannot remove emoji reaction '${reaction.emoji}': no target message found")
             return
         }
 
-        val existingReaction = targetMessage.emojiReactions.find { candidate ->
+        val existingReaction = database.emojiReactionDao().forTargets(listOf(targetMessage.id)).find { candidate ->
             candidate.senderAddress == reactionMessage.address && candidate.emoji == reaction.emoji
         }
 
         if (existingReaction != null) {
-            existingReaction.deleteFromRealm()
+            database.emojiReactionDao().delete(listOf(existingReaction.id))
             Timber.d("Removed emoji reaction: ${reaction.emoji} to message ${targetMessage.id}")
         } else {
             Timber.w("No existing emoji reaction found to remove: ${reaction.emoji} to message ${targetMessage.id}")
         }
 
         reactionMessage.isEmojiReaction = true
-        realm.insertOrUpdate(reactionMessage)
+        database.messageDao().upsert(reactionMessage)
     }
 
-    fun saveEmojiReaction(
-        reactionMessage: Message,
-        parsedReaction: ParsedEmojiReaction,
-        targetMessage: Message?,
-        realm: Realm,
-    ) {
+    /** Saves (or removes) a parsed reaction. Writes [reactionMessage] too; call inside a transaction. */
+    fun saveEmojiReaction(reactionMessage: Message, parsedReaction: ParsedEmojiReaction, targetMessage: Message?) {
         if (parsedReaction.isRemoval) {
-            removeEmojiReaction(reactionMessage, parsedReaction, targetMessage, realm)
+            removeEmojiReaction(reactionMessage, parsedReaction, targetMessage)
             return
-        }
-
-        val reaction = EmojiReaction().apply {
-            id = keyManager.newId()
-            reactionMessageId = reactionMessage.id
-            senderAddress = reactionMessage.address
-            emoji = parsedReaction.emoji
-            originalMessageText = parsedReaction.originalMessage
-            threadId = reactionMessage.threadId
         }
 
         // Only kept when attached: a reaction row is only ever read for a message marked as one
         if (targetMessage != null) {
-            realm.insertOrUpdate(reaction)
-            reactionMessage.isEmojiReaction = true
-            realm.insertOrUpdate(reactionMessage)
+            val reaction = EmojiReaction().apply {
+                id = keyManager.newId()
+                reactionMessageId = reactionMessage.id
+                senderAddress = reactionMessage.address
+                emoji = parsedReaction.emoji
+                originalMessageText = parsedReaction.originalMessage
+                threadId = reactionMessage.threadId
+                targetMessageId = targetMessage.id
+            }
 
             // Overwrite any previous reaction from this sender for this target
-            val priorFromSender = targetMessage.emojiReactions.filter { it.senderAddress == reaction.senderAddress }
-            priorFromSender.forEach { it.deleteFromRealm() }
+            val priorFromSender = database.emojiReactionDao().forTargets(listOf(targetMessage.id))
+                .filter { it.senderAddress == reaction.senderAddress }
+            database.emojiReactionDao().delete(priorFromSender.map { it.id })
+            database.emojiReactionDao().upsert(reaction)
 
-            targetMessage.emojiReactions.add(reaction)
+            reactionMessage.isEmojiReaction = true
+            database.messageDao().upsert(reactionMessage)
 
             Timber.i("Saved emoji reaction: ${reaction.emoji} to message ${targetMessage.id}")
         } else {
-            Timber.w("No target message, cannot save emoji reaction: ${reaction.emoji}")
+            Timber.w("No target message, cannot save emoji reaction: ${parsedReaction.emoji}")
         }
     }
 
-    fun deleteAndReparseAllEmojiReactions(realm: Realm, onProgress: (SyncRepository.SyncProgress) -> Unit) {
+    /** Clears every reaction and parses them all again from message text, in one transaction. */
+    fun deleteAndReparseAllEmojiReactions(onProgress: (SyncRepository.SyncProgress) -> Unit) = database.runInTransaction {
         val startTime = System.currentTimeMillis()
 
-        realm.delete(EmojiReaction::class.java)
-        realm.where(Message::class.java).findAll().map {
-            it.isEmojiReaction = false
-        }
+        database.emojiReactionDao().clear()
+        database.messageDao().clearEmojiReactionFlags()
 
-        val allMessages = realm.where(Message::class.java)
-            .beginGroup()
-                .beginGroup()
-                    .equalTo("type", "sms")
-                    .isNotEmpty("body")
-                .endGroup()
-                .or()
-                .beginGroup()
-                    .equalTo("type", "mms")
-                    .notEqualTo("messageType", 130.toLong())
-                    .isNotEmpty("parts.text")
-                .endGroup()
-            .endGroup()
-            .sort("date", Sort.ASCENDING) // parse oldest to newest to handle reactions & removals properly
-            .findAll()
+        // parse oldest to newest to handle reactions & removals properly
+        val allMessages = relations.messages(database.messageDao().reactionCandidates())
 
-        val max = allMessages?.count() ?: 0
+        val max = allMessages.size
         var progress = 0
         var reactionsParsed = 0
         var targetsFound = 0
@@ -273,14 +234,9 @@ class EmojiReactionRepositoryImpl @Inject constructor(
             val parsedReaction = parseEmojiReaction(text)
             if (parsedReaction != null) {
                 reactionsParsed++
-                val targetMessage = findTargetMessage(message, parsedReaction, realm)
+                val targetMessage = findTargetMessage(message, parsedReaction)
                 if (targetMessage != null) targetsFound++
-                saveEmojiReaction(
-                    message,
-                    parsedReaction,
-                    targetMessage,
-                    realm,
-                )
+                saveEmojiReaction(message, parsedReaction, targetMessage)
             }
             // Counts every message scanned, since max does; counting only reactions left the bar
             // near the start. Updated every 25 messages and at the end, so the UI isn't flooded.
@@ -306,23 +262,19 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         )
     }
 
-
     override fun reparseIfFlagged() {
-        Realm.getDefaultInstance().executeTransactionAsync { realm ->
-            val emojiSyncNeeded = realm.where(EmojiSyncNeeded::class.java).findFirst()
-            if (emojiSyncNeeded != null) {
-                deleteAndReparseAllEmojiReactions(realm) { /* No progress UI here */ }
-                emojiSyncNeeded.deleteFromRealm()
+        Completable.fromAction {
+            if (database.emojiSyncNeededDao().count() > 0) {
+                deleteAndReparseAllEmojiReactions { /* No progress UI here */ }
+                database.emojiSyncNeededDao().clear()
             }
-        }
+        }.subscribeOn(Schedulers.io()).subscribe({}, { error -> Timber.e(error, "Emoji reparse failed") })
     }
 
     override fun reparseAll(onDone: () -> Unit, onError: (Throwable) -> Unit) {
-        Realm.getDefaultInstance().executeTransactionAsync(
-            { realm -> deleteAndReparseAllEmojiReactions(realm) { /* No progress UI here */ } },
-            { onDone() },
-            { error -> onError(error) }
-        )
+        Completable.fromAction { deleteAndReparseAllEmojiReactions { /* No progress UI here */ } }
+            .subscribeOn(Schedulers.io())
+            .subscribe({ onDone() }, { error -> onError(error) })
     }
 
 }

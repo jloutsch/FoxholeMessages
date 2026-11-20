@@ -18,60 +18,42 @@
  */
 package dev.octoshrimpy.quik.repository
 
-import dev.octoshrimpy.quik.extensions.asLiveList
-import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.db.FoxholeDatabase
 import dev.octoshrimpy.quik.model.MessageContentFilter
 import dev.octoshrimpy.quik.model.MessageContentFilterData
-import io.realm.Realm
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class MessageContentFilterRepositoryImpl @Inject constructor() : MessageContentFilterRepository {
-    override fun exportFilters(): List<MessageContentFilterData> = Realm.getDefaultInstance().use { realm ->
-        // See BlockingRepositoryImpl.exportBlockedAddresses: the instance may be pinned to an old version.
-        realm.refresh()
-        realm.where(MessageContentFilter::class.java).findAll().map {
-            MessageContentFilterData(it.value, it.caseSensitive, it.isRegex, it.includeContacts)
-        }
+class MessageContentFilterRepositoryImpl @Inject constructor(
+    private val database: FoxholeDatabase
+) : MessageContentFilterRepository {
+
+    private val filters get() = database.messageContentFilterDao()
+
+    override fun exportFilters(): List<MessageContentFilterData> = filters.all().map {
+        MessageContentFilterData(it.value, it.caseSensitive, it.isRegex, it.includeContacts)
     }
 
     override fun createFilter(data: MessageContentFilterData) {
-        Realm.getDefaultInstance().use { realm ->
-            // Next id read inside the write transaction so a concurrent insert can't take it first.
-            realm.executeTransaction {
-                val maxId = realm.where(MessageContentFilter::class.java)
-                    .max("id")?.toLong() ?: -1
-                realm.insert(MessageContentFilter(maxId + 1, data.value, data.caseSensitive, data.isRegex, data.includeContacts))
-            }
+        // Next id read inside the transaction so a concurrent insert can't take it first
+        database.runInTransaction {
+            val maxId = filters.maxId() ?: -1
+            filters.insert(listOf(MessageContentFilter(maxId + 1, data.value, data.caseSensitive, data.isRegex, data.includeContacts)))
         }
     }
 
-    override fun getMessageContentFilters(): Flow<List<MessageContentFilter>> =
-        Realm.getDefaultInstance().let { realm -> realm.where(MessageContentFilter::class.java).asLiveList(realm) }
+    override fun getMessageContentFilters(): Flow<List<MessageContentFilter>> = filters.observeAll()
 
     override fun isBlocked(messageBody: String, address: String, contactsRepo: ContactRepository): Boolean {
         val isContact = contactsRepo.isContact(address)
-
-        return Realm.getDefaultInstance().use { realm ->
-            realm.where(MessageContentFilter::class.java)
-                .findAll()
-                .any { filter ->
-                    ContentFilterMatcher.matches(
-                        filter.value, filter.caseSensitive, filter.isRegex, filter.includeContacts,
-                        messageBody, isContact
-                    )
-                }
+        return filters.all().any { filter ->
+            ContentFilterMatcher.matches(
+                filter.value, filter.caseSensitive, filter.isRegex, filter.includeContacts,
+                messageBody, isContact
+            )
         }
     }
 
-    override fun removeFilter(id: Long) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.executeTransaction {
-                realm.where(MessageContentFilter::class.java)
-                    .equalTo("id", id)
-                    .findAll()
-                    .deleteAllFromRealm()
-            }
-        }
-    }
+    override fun removeFilter(id: Long) = filters.delete(id)
 
 }

@@ -101,11 +101,6 @@ class ConversationInfoPresenter @Inject constructor(
                 ) { conversation, parts, backgroundUri ->
                     val data = mutableListOf<ConversationInfoItem>()
 
-                    // If some data was deleted, this isn't the place to handle it
-                    if (!conversation.isValid) {
-                        return@combineLatest
-                    }
-
                     data += conversation.recipients.map(::ConversationInfoRecipient)
                     data += ConversationInfoItem.ConversationInfoSettings(
                             name = conversation.name,

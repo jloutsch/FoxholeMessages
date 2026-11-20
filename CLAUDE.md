@@ -235,6 +235,10 @@ broken version of the code it covers. What's covered, and the past failure each 
   The Compose launcher shortcut names the installed app id, so `res/xml/shortcuts.xml` has one copy
   per build type (`src/main`, `src/debug`, `src/fdroid`), checked by `ShortcutsXmlTest`.
 
+Room (the database replacing Realm, #44) is tested in plain unit tests through **Robolectric**
+(`@RunWith(RobolectricTestRunner::class) @Config(sdk = [35])`, in-memory database from
+`data/src/test/.../db/TestDatabase.kt`). Room's schema history is exported to `data/schemas/` and checked in.
+
 Tests that read files (proguard rules, changelogs, emoji assets) declare them as Gradle test inputs,
 so editing those files re-runs the tests locally rather than reusing a stale pass.
 

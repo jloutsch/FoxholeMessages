@@ -23,55 +23,36 @@ import android.net.Uri
 import android.provider.BaseColumns
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
-import dev.octoshrimpy.quik.extensions.asObservable
+import dev.octoshrimpy.quik.db.FoxholeDatabase
+import dev.octoshrimpy.quik.db.Relations
+import dev.octoshrimpy.quik.db.Tables
+import dev.octoshrimpy.quik.db.observe
 import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.ContactGroup
 import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
-import io.realm.Realm
-import io.realm.RealmResults
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.rx2.asObservable
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ContactRepositoryImpl @Inject constructor(
-    private val context: Context
+    private val context: Context,
+    private val database: FoxholeDatabase,
+    private val relations: Relations
 ) : ContactRepository {
 
-    override fun getContacts(): List<Contact> = Realm.getDefaultInstance().use { realm ->
-        realm.copyFromRealm(realm.where(Contact::class.java).sort("name").findAll())
-    }
+    private val contactDao get() = database.contactDao()
 
-    override fun getUnmanagedContact(lookupKey: String): Contact? {
-        return Realm.getDefaultInstance().use { realm ->
-            realm.where(Contact::class.java)
-                    .equalTo("lookupKey", lookupKey)
-                    .findFirst()
-                    ?.let(realm::copyFromRealm)
-        }
-    }
+    override fun getContacts(): List<Contact> = relations.contacts(contactDao.all())
 
-    override fun getUnmanagedAllContacts(): List<Contact> =
-        Realm.getDefaultInstance().use { realm ->
-            realm.copyFromRealm(realm.where(Contact::class.java).findAll())
-        }
+    override fun getUnmanagedContact(lookupKey: String): Contact? =
+        contactDao.get(lookupKey)?.let { relations.contacts(listOf(it)).first() }
 
-    override fun getUnmanagedContacts(starred: Boolean): Observable<List<Contact>> {
-        val realm = Realm.getDefaultInstance()
+    override fun getUnmanagedAllContacts(): List<Contact> = getContacts()
 
-        var query = realm.where(Contact::class.java)
-
-        if (starred) {
-            query = query.equalTo("starred", true)
-        }
-
-        return query
-                .findAllAsync()
-                .asObservable()
-                .filter { it.isLoaded }
-                .filter { it.isValid }
-                .map { realm.copyFromRealm(it) }
+    override fun getUnmanagedContacts(starred: Boolean): Observable<List<Contact>> =
+        database.observe(Tables.CONTACTS) { relations.contacts(if (starred) contactDao.starred() else contactDao.all()) }
                 .map { contacts ->
                     contacts.sortedWith { c1, c2 ->
                         val initial = c1.name.firstOrNull()
@@ -85,37 +66,15 @@ class ContactRepositoryImpl @Inject constructor(
                         }
                     }
                 }
-                .subscribeOn(Schedulers.io())
-    }
-
-    override fun getUnmanagedContactGroups(): Observable<List<ContactGroup>> {
-        val realm = Realm.getDefaultInstance()
-        return realm.where(ContactGroup::class.java)
-                .isNotEmpty("contacts")
-                .findAllAsync()
                 .asObservable()
-                .filter { it.isLoaded }
-                .filter { it.isValid }
-                .map { realm.copyFromRealm(it) }
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .observeOn(Schedulers.io())
-    }
 
-    override fun setDefaultPhoneNumber(lookupKey: String, phoneNumberId: Long) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            val contact = realm.where(Contact::class.java)
-                    .equalTo("lookupKey", lookupKey)
-                    .findFirst()
-                    ?: return
+    // Only groups with at least one saved contact in them
+    override fun getUnmanagedContactGroups(): Observable<List<ContactGroup>> =
+        database.observe(Tables.GROUPS) { relations.contactGroups(contactDao.groups()).filter { it.contacts.isNotEmpty() } }
+                .asObservable()
 
-            realm.executeTransaction {
-                contact.numbers.forEach { number ->
-                    number.isDefault = number.id == phoneNumberId
-                }
-            }
-        }
-    }
+    override fun setDefaultPhoneNumber(lookupKey: String, phoneNumberId: Long) =
+        contactDao.setDefaultNumber(lookupKey, phoneNumberId)
 
     override fun isContact(address: String): Boolean {
         // A blank address appends nothing to the lookup path, producing a malformed URI

@@ -18,15 +18,16 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.ColumnInfo
+import androidx.room.PrimaryKey
 
-open class EmojiReaction : RealmObject() {
+@Entity
+open class EmojiReaction {
     @PrimaryKey var id: Long = 0
 
     /** The reaction message ID itself */
-    @Index var reactionMessageId: Long = 0
+    @ColumnInfo(index = true) var reactionMessageId: Long = 0
 
     /** The sender's address (phone number) */
     var senderAddress: String = ""
@@ -38,5 +39,8 @@ open class EmojiReaction : RealmObject() {
     var originalMessageText: String = ""
 
     /** Thread ID for easier querying */
-    @Index var threadId: Long = 0
+    @ColumnInfo(index = true) var threadId: Long = 0
+
+    // The message this reaction is on (was membership of Message.emojiReactions in Realm)
+    @ColumnInfo(index = true) var targetMessageId: Long = 0
 }

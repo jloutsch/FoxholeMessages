@@ -134,7 +134,7 @@ class MessagesAdapter @Inject constructor(
      * Safely return the conversation, if available
      */
     private val conversation: Conversation?
-        get() = threadData?.first?.takeIf { it.isValid }
+        get() = threadData?.first
 
     private val contactCache = ContactCache()
     private val expanded = HashMap<Long, Boolean>()
@@ -669,7 +669,7 @@ class MessagesAdapter @Inject constructor(
      */
     private inner class ContactCache : HashMap<String, Recipient?>() {
         override fun get(key: String): Recipient? {
-            if (super.get(key)?.isValid != true)
+            if (super.get(key) == null)
                 set(
                     key,
                     conversation?.recipients?.firstOrNull {
@@ -677,7 +677,7 @@ class MessagesAdapter @Inject constructor(
                     }
                 )
 
-            return super.get(key)?.takeIf { it.isValid }
+            return super.get(key)
         }
 
     }

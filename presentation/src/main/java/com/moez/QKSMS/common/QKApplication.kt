@@ -35,13 +35,10 @@ import dev.octoshrimpy.quik.injection.AppComponentManager
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.interactor.SpeakThreads
 import dev.octoshrimpy.quik.migration.QkMigration
-import dev.octoshrimpy.quik.migration.QkRealmMigration
 import dev.octoshrimpy.quik.util.NightModeManager
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.worker.HousekeepingWorker
 import dev.octoshrimpy.quik.worker.RetentionWorker
-import io.realm.Realm
-import io.realm.RealmConfiguration
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -57,7 +54,6 @@ class QKApplication : Application(), HasAndroidInjector {
     @Inject lateinit var fileLoggingTree: FileLoggingTree
     @Inject lateinit var nightModeManager: NightModeManager
     @Inject lateinit var prefs: Preferences
-    @Inject lateinit var realmMigration: QkRealmMigration
     @Inject lateinit var workerFactory: WorkerFactory
 
     override fun onCreate() {
@@ -69,13 +65,6 @@ class QKApplication : Application(), HasAndroidInjector {
         AppComponentManager.init(this)
         appComponent.inject(this)
 
-        Realm.init(this)
-        Realm.setDefaultConfiguration(RealmConfiguration.Builder()
-                .compactOnLaunch()
-                .migration(realmMigration)
-                .schemaVersion(QkRealmMigration.SCHEMA_VERSION)
-                .build())
-
         qkMigration.performMigration()
 
         nightModeManager.updateCurrentTheme()
@@ -86,8 +75,8 @@ class QKApplication : Application(), HasAndroidInjector {
         // FileLoggingTree only ever sees what's explicitly logged via Timber - an actual fatal
         // crash goes straight to the system's default handler and kills the process without
         // ever being logged, so exported logs never show why the app closed. Hook in a global
-        // handler that logs the crash first (FileLoggingTree writes asynchronously via
-        // Schedulers.io(), so give it a moment to flush before actually dying) and then defers
+        // handler that logs the crash first (FileLoggingTree writes on its own
+        // background thread, so give it a moment to flush before actually dying) and then defers
         // to the previous default handler so normal crash/ANR reporting still happens.
         val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
