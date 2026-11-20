@@ -118,4 +118,7 @@ tasks.withType(Test).configureEach {
     inputs.file("../android-smsmms/src/main/java/com/android/mms/transaction/PushReceiver.java")
     inputs.dir("src/main/java/com/moez/QKSMS/receiver")
     inputs.dir("src/main/java/com/moez/QKSMS/service")
+    // ReceivePathIndependentOfImportTest reads these
+    inputs.dir("src/main/java/com/moez/QKSMS/worker")
+    inputs.file("../presentation/src/main/java/com/moez/QKSMS/common/util/NotificationManagerImpl.kt")
 }
