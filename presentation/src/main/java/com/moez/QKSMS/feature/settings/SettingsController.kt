@@ -170,6 +170,8 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
         binding.pinchToZoom.checkbox?.isChecked = state.pinchToZoomEnabled
         binding.confirmArchive.checkbox?.isChecked = state.confirmArchiveEnabled
         binding.autoColor.checkbox?.isChecked = state.autoColor
+        binding.systemColors.setVisible(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+        binding.systemColors.checkbox?.isChecked = state.systemColors
 
         binding.systemFont.checkbox?.isChecked = state.systemFontEnabled
 

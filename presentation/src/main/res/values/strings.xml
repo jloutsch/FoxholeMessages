@@ -264,6 +264,8 @@
     <string name="settings_black_title">Pure black night mode</string>
     <string name="settings_night_start_title">Start time</string>
     <string name="settings_night_end_title">End time</string>
+    <string name="settings_system_colors_title">Use system colors</string>
+    <string name="settings_system_colors_summary">Match your wallpaper instead of the theme color. Conversations with their own color keep it.</string>
     <string name="settings_automatic_colors_title">Automatic contact colors</string>
     <string name="settings_text_size_title">Font size</string>
     <string name="settings_pinch_to_zoom_title">Pinch to zoom message text</string>
@@ -326,6 +328,13 @@
     <string name="message_sorting_widget_tabs_pick_one">Pick at least one tab for the widget</string>
     <string name="message_sorting_sort_existing_title">Sort existing messages</string>
     <string name="message_sorting_sort_existing_summary">Categorize messages you already have</string>
+    <string name="message_sorting_sort_starting">Sorting…</string>
+    <string name="message_sorting_sort_progress">Sorting… %1$s of %2$s</string>
+    <plurals name="message_sorting_sort_done">
+        <item quantity="one">Sorted %s message</item>
+        <item quantity="other">Sorted %s messages</item>
+    </plurals>
+    <string name="message_sorting_sort_failed">Sorting didn\'t finish. Tap to try again.</string>
     <string name="message_sorting_sort_existing_confirm_message">This will categorize every message currently in your conversations. This may take a moment.</string>
     <string name="message_sorting_notification_channel_name">Message sorting</string>
     <string name="message_sorting_classifying">Sorting messages…</string>

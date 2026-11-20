@@ -19,6 +19,7 @@
 package dev.octoshrimpy.quik.common.util
 
 import android.content.Context
+import android.os.Build
 import android.graphics.Color
 import androidx.core.content.res.getColorOrThrow
 import dev.octoshrimpy.quik.R
@@ -78,23 +79,31 @@ class Colors @Inject constructor(
     private val tertiaryTextLuminance = measureLuminance(context.getColorCompat(R.color.textTertiaryDark))
 
     fun theme(recipient: Recipient? = null): Theme {
-        val pref = prefs.theme(recipient?.id ?: 0)
-        val color = when {
-            recipient == null || !prefs.autoColor.get() || pref.isSet -> pref.get()
-            else -> generateColor(recipient)
-        }
-        return Theme(color, this)
+        val conversationPref = recipient?.let { prefs.theme(it.id) }
+        return Theme(pickThemeColor(
+            conversationColor = conversationPref?.takeIf { it.isSet }?.get(),
+            autoColor = recipient?.takeIf { prefs.autoColor.get() }?.let(::generateColor),
+            globalColor = prefs.theme().get(),
+            systemColor = systemColor()
+        ), this)
     }
 
-    fun themeObservable(recipient: Recipient? = null): Observable<Theme> {
-        val pref = when {
-            recipient == null -> prefs.theme()
-            prefs.autoColor.get() -> prefs.theme(recipient.id, generateColor(recipient))
-            else -> prefs.theme(recipient.id, prefs.theme().get())
-        }
-        return pref.asObservable()
-                .map { color -> Theme(color, this) }
-    }
+    /** Emits again whenever any setting that decides [theme] changes. */
+    fun themeObservable(recipient: Recipient? = null): Observable<Theme> =
+        Observable.merge(listOfNotNull(
+            prefs.theme().asObservable(),
+            recipient?.let { prefs.theme(it.id).asObservable() },
+            prefs.autoColor.asObservable(),
+            prefs.systemColors.asObservable()
+        ))
+            .map { theme(recipient) }
+            .distinctUntilChanged()
+
+    /** The wallpaper accent when "Use system colors" is on (Android 12+ only), otherwise null. */
+    private fun systemColor(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && prefs.systemColors.get())
+            context.getColor(android.R.color.system_accent1_500)
+        else null
 
     fun highlightColorForTheme(theme: Int): Int = FloatArray(3)
             .apply { Color.colorToHSV(theme, this) }
@@ -138,3 +147,10 @@ class Colors @Inject constructor(
         return randomColors[index]
     }
 }
+
+/**
+ * Which colour a screen or conversation uses: its own colour if one was picked, then the automatic
+ * contact colour, then the system (wallpaper) colour if that's on, then the chosen theme colour.
+ */
+internal fun pickThemeColor(conversationColor: Int?, autoColor: Int?, globalColor: Int, systemColor: Int?): Int =
+    conversationColor ?: autoColor ?: systemColor ?: globalColor

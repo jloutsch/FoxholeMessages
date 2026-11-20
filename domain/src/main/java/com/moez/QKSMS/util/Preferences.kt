@@ -116,6 +116,8 @@ class Preferences @Inject constructor(
     val nightEnd = rxPrefs.getString("nightEnd", "6:00")
     val black = rxPrefs.getBoolean("black", false)
     val autoColor = rxPrefs.getBoolean("autoColor", true)
+    // Android 12+: use the wallpaper accent instead of the chosen theme colour (fork issue #42)
+    val systemColors = rxPrefs.getBoolean("fh_systemColors", false)
     val systemFont = rxPrefs.getBoolean("systemFont", false)
     val showStt = rxPrefs.getBoolean("showStt", true)
     val showSttOffsetX = rxPrefs.getFloat("showSttOffsetX", Float.MIN_VALUE)

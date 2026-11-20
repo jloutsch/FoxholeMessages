@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
+import androidx.core.view.isVisible
+import java.text.NumberFormat
+import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker.SortStatus
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -76,6 +79,25 @@ class MessageSortingController :
         otpRetentionDialog.adapter.selectedItem = state.otpRetentionId
         binding.otpNotificationSize.summary = state.otpNotificationSizeSummary
         otpNotificationSizeDialog.adapter.selectedItem = state.otpNotificationSizeId
+        renderSortStatus(state.sortStatus)
+    }
+
+    private fun renderSortStatus(status: SortStatus) {
+        val res = activity!!.resources
+        val number = NumberFormat.getIntegerInstance()
+        binding.sortExisting.summary = when (status) {
+            SortStatus.Idle -> res.getString(R.string.message_sorting_sort_existing_summary)
+            is SortStatus.Running -> if (status.total == 0) res.getString(R.string.message_sorting_sort_starting)
+                else res.getString(R.string.message_sorting_sort_progress, number.format(status.done), number.format(status.total))
+            is SortStatus.Finished -> res.getQuantityString(R.plurals.message_sorting_sort_done, status.sorted, number.format(status.sorted))
+            SortStatus.Failed -> res.getString(R.string.message_sorting_sort_failed)
+        }
+        binding.sortProgress.isVisible = status is SortStatus.Running
+        if (status is SortStatus.Running) {
+            binding.sortProgress.isIndeterminate = status.total == 0
+            binding.sortProgress.max = status.total
+            binding.sortProgress.progress = status.done
+        }
     }
 
     override fun preferenceClicks(): Observable<PreferenceView> =

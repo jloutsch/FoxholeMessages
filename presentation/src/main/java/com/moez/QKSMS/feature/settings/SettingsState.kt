@@ -29,6 +29,7 @@ data class SettingsState(
     val nightEnd: String = "",
     val black: Boolean = false,
     val autoColor: Boolean = true,
+    val systemColors: Boolean = false,
     val autoEmojiEnabled: Boolean = true,
     val notificationsEnabled: Boolean = true,
     val sendDelaySummary: String = "",
