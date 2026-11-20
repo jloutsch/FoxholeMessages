@@ -29,6 +29,7 @@ import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.ClipboardUtils
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.extensions.asObservable
+import kotlinx.coroutines.rx2.asObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoMedia
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoRecipient
@@ -99,7 +100,7 @@ class ConversationInfoPresenter @Inject constructor(
                     val data = mutableListOf<ConversationInfoItem>()
 
                     // If some data was deleted, this isn't the place to handle it
-                    if (!conversation.isLoaded || !conversation.isValid || !parts.isLoaded || !parts.isValid) {
+                    if (!conversation.isLoaded || !conversation.isValid) {
                         return@combineLatest
                     }
 

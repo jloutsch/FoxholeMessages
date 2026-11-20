@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.SearchResult
@@ -37,9 +38,9 @@ interface ConversationRepository {
 
     fun searchConversations(query: CharSequence): List<SearchResult>
 
-    fun getBlockedConversations(): RealmResults<Conversation>
+    fun getBlockedConversations(): List<Conversation>
 
-    fun getBlockedConversationsAsync(): RealmResults<Conversation>
+    fun observeBlockedConversations(): Flow<List<Conversation>>
 
     fun getConversationAsync(threadId: Long): Conversation
 

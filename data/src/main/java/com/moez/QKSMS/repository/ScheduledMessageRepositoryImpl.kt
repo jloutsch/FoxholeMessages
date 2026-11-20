@@ -1,5 +1,7 @@
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.ScheduledMessage
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -7,7 +9,6 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
 import io.realm.RealmList
-import io.realm.RealmResults
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -49,12 +50,16 @@ class ScheduledMessageRepositoryImpl @Inject constructor() : ScheduledMessageRep
         }
     }
 
-    override fun getScheduledMessages(): RealmResults<ScheduledMessage> {
-        return Realm.getDefaultInstance()
-            .where(ScheduledMessage::class.java)
-            .sort("date")
-            .findAll()
-    }
+    override fun getScheduledMessages(): List<ScheduledMessage> =
+        Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
+            realm.copyFromRealm(realm.where(ScheduledMessage::class.java).sort("date").findAll())
+        }
+
+    override fun observeScheduledMessages(): Flow<List<ScheduledMessage>> =
+        Realm.getDefaultInstance().let { realm ->
+            realm.where(ScheduledMessage::class.java).sort("date").asLiveList(realm)
+        }
 
     override fun getScheduledMessage(id: Long): ScheduledMessage? {
         return Realm.getDefaultInstance()
@@ -64,12 +69,10 @@ class ScheduledMessageRepositoryImpl @Inject constructor() : ScheduledMessageRep
             .findFirst()
     }
 
-    override fun getScheduledMessagesForConversation(conversationId: Long): RealmResults<ScheduledMessage> {
-        return Realm.getDefaultInstance()
-            .where(ScheduledMessage::class.java)
-            .equalTo("conversationId", conversationId)
-            .findAllAsync()
-    }
+    override fun getScheduledMessagesForConversation(conversationId: Long): Flow<List<ScheduledMessage>> =
+        Realm.getDefaultInstance().let { realm ->
+            realm.where(ScheduledMessage::class.java).equalTo("conversationId", conversationId).asLiveList(realm)
+        }
 
     override fun deleteScheduledMessage(id: Long) {
         val subscription = Completable.fromAction {

@@ -75,6 +75,9 @@ class GalleryActivity : QkActivity(), GalleryView {
         })
 
         pagerAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            // The first list arrives as an insertion, later ones as changes
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) = onChanged()
+
             override fun onChanged() {
                 pagerAdapter.data?.takeIf { pagerAdapter.itemCount > 0 }
                         ?.indexOfFirst { part -> part.id == partId }

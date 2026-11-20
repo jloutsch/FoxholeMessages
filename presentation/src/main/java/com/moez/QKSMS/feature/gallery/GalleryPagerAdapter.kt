@@ -25,7 +25,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.google.android.mms.ContentType
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.common.base.QkViewHolder
 import dev.octoshrimpy.quik.databinding.GalleryImagePageBinding
 import dev.octoshrimpy.quik.databinding.GalleryVideoPageBinding
@@ -42,7 +42,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 
-class GalleryPagerAdapter @Inject constructor(private val context: Context) : QkRealmAdapter<MmsPart, QkViewHolder>() {
+class GalleryPagerAdapter @Inject constructor(private val context: Context) : QkListAdapter<MmsPart, QkViewHolder>(itemId = { it.id }) {
 
     companion object {
         private const val VIEW_TYPE_INVALID = 0

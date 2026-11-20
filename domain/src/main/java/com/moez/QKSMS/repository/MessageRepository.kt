@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import android.net.Uri
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.Message
@@ -61,7 +62,7 @@ interface MessageRepository {
 
     fun getPart(id: Long): MmsPart?
 
-    fun getPartsForConversation(threadId: Long): RealmResults<MmsPart>
+    fun getPartsForConversation(threadId: Long): Flow<List<MmsPart>>
 
     /**
      * The image/video parts of a single message, oldest id first - i.e. the order the attachments
@@ -76,7 +77,7 @@ interface MessageRepository {
      * has been seen coming back empty for a message whose MmsPart row provably existed. Matching
      * on either covers both.
      */
-    fun getMediaPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart>
+    fun getMediaPartsForMessage(messageId: Long, contentId: Long): List<MmsPart>
 
     /**
      * Every part of a single message - unlike [getMediaPartsForMessage], which keeps only the
@@ -130,7 +131,7 @@ interface MessageRepository {
 
     fun restoreMessages(messageIds: Collection<Long>)
 
-    fun getDeletedMessages(): RealmResults<Message>
+    fun getDeletedMessages(): Flow<List<Message>>
 
     fun purgeTrash(maxAgeDays: Int)
 

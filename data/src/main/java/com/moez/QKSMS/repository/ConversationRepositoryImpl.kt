@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import android.content.Context
 import dev.octoshrimpy.quik.common.util.extensions.now
 import dev.octoshrimpy.quik.compat.TelephonyCompat
@@ -178,25 +180,22 @@ class ConversationRepositoryImpl @Inject constructor(
             } + messagesByConversation
     }
 
-    override fun getBlockedConversations(): RealmResults<Conversation> =
-        Realm.getDefaultInstance()
-            .where(Conversation::class.java)
-            .equalTo("blocked", true)
-            .sort(
-                arrayOf("lastMessage.date"),
-                arrayOf(Sort.DESCENDING)
-            )
-            .findAll()
+    override fun getBlockedConversations(): List<Conversation> =
+        Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
+            realm.copyFromRealm(blockedConversationsQuery(realm).findAll())
+        }
 
-    override fun getBlockedConversationsAsync(): RealmResults<Conversation> =
-        Realm.getDefaultInstance()
+    override fun observeBlockedConversations(): Flow<List<Conversation>> =
+        Realm.getDefaultInstance().let { realm -> blockedConversationsQuery(realm).asLiveList(realm) }
+
+    private fun blockedConversationsQuery(realm: Realm) = realm
             .where(Conversation::class.java)
             .equalTo("blocked", true)
             .sort(
                 arrayOf("lastMessage.date"),
                 arrayOf(Sort.DESCENDING)
             )
-            .findAllAsync()
 
     override fun getConversationAsync(threadId: Long): Conversation =
         Realm.getDefaultInstance()

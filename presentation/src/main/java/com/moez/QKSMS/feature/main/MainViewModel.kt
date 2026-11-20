@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import kotlinx.coroutines.rx2.asObservable
 import android.content.Context
 import androidx.recyclerview.widget.ItemTouchHelper
 import dev.octoshrimpy.quik.classifier.MessageCategoryBackfill
@@ -131,8 +132,8 @@ class MainViewModel @Inject constructor(
                 .subscribe { show -> newState { copy(showRating = show) } }
 
         // Fetch scheduled messages and assign it to hasScheduledMessage
-        disposables += scheduledMessageRepo.getScheduledMessages()
-            .asFlowable()
+        disposables += scheduledMessageRepo.observeScheduledMessages()
+            .asObservable()
             .map { messages ->
                 messages.map { it.conversationId }.toSet()
             }

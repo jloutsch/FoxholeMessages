@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import com.moez.QKSMS.manager.QkTransaction
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -211,8 +213,8 @@ open class MessageRepositoryImpl @Inject constructor(
             .equalTo("id", id)
             .findFirst()
 
-    override fun getPartsForConversation(threadId: Long): RealmResults<MmsPart> =
-        Realm.getDefaultInstance()
+    override fun getPartsForConversation(threadId: Long): Flow<List<MmsPart>> =
+        Realm.getDefaultInstance().let { realm -> realm
             .where(MmsPart::class.java)
             .equalTo("messages.threadId", threadId)
             .isNull("messages.deletedAt") // pictures of trashed messages stay out of the gallery
@@ -222,13 +224,13 @@ open class MessageRepositoryImpl @Inject constructor(
             .contains("type", "video/")
             .endGroup()
             .sort("id", Sort.DESCENDING)
-            .findAllAsync()
+            .asLiveList(realm) }
 
     // Ascending, unlike getPartsForConversation above: the pager advances through this list as the
     // user swipes left, so it has to run in the same direction the attachments do. Queries
     // messageId directly for the same reason getPartsForMessage below does.
-    override fun getMediaPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart> =
-        Realm.getDefaultInstance()
+    override fun getMediaPartsForMessage(messageId: Long, contentId: Long): List<MmsPart> =
+        Realm.getDefaultInstance().use { realm -> realm
             .where(MmsPart::class.java)
             // Either linkage - see the interface for why neither is trustworthy on its own
             .beginGroup()
@@ -242,7 +244,8 @@ open class MessageRepositoryImpl @Inject constructor(
             .contains("type", "video/")
             .endGroup()
             .sort("id", Sort.ASCENDING)
-            .findAllAsync()
+            .findAll()
+            .let(realm::copyFromRealm) }
 
     // Matches on either linkage - see the interface for why neither is trustworthy on its own.
     // findAll() (not findAllAsync()) since callers need the result immediately, not on the next
@@ -1157,12 +1160,12 @@ open class MessageRepositoryImpl @Inject constructor(
             }
         }
 
-    override fun getDeletedMessages(): RealmResults<Message> =
-        Realm.getDefaultInstance()
+    override fun getDeletedMessages(): Flow<List<Message>> =
+        Realm.getDefaultInstance().let { realm -> realm
             .where(Message::class.java)
             .isNotNull("deletedAt")
             .sort("deletedAt", Sort.DESCENDING)
-            .findAllAsync()
+            .asLiveList(realm) }
 
     override fun purgeTrash(maxAgeDays: Int) =
         deleteTrash(trashedBefore = now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))

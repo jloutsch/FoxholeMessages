@@ -19,8 +19,7 @@
 package dev.octoshrimpy.quik.feature.trash
 
 import dev.octoshrimpy.quik.model.Message
-import io.realm.RealmResults
 
 data class TrashState(
-    val data: RealmResults<Message>? = null
+    val data: List<Message>? = null
 )

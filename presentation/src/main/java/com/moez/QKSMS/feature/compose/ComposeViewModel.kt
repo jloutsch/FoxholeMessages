@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import kotlinx.coroutines.rx2.asObservable
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
@@ -316,8 +317,7 @@ class ComposeViewModel @Inject constructor(
             .switchMap { conversation ->
                 scheduledMessageRepo
                     .getScheduledMessagesForConversation(conversation.id)
-                    .asFlowable()
-                    .toObservable()
+                    .asObservable()
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { liveResults ->
