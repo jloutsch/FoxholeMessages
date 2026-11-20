@@ -1,0 +1,5 @@
+What's new in 2.8.0:
+- New: messages are stored in a new database. Stars, Trash, sorting, pins, drafts, blocking and scheduled messages move over automatically on first launch.
+- Fixed: drafts and "Send as group" were lost after Sync messages.
+- Fixed: syncing could crash with debug logging on.
+- Fixed: a new reaction could overwrite an earlier one.
