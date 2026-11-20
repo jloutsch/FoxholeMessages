@@ -88,6 +88,8 @@ class SyncRepositoryImpl @Inject constructor(
     private val conversationDao get() = database.conversationDao()
     private val contactDao get() = database.contactDao()
 
+    // Fire and forget: runs once in the background for the app's lifetime, nothing to cancel
+    @Suppress("CheckResult")
     override fun syncMessages() {
 
         val oldBlockedSenders = rxPrefs.getStringSet("pref_key_blocked_senders")
