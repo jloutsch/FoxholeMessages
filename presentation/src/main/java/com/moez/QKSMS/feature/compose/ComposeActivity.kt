@@ -244,6 +244,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             messageAdapter.emptyView = binding.messagesEmpty
 
             binding.messageList.setHasFixedSize(true)
+            messageAdapter.openedAt = SystemClock.elapsedRealtime()
             binding.messageList.adapter = messageAdapter
 
             // Pinch-to-zoom: only active while the Settings toggle is on, so normal scrolling

@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import android.os.SystemClock
 import com.bumptech.glide.Glide
 import android.animation.ObjectAnimator
 import android.content.ActivityNotFoundException
@@ -205,7 +206,14 @@ class MessagesAdapter @Inject constructor(
         }
     }
 
+    /** When the thread was opened (elapsedRealtime), for the "first shown" log; 0 = don't log. */
+    var openedAt = 0L
+
     override fun onBindViewHolder(holder: QkViewHolder, position: Int) {
+        if (openedAt != 0L) {
+            Timber.i("Thread first shown: $itemCount messages, ${SystemClock.elapsedRealtime() - openedAt} ms after opening")
+            openedAt = 0L
+        }
         val message = getItem(position) ?: return
         val previous = if (position == 0) null else getItem(position - 1)
         val next = if (position == itemCount - 1) null else getItem(position + 1)
