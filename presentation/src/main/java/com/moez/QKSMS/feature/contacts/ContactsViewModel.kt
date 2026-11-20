@@ -41,7 +41,6 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.schedulers.Schedulers
-import io.realm.RealmList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.awaitFirst
 import javax.inject.Inject
@@ -68,7 +67,7 @@ class ContactsViewModel @Inject constructor(
             .observeOn(Schedulers.io())
             .map { hashmap ->
                 hashmap.map { (address, lookupKey) ->
-                    Recipient(address = address, contact = lookupKey?.let(contactsRepo::getUnmanagedContact))
+                    Recipient(address = address).apply { contact = lookupKey?.let(contactsRepo::getUnmanagedContact) }
                 }
             }
 
@@ -133,7 +132,7 @@ class ContactsViewModel @Inject constructor(
                         // If the entry is a valid destination, allow it as a recipient
                         if (phoneNumberUtils.isPossibleNumber(query.toString())) {
                             val newAddress = phoneNumberUtils.formatNumber(query)
-                            val newContact = Contact(numbers = RealmList(PhoneNumber(address = newAddress)))
+                            val newContact = Contact().apply { numbers = listOf(PhoneNumber(address = newAddress)) }
                             composeItems += ComposeItem.New(newContact)
                         }
 

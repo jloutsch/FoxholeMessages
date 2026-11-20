@@ -46,7 +46,7 @@ class CursorToConversationImpl @Inject constructor(
     override fun map(from: Cursor): Conversation {
         return Conversation().apply {
             id = from.getLong(ID)
-            recipients.addAll(from.getString(RECIPIENT_IDS)
+            recipients = (from.getString(RECIPIENT_IDS)
                     .split(" ")
                     .filter { it.isNotBlank() }
                     .map { recipientId -> recipientId.toLong() }

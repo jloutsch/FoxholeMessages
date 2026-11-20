@@ -2,6 +2,7 @@ package dev.octoshrimpy.quik.db
 
 import dev.octoshrimpy.quik.db.entity.ConversationRecipient
 import dev.octoshrimpy.quik.model.Contact
+import dev.octoshrimpy.quik.model.ContactGroup
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.Recipient
@@ -63,6 +64,19 @@ class Relations @Inject constructor(private val database: FoxholeDatabase) {
             .flatMap(contactDao::numbersFor).groupBy { it.contactLookupKey }
         contacts.forEach { contact -> contact.numbers = numbers[contact.lookupKey].orEmpty() }
         return contacts
+    }
+
+    /** Fills each group's contacts. */
+    fun contactGroups(groups: List<ContactGroup>): List<ContactGroup> {
+        if (groups.isEmpty()) return groups
+        val members = groups.map { it.id }.chunked(CHUNK).flatMap(contactDao::groupMembers)
+        val contacts = contacts(members.map { it.lookupKey }.distinct().chunked(CHUNK).flatMap(contactDao::get))
+            .associateBy { it.lookupKey }
+        val membersByGroup = members.groupBy { it.groupId }
+        groups.forEach { group ->
+            group.contacts = membersByGroup[group.id].orEmpty().mapNotNull { member -> contacts[member.lookupKey] }
+        }
+        return groups
     }
 
     /** Fills each recipient's matched contact (with its numbers). */

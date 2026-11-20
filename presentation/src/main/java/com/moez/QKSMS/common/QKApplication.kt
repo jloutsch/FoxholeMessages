@@ -35,13 +35,10 @@ import dev.octoshrimpy.quik.injection.AppComponentManager
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.interactor.SpeakThreads
 import dev.octoshrimpy.quik.migration.QkMigration
-import dev.octoshrimpy.quik.migration.QkRealmMigration
 import dev.octoshrimpy.quik.util.NightModeManager
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.worker.HousekeepingWorker
 import dev.octoshrimpy.quik.worker.RetentionWorker
-import io.realm.Realm
-import io.realm.RealmConfiguration
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -57,7 +54,6 @@ class QKApplication : Application(), HasAndroidInjector {
     @Inject lateinit var fileLoggingTree: FileLoggingTree
     @Inject lateinit var nightModeManager: NightModeManager
     @Inject lateinit var prefs: Preferences
-    @Inject lateinit var realmMigration: QkRealmMigration
     @Inject lateinit var workerFactory: WorkerFactory
 
     override fun onCreate() {
@@ -68,13 +64,6 @@ class QKApplication : Application(), HasAndroidInjector {
 
         AppComponentManager.init(this)
         appComponent.inject(this)
-
-        Realm.init(this)
-        Realm.setDefaultConfiguration(RealmConfiguration.Builder()
-                .compactOnLaunch()
-                .migration(realmMigration)
-                .schemaVersion(QkRealmMigration.SCHEMA_VERSION)
-                .build())
 
         qkMigration.performMigration()
 

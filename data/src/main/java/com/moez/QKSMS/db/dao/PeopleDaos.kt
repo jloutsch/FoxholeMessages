@@ -9,13 +9,11 @@ import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.ContactGroup
 import dev.octoshrimpy.quik.model.PhoneNumber
 import dev.octoshrimpy.quik.model.Recipient
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RecipientDao {
     @Query("SELECT * FROM Recipient") fun all(): List<Recipient>
-    @Query("SELECT * FROM Recipient WHERE contactLookupKey IS NOT NULL")
-    fun observeWithContact(): Flow<List<Recipient>>
+    @Query("SELECT * FROM Recipient WHERE contactLookupKey IS NOT NULL") fun withContact(): List<Recipient>
     @Query("SELECT * FROM Recipient WHERE id = :id") fun get(id: Long): Recipient?
     @Query("SELECT * FROM Recipient WHERE id IN (:ids)") fun get(ids: List<Long>): List<Recipient>
     @Query("SELECT MAX(id) FROM Recipient") fun maxId(): Long?
@@ -28,7 +26,6 @@ interface RecipientDao {
 interface ContactDao {
     @Query("SELECT * FROM Contact ORDER BY name") fun all(): List<Contact>
     @Query("SELECT * FROM Contact WHERE starred = 1 ORDER BY name") fun starred(): List<Contact>
-    @Query("SELECT * FROM Contact ORDER BY name") fun observeAll(): Flow<List<Contact>>
     @Query("SELECT * FROM Contact WHERE lookupKey = :lookupKey") fun get(lookupKey: String): Contact?
     @Query("SELECT * FROM Contact WHERE lookupKey IN (:lookupKeys)") fun get(lookupKeys: List<String>): List<Contact>
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun upsert(contacts: List<Contact>)
@@ -39,9 +36,10 @@ interface ContactDao {
     @Query("SELECT * FROM PhoneNumber") fun allNumbers(): List<PhoneNumber>
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun upsertNumbers(numbers: List<PhoneNumber>)
     @Query("DELETE FROM PhoneNumber") fun clearNumbers()
+    @Query("UPDATE PhoneNumber SET isDefault = (id = :phoneNumberId) WHERE contactLookupKey = :lookupKey")
+    fun setDefaultNumber(lookupKey: String, phoneNumberId: Long)
 
     @Query("SELECT * FROM ContactGroup") fun groups(): List<ContactGroup>
-    @Query("SELECT * FROM ContactGroup") fun observeGroups(): Flow<List<ContactGroup>>
     @Query("SELECT * FROM ContactGroupMember WHERE groupId IN (:groupIds)")
     fun groupMembers(groupIds: List<Long>): List<ContactGroupMember>
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun upsertGroups(groups: List<ContactGroup>)

@@ -7,7 +7,6 @@ import androidx.room.Query
 import androidx.room.Update
 import dev.octoshrimpy.quik.db.entity.ConversationRecipient
 import dev.octoshrimpy.quik.model.Conversation
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Conversations. A conversation's last message is the row [Conversation.lastMessageId] points at
@@ -25,8 +24,9 @@ interface ConversationDao {
         private const val LISTED = "c.id != 0 AND c.blocked = 0 AND $HAS_RECIPIENTS " +
                 "AND (c.lastMessageId IS NOT NULL OR c.draft != '')"
 
-        // Pinned first, then (optionally) unread first, then drafts, then newest
-        private const val ORDER = "ORDER BY CASE WHEN :unreadAtTop THEN m.read ELSE 0 END ASC, " +
+        // (Optionally) unread first, then pinned, then drafts, then newest: Realm's order. A draft-only
+        // conversation has no message and counts as read.
+        private const val ORDER = "ORDER BY CASE WHEN :unreadAtTop THEN COALESCE(m.read, 1) ELSE 0 END ASC, " +
                 "c.pinned DESC, c.draft DESC, m.date DESC"
 
         // Category tabs: a manual override wins; otherwise the last message's category. Personal
@@ -38,13 +38,10 @@ interface ConversationDao {
     }
 
     @Query("SELECT c.* $FROM WHERE $LISTED AND c.archived = :archived $ORDER")
-    fun observeListed(archived: Boolean, unreadAtTop: Boolean): Flow<List<Conversation>>
-
-    @Query("SELECT c.* $FROM WHERE $LISTED AND c.archived = :archived $ORDER")
     fun listed(archived: Boolean, unreadAtTop: Boolean): List<Conversation>
 
     @Query("SELECT c.* $FROM WHERE $LISTED AND c.archived = 0 AND $IN_CATEGORY $ORDER")
-    fun observeInCategory(category: String, unreadAtTop: Boolean): Flow<List<Conversation>>
+    fun inCategory(category: String, unreadAtTop: Boolean): List<Conversation>
 
     @Query("SELECT COUNT(*) $FROM WHERE $LISTED AND c.archived = 0 AND $IN_CATEGORY AND m.read = 0")
     fun unreadCountInCategory(category: String): Long
@@ -62,19 +59,15 @@ interface ConversationDao {
     @Query("SELECT c.* $FROM WHERE c.blocked = 1 ORDER BY m.date DESC")
     fun blocked(): List<Conversation>
 
-    @Query("SELECT c.* $FROM WHERE c.blocked = 1 ORDER BY m.date DESC")
-    fun observeBlocked(): Flow<List<Conversation>>
-
     @Query("SELECT c.id $FROM WHERE c.id != 0 AND c.archived = :archived AND c.blocked = 0 AND m.seen = 0 ORDER BY m.date DESC")
     fun unseenIds(archived: Boolean): List<Long>
 
     // For the share sheet: the five newest unarchived conversations
     @Query("SELECT c.* $FROM WHERE c.id != 0 AND c.lastMessageId IS NOT NULL AND c.archived = 0 " +
             "AND c.blocked = 0 AND $HAS_RECIPIENTS ORDER BY m.date DESC LIMIT 5")
-    fun observeRecent(): Flow<List<Conversation>>
+    fun recent(): List<Conversation>
 
     @Query("SELECT * FROM Conversation WHERE id = :id") fun get(id: Long): Conversation?
-    @Query("SELECT * FROM Conversation WHERE id = :id") fun observe(id: Long): Flow<Conversation?>
     @Query("SELECT * FROM Conversation WHERE id IN (:ids)") fun get(ids: List<Long>): List<Conversation>
     @Query("SELECT * FROM Conversation") fun all(): List<Conversation>
 

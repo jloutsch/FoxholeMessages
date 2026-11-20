@@ -122,8 +122,12 @@ class AppModule(private var application: Application) {
     @Provides
     @Singleton
     fun provideDatabase(context: Context): FoxholeDatabase =
-        // No allowMainThreadQueries: Room refuses database work on the main thread, like Realm writes
-        Room.databaseBuilder(context, FoxholeDatabase::class.java, "foxhole.db").build()
+        // allowMainThreadQueries: many screens read synchronously on the main thread, as they did
+        // with Realm. Moving those reads off it is a follow-up; Room's writes here run in the
+        // repositories' background paths.
+        Room.databaseBuilder(context, FoxholeDatabase::class.java, "foxhole.db")
+            .allowMainThreadQueries()
+            .build()
 
     @Provides
     @Singleton

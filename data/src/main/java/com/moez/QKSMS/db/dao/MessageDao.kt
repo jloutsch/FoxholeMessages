@@ -26,10 +26,7 @@ interface MessageDao {
                 "(SELECT 1 FROM MmsPart p WHERE p.messageId = Message.contentId AND p.text LIKE '%' || :query || '%')))"
     }
 
-    @Query("SELECT * FROM Message WHERE $IN_THREAD ORDER BY date") fun observeThread(threadId: Long): Flow<List<Message>>
     @Query("SELECT * FROM Message WHERE $IN_THREAD ORDER BY date") fun thread(threadId: Long): List<Message>
-    @Query("SELECT * FROM Message WHERE $IN_THREAD AND $MATCHES ORDER BY date")
-    fun observeThreadSearch(threadId: Long, query: String): Flow<List<Message>>
     @Query("SELECT * FROM Message WHERE $IN_THREAD AND $MATCHES ORDER BY date")
     fun threadSearch(threadId: Long, query: String): List<Message>
     @Query("SELECT * FROM Message WHERE deletedAt IS NULL AND $MATCHES") fun search(query: String): List<Message>
@@ -43,7 +40,7 @@ interface MessageDao {
     @Query("SELECT MAX(id) FROM Message") fun maxId(): Long?
 
     @Query("SELECT * FROM Message WHERE threadId = :threadId AND deletedAt IS NULL AND boxId IN (0, 1) ORDER BY date DESC")
-    fun observeLastIncoming(threadId: Long): Flow<List<Message>>
+    fun lastIncoming(threadId: Long): List<Message>
 
     // The newest message not in Trash: a conversation's last message
     @Query("SELECT * FROM Message WHERE threadId = :threadId AND deletedAt IS NULL ORDER BY date DESC LIMIT 1")
@@ -63,8 +60,6 @@ interface MessageDao {
     fun unreadCount(threadId: Long): Long
     @Query("SELECT * FROM Message WHERE threadId = :threadId AND read = 0 AND deletedAt IS NULL ORDER BY date")
     fun unread(threadId: Long): List<Message>
-    @Query("SELECT * FROM Message WHERE threadId = :threadId AND read = 0 AND deletedAt IS NULL ORDER BY date")
-    fun observeUnread(threadId: Long): Flow<List<Message>>
     @Query("SELECT * FROM Message WHERE threadId = :threadId AND seen = 0 AND read = 0 AND deletedAt IS NULL ORDER BY date")
     fun unreadUnseen(threadId: Long): List<Message>
 
@@ -81,7 +76,7 @@ interface MessageDao {
     @Query("UPDATE Message SET deletedAt = :at WHERE id IN (:ids)") fun setDeletedAt(ids: List<Long>, at: Long?)
     @Query("UPDATE Message SET deletedAt = :at WHERE deletedAt IS NULL AND threadId IN (:threadIds)")
     fun trashThreads(threadIds: List<Long>, at: Long)
-    @Query("SELECT * FROM Message WHERE deletedAt IS NOT NULL ORDER BY deletedAt DESC") fun observeTrash(): Flow<List<Message>>
+    @Query("SELECT * FROM Message WHERE deletedAt IS NOT NULL ORDER BY deletedAt DESC") fun trash(): List<Message>
     @Query("SELECT * FROM Message WHERE deletedAt IS NOT NULL AND deletedAt < :before") fun trashedBefore(before: Long): List<Message>
 
     // Retention and maintenance
@@ -94,12 +89,28 @@ interface MessageDao {
     @Query("SELECT * FROM Message WHERE isOtp = 0") fun notOtp(): List<Message>
     @Query("SELECT * FROM Message ORDER BY date") fun allOldestFirst(): List<Message>
     @Query("SELECT * FROM Message WHERE threadId IN (:threadIds) ORDER BY date") fun inThreadsOldestFirst(threadIds: List<Long>): List<Message>
+    @Query("UPDATE Message SET category = :category WHERE id = :id") fun setCategory(id: Long, category: String?)
+    @Query("UPDATE Message SET isOtp = 1 WHERE id IN (:ids)") fun markOtp(ids: List<Long>)
     @Query("SELECT DISTINCT threadId FROM Message WHERE boxId IN (2, 4, 5, 6)") fun threadsWithSent(): List<Long>
     @Query("SELECT DISTINCT threadId FROM Message WHERE boxId IN (2, 4, 5, 6) AND threadId IN (:threadIds)")
     fun threadsWithSent(threadIds: List<Long>): List<Long>
 
+    // Reactions: candidates for a reaction's target, and the reparse
+    @Query("SELECT * FROM Message WHERE threadId = :threadId ORDER BY date DESC")
+    fun inThreadNewestFirst(threadId: Long): List<Message>
+    @Query("SELECT m.* FROM Message m WHERE m.threadId = :threadId AND m.id != :excludeId AND m.date <= :before " +
+            "AND m.type = 'mms' AND EXISTS (SELECT 1 FROM MmsPart p WHERE p.messageId = m.contentId " +
+            "AND (p.type LIKE 'image/%' OR p.type LIKE 'video/%' OR p.type LIKE 'audio/%')) ORDER BY m.date DESC LIMIT 1")
+    fun latestWithAttachment(threadId: Long, excludeId: Long, before: Long): Message?
+    @Query("UPDATE Message SET isEmojiReaction = 0 WHERE isEmojiReaction = 1") fun clearEmojiReactionFlags()
+    // Messages with text: SMS with a body, or MMS (not a download notification, type 130) with a text part
+    @Query("SELECT * FROM Message WHERE (type = 'sms' AND body != '') OR (type = 'mms' AND messageType != 130 " +
+            "AND EXISTS (SELECT 1 FROM MmsPart p WHERE p.messageId = Message.contentId AND p.text IS NOT NULL AND p.text != '')) " +
+            "ORDER BY date")
+    fun reactionCandidates(): List<Message>
+
     // Starred
-    @Query("SELECT * FROM Message WHERE isStarred = 1 AND deletedAt IS NULL ORDER BY date DESC") fun observeStarred(): Flow<List<Message>>
+    @Query("SELECT * FROM Message WHERE isStarred = 1 AND deletedAt IS NULL ORDER BY date DESC") fun starred(): List<Message>
     @Query("SELECT COUNT(*) FROM Message WHERE isStarred = 1 AND read = 0 AND deletedAt IS NULL") fun unreadStarredCount(): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun upsert(message: Message)

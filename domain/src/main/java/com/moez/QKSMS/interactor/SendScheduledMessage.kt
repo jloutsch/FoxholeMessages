@@ -26,7 +26,6 @@ import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import io.reactivex.Flowable
 import io.reactivex.rxkotlin.toFlowable
-import io.realm.RealmList
 import java.util.Collections
 import javax.inject.Inject
 
@@ -53,7 +52,7 @@ class SendScheduledMessage @Inject constructor(
                 if (message.sendAsGroup) {
                     listOf(message)
                 } else {
-                    message.recipients.map { recipient -> message.copy(recipients = RealmList(recipient)) }
+                    message.recipients.map { recipient -> message.copy(recipients = listOf(recipient)) }
                 }.toFlowable()
             }
             .map { message ->

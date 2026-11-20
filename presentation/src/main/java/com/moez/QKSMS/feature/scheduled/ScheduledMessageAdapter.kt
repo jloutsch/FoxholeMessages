@@ -106,14 +106,14 @@ class ScheduledMessageAdapter @Inject constructor(
     private inner class ContactCache : HashMap<String, Contact?>() {
 
         override fun get(key: String): Contact? {
-            if (super.get(key)?.isValid != true) {
+            if (super.get(key) == null) {
                 set(key, contacts.firstOrNull { contact ->
                     contact.numbers.any {
                         phoneNumberUtils.compare(it.address, key)
                     }
                 })
             }
-            return super.get(key)?.takeIf { it.isValid }
+            return super.get(key)
         }
     }
 }
