@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.unmanaged
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import com.moez.QKSMS.manager.QkTransaction
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -87,7 +90,8 @@ open class MessageRepositoryImpl @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils,
     private val prefs: Preferences,
     private val syncRepository: SyncRepository,
-    private val reactions: EmojiReactionRepository,
+    // The implementation, not the interface: these call its Realm-level methods
+    private val reactions: EmojiReactionRepositoryImpl,
     private val cursorToMessage: CursorToMessage,
     private val cursorToPart: CursorToPart,
     private val contactRepo: ContactRepository,
@@ -119,11 +123,11 @@ open class MessageRepositoryImpl @Inject constructor(
             }
             .sort("date")
 
-    override fun getMessages(threadId: Long, query: String): RealmResults<Message> =
-        getMessagesBase(threadId, query).findAllAsync()
+    override fun getMessages(threadId: Long, query: String): Flow<List<Message>> =
+        getMessagesBase(threadId, query).asLiveList(Realm.getDefaultInstance())
 
-    override fun getMessagesSync(threadId: Long, query: String): RealmResults<Message> =
-        getMessagesBase(threadId, query).findAll()
+    override fun getMessagesSync(threadId: Long, query: String): List<Message> =
+        getMessagesBase(threadId, query).findAll().unmanaged()
 
     override fun getMessage(messageId: Long) =
         Realm.getDefaultInstance()
@@ -141,12 +145,13 @@ open class MessageRepositoryImpl @Inject constructor(
                 ?.let(realm::copyFromRealm)
         }
 
-    override fun getMessages(messageIds: Collection<Long>): RealmResults<Message> =
+    override fun getMessages(messageIds: Collection<Long>): List<Message> =
         Realm.getDefaultInstance()
             .also { it.refresh() }
             .where(Message::class.java)
             .anyOf("id", messageIds.toLongArray())
             .findAll()
+            .unmanaged()
 
     override fun getMessageForPart(id: Long) =
         Realm.getDefaultInstance()
@@ -154,7 +159,7 @@ open class MessageRepositoryImpl @Inject constructor(
             .equalTo("parts.id", id)
             .findFirst()
 
-    override fun getLastIncomingMessage(threadId: Long): RealmResults<Message> =
+    override fun getLastIncomingMessage(threadId: Long): Flow<List<Message>> =
         Realm.getDefaultInstance()
             .where(Message::class.java)
             .equalTo("threadId", threadId)
@@ -173,7 +178,7 @@ open class MessageRepositoryImpl @Inject constructor(
             .endGroup()
             .endGroup()
             .sort("date", Sort.DESCENDING)
-            .findAll()
+            .asLiveList(Realm.getDefaultInstance())
 
     override fun getUnreadCount() =
         Realm.getDefaultInstance().use { realm ->
@@ -211,8 +216,8 @@ open class MessageRepositoryImpl @Inject constructor(
             .equalTo("id", id)
             .findFirst()
 
-    override fun getPartsForConversation(threadId: Long): RealmResults<MmsPart> =
-        Realm.getDefaultInstance()
+    override fun getPartsForConversation(threadId: Long): Flow<List<MmsPart>> =
+        Realm.getDefaultInstance().let { realm -> realm
             .where(MmsPart::class.java)
             .equalTo("messages.threadId", threadId)
             .isNull("messages.deletedAt") // pictures of trashed messages stay out of the gallery
@@ -222,13 +227,13 @@ open class MessageRepositoryImpl @Inject constructor(
             .contains("type", "video/")
             .endGroup()
             .sort("id", Sort.DESCENDING)
-            .findAllAsync()
+            .asLiveList(realm) }
 
     // Ascending, unlike getPartsForConversation above: the pager advances through this list as the
     // user swipes left, so it has to run in the same direction the attachments do. Queries
     // messageId directly for the same reason getPartsForMessage below does.
-    override fun getMediaPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart> =
-        Realm.getDefaultInstance()
+    override fun getMediaPartsForMessage(messageId: Long, contentId: Long): List<MmsPart> =
+        Realm.getDefaultInstance().use { realm -> realm
             .where(MmsPart::class.java)
             // Either linkage - see the interface for why neither is trustworthy on its own
             .beginGroup()
@@ -242,12 +247,13 @@ open class MessageRepositoryImpl @Inject constructor(
             .contains("type", "video/")
             .endGroup()
             .sort("id", Sort.ASCENDING)
-            .findAllAsync()
+            .findAll()
+            .let(realm::copyFromRealm) }
 
     // Matches on either linkage - see the interface for why neither is trustworthy on its own.
     // findAll() (not findAllAsync()) since callers need the result immediately, not on the next
     // event loop tick.
-    override fun getPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart> =
+    override fun getPartsForMessage(messageId: Long, contentId: Long): List<MmsPart> =
         Realm.getDefaultInstance()
             .where(MmsPart::class.java)
             .beginGroup()
@@ -256,6 +262,7 @@ open class MessageRepositoryImpl @Inject constructor(
             .equalTo("messageId", contentId)
             .endGroup()
             .findAll()
+            .unmanaged()
 
     override fun savePart(id: Long): Uri? {
         val part = getPart(id) ?: return null
@@ -336,7 +343,7 @@ open class MessageRepositoryImpl @Inject constructor(
 
     // isNull("deletedAt") on both: these drive notification contents, and a message the user has
     // already moved to Trash shouldn't reappear in a notification afterwards
-    override fun getUnreadUnseenMessages(threadId: Long): RealmResults<Message> =
+    override fun getUnreadUnseenMessages(threadId: Long): List<Message> =
         Realm.getDefaultInstance()
             .also { it.refresh() }
             .where(Message::class.java)
@@ -346,15 +353,20 @@ open class MessageRepositoryImpl @Inject constructor(
             .isNull("deletedAt")
             .sort("date")
             .findAll()
+            .unmanaged()
 
-    override fun getUnreadMessages(threadId: Long): RealmResults<Message> =
-        Realm.getDefaultInstance()
+    override fun getUnreadMessages(threadId: Long): List<Message> =
+        unreadMessagesQuery(Realm.getDefaultInstance(), threadId).findAll().unmanaged()
+
+    override fun observeUnreadMessages(threadId: Long): Flow<List<Message>> =
+        Realm.getDefaultInstance().let { realm -> unreadMessagesQuery(realm, threadId).asLiveList(realm) }
+
+    private fun unreadMessagesQuery(realm: Realm, threadId: Long) = realm
             .where(Message::class.java)
             .equalTo("read", false)
             .equalTo("threadId", threadId)
             .isNull("deletedAt")
             .sort("date")
-            .findAll()
 
     // marks all messages in threads as read and/or seen in the native provider
     private fun telephonyMarkSeenRead(
@@ -1157,12 +1169,12 @@ open class MessageRepositoryImpl @Inject constructor(
             }
         }
 
-    override fun getDeletedMessages(): RealmResults<Message> =
-        Realm.getDefaultInstance()
+    override fun getDeletedMessages(): Flow<List<Message>> =
+        Realm.getDefaultInstance().let { realm -> realm
             .where(Message::class.java)
             .isNotNull("deletedAt")
             .sort("deletedAt", Sort.DESCENDING)
-            .findAllAsync()
+            .asLiveList(realm) }
 
     override fun purgeTrash(maxAgeDays: Int) =
         deleteTrash(trashedBefore = now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
@@ -1422,13 +1434,13 @@ open class MessageRepositoryImpl @Inject constructor(
             }
         }
 
-    override fun getStarredMessages(): RealmResults<Message> =
+    override fun getStarredMessages(): Flow<List<Message>> =
         Realm.getDefaultInstance()
             .where(Message::class.java)
             .equalTo("isStarred", true)
             .isNull("deletedAt")
             .sort("date", Sort.DESCENDING)
-            .findAllAsync()
+            .asLiveList(Realm.getDefaultInstance())
 
     override fun getUnreadStarredCount(): Long =
         Realm.getDefaultInstance().use { realm ->

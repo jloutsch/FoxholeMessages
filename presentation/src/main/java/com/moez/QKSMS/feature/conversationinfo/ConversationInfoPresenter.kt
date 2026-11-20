@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.conversationinfo
 
+import kotlinx.coroutines.flow.map
+import dev.octoshrimpy.quik.extensions.Optional
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import com.uber.autodispose.android.lifecycle.scope
@@ -28,7 +30,7 @@ import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.ClipboardUtils
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
-import dev.octoshrimpy.quik.extensions.asObservable
+import kotlinx.coroutines.rx2.asObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoMedia
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoRecipient
@@ -74,15 +76,16 @@ class ConversationInfoPresenter @Inject constructor(
     private val conversation: Subject<Conversation> = BehaviorSubject.create()
 
     init {
-        disposables += conversationRepo.getConversationAsync(threadId)
+        // A deleted conversation arrives as null, which closes the screen (hasError)
+        disposables += conversationRepo.observeConversation(threadId)
+                .map { conversation -> Optional(conversation) }
                 .asObservable()
-                .filter { conversation -> conversation.isLoaded }
                 .doOnNext { conversation ->
-                    if (!conversation.isValid) {
+                    if (conversation.value == null) {
                         newState { copy(hasError = true) }
                     }
                 }
-                .filter { conversation -> conversation.isValid }
+                .mapNotNull { conversation -> conversation.value }
                 .filter { conversation -> conversation.id != 0L }
                 .subscribe(conversation::onNext)
 
@@ -99,7 +102,7 @@ class ConversationInfoPresenter @Inject constructor(
                     val data = mutableListOf<ConversationInfoItem>()
 
                     // If some data was deleted, this isn't the place to handle it
-                    if (!conversation.isLoaded || !conversation.isValid || !parts.isLoaded || !parts.isValid) {
+                    if (!conversation.isValid) {
                         return@combineLatest
                     }
 

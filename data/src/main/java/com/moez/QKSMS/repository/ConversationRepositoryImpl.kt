@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveFirst
+import dev.octoshrimpy.quik.extensions.unmanaged
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import android.content.Context
 import dev.octoshrimpy.quik.common.util.extensions.now
 import dev.octoshrimpy.quik.compat.TelephonyCompat
@@ -83,9 +87,8 @@ class ConversationRepositoryImpl @Inject constructor(
     override fun getConversations(
         unreadAtTop: Boolean,
         archived: Boolean
-    ): RealmResults<Conversation> =
-        getConversationsBase(Realm.getDefaultInstance(), unreadAtTop, archived)
-            .findAllAsync()
+    ): Flow<List<Conversation>> =
+        Realm.getDefaultInstance().let { realm -> getConversationsBase(realm, unreadAtTop, archived).asLiveList(realm, ::copyReactionEmoji) }
 
     override fun getConversationsSnapshot(unreadAtTop: Boolean): List<Conversation> =
         Realm.getDefaultInstance().use { realm ->
@@ -178,31 +181,27 @@ class ConversationRepositoryImpl @Inject constructor(
             } + messagesByConversation
     }
 
-    override fun getBlockedConversations(): RealmResults<Conversation> =
-        Realm.getDefaultInstance()
+    override fun getBlockedConversations(): List<Conversation> =
+        Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
+            realm.copyFromRealm(blockedConversationsQuery(realm).findAll())
+        }
+
+    override fun observeBlockedConversations(): Flow<List<Conversation>> =
+        Realm.getDefaultInstance().let { realm -> blockedConversationsQuery(realm).asLiveList(realm, ::copyReactionEmoji) }
+
+    private fun blockedConversationsQuery(realm: Realm) = realm
             .where(Conversation::class.java)
             .equalTo("blocked", true)
             .sort(
                 arrayOf("lastMessage.date"),
                 arrayOf(Sort.DESCENDING)
             )
-            .findAll()
 
-    override fun getBlockedConversationsAsync(): RealmResults<Conversation> =
-        Realm.getDefaultInstance()
-            .where(Conversation::class.java)
-            .equalTo("blocked", true)
-            .sort(
-                arrayOf("lastMessage.date"),
-                arrayOf(Sort.DESCENDING)
-            )
-            .findAllAsync()
-
-    override fun getConversationAsync(threadId: Long): Conversation =
-        Realm.getDefaultInstance()
-            .where(Conversation::class.java)
-            .equalTo("id", threadId)
-            .findFirstAsync()
+    override fun observeConversation(threadId: Long): Flow<Conversation?> =
+        Realm.getDefaultInstance().let { realm ->
+            realm.where(Conversation::class.java).equalTo("id", threadId).asLiveFirst(realm, ::copyReactionEmoji)
+        }
 
     override fun getConversation(threadId: Long) =
         tryOrNull(true) {
@@ -259,11 +258,12 @@ class ConversationRepositoryImpl @Inject constructor(
                 }
         }
 
-    override fun getConversations(vararg threadIds: Long): RealmResults<Conversation> =
+    override fun getConversations(vararg threadIds: Long): List<Conversation> =
         Realm.getDefaultInstance()
             .where(Conversation::class.java)
             .anyOf("id", threadIds)
             .findAll()
+            .unmanaged()
 
     override fun getUnmanagedConversations(): Observable<List<Conversation>> =
         Realm.getDefaultInstance().let { realm->
@@ -284,10 +284,11 @@ class ConversationRepositoryImpl @Inject constructor(
                 .observeOn(Schedulers.io())
         }
 
-    override fun getRecipients(): RealmResults<Recipient> =
+    override fun getRecipients(): List<Recipient> =
         Realm.getDefaultInstance()
             .where(Recipient::class.java)
             .findAll()
+            .unmanaged()
 
     override fun getUnmanagedRecipients(): Observable<List<Recipient>> =
         Realm.getDefaultInstance().let { realm ->
@@ -489,8 +490,10 @@ class ConversationRepositoryImpl @Inject constructor(
         return query.endGroup()
     }
 
-    override fun getConversationsByCategory(unreadAtTop: Boolean, category: String): RealmResults<Conversation> =
-        getConversationsByCategoryBase(Realm.getDefaultInstance(), unreadAtTop, category).findAllAsync()
+    override fun getConversationsByCategory(unreadAtTop: Boolean, category: String): Flow<List<Conversation>> =
+        Realm.getDefaultInstance().let { realm ->
+            getConversationsByCategoryBase(realm, unreadAtTop, category).asLiveList(realm, ::copyReactionEmoji)
+        }
 
     override fun getUnreadCountByCategory(category: String): Long =
         Realm.getDefaultInstance().use { realm ->
@@ -589,6 +592,11 @@ class ConversationRepositoryImpl @Inject constructor(
             realm.executeTransaction { it.copyToRealmOrUpdate(conversation) }
             return conversation
         }
+    }
+
+
+    private fun copyReactionEmoji(managed: Conversation, copy: Conversation) {
+        copy.lastReactionEmoji = managed.lastMessageReactionEmoji()
     }
 
 }

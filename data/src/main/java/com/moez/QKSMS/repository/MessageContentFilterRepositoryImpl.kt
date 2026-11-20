@@ -18,10 +18,11 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.MessageContentFilter
 import dev.octoshrimpy.quik.model.MessageContentFilterData
 import io.realm.Realm
-import io.realm.RealmResults
 import javax.inject.Inject
 
 class MessageContentFilterRepositoryImpl @Inject constructor() : MessageContentFilterRepository {
@@ -44,11 +45,8 @@ class MessageContentFilterRepositoryImpl @Inject constructor() : MessageContentF
         }
     }
 
-    override fun getMessageContentFilters(): RealmResults<MessageContentFilter> {
-        return Realm.getDefaultInstance()
-            .where(MessageContentFilter::class.java)
-            .findAllAsync()
-    }
+    override fun getMessageContentFilters(): Flow<List<MessageContentFilter>> =
+        Realm.getDefaultInstance().let { realm -> realm.where(MessageContentFilter::class.java).asLiveList(realm) }
 
     override fun isBlocked(messageBody: String, address: String, contactsRepo: ContactRepository): Boolean {
         val isContact = contactsRepo.isContact(address)

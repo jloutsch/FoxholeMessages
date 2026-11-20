@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import android.os.SystemClock
 import com.bumptech.glide.Glide
 import android.animation.ObjectAnimator
 import android.content.ActivityNotFoundException
@@ -45,7 +46,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.moez.QKSMS.common.QkMediaPlayer
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.common.base.QkViewHolder
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.DateFormatter
@@ -78,7 +79,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
-import io.realm.RealmResults
 import timber.log.Timber
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -95,7 +95,7 @@ class MessagesAdapter @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils,
     private val prefs: Preferences,
     private val textViewStyler: TextViewStyler,
-) : QkRealmAdapter<Message, QkViewHolder>() {
+) : QkListAdapter<Message, QkViewHolder>(itemId = { it.id }) {
     class AudioState(
         var partId: Long = -1,
         var state: QkMediaPlayer.PlayingState = QkMediaPlayer.PlayingState.Stopped,
@@ -120,7 +120,7 @@ class MessagesAdapter @Inject constructor(
     val partContextMenuRegistrar: Subject<View> = PublishSubject.create()
     val reactionClicks: Subject<Long> = PublishSubject.create()
 
-    var data: Pair<Conversation, RealmResults<Message>>? = null
+    var threadData: Pair<Conversation, List<Message>>? = null
         set(value) {
             if (field === value) return
 
@@ -134,7 +134,7 @@ class MessagesAdapter @Inject constructor(
      * Safely return the conversation, if available
      */
     private val conversation: Conversation?
-        get() = data?.first?.takeIf { it.isValid }
+        get() = threadData?.first?.takeIf { it.isValid }
 
     private val contactCache = ContactCache()
     private val expanded = HashMap<Long, Boolean>()
@@ -205,7 +205,14 @@ class MessagesAdapter @Inject constructor(
         }
     }
 
+    /** When the thread was opened (elapsedRealtime), for the "first shown" log; 0 = don't log. */
+    var openedAt = 0L
+
     override fun onBindViewHolder(holder: QkViewHolder, position: Int) {
+        if (openedAt != 0L) {
+            Timber.i("Thread first shown: $itemCount messages, ${SystemClock.elapsedRealtime() - openedAt} ms after opening")
+            openedAt = 0L
+        }
         val message = getItem(position) ?: return
         val previous = if (position == 0) null else getItem(position - 1)
         val next = if (position == itemCount - 1) null else getItem(position + 1)

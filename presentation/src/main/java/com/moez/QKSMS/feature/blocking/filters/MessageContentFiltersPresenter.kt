@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.filters
 
+import io.reactivex.rxkotlin.plusAssign
+import kotlinx.coroutines.rx2.asObservable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.common.base.QkPresenter
@@ -27,9 +29,12 @@ import javax.inject.Inject
 
 class MessageContentFiltersPresenter @Inject constructor(
     private val filterRepo: MessageContentFilterRepository,
-) : QkPresenter<MessageContentFiltersView, MessageContentFiltersState>(
-        MessageContentFiltersState(filters = filterRepo.getMessageContentFilters())
-) {
+) : QkPresenter<MessageContentFiltersView, MessageContentFiltersState>(MessageContentFiltersState()) {
+
+    init {
+        disposables += filterRepo.getMessageContentFilters().asObservable()
+            .subscribe { list -> newState { copy(filters = list) } }
+    }
 
     override fun bindIntents(view: MessageContentFiltersView) {
         super.bindIntents(view)

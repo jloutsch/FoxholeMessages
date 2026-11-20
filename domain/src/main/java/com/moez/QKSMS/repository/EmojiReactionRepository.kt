@@ -18,8 +18,6 @@
  */
 package dev.octoshrimpy.quik.repository
 
-import dev.octoshrimpy.quik.model.Message
-import io.realm.Realm
 
 /**
  * [targetsAttachment] is set when the reaction was to a picture, video or similar rather than to
@@ -36,17 +34,9 @@ data class ParsedEmojiReaction(
 interface EmojiReactionRepository {
     fun parseEmojiReaction(body: String): ParsedEmojiReaction?
 
-    fun findTargetMessage(reactionMessage: Message, reaction: ParsedEmojiReaction, realm: Realm): Message?
+    /** Re-parses every reaction if a schema migration asked for it (an EmojiSyncNeeded row). Runs in the background. */
+    fun reparseIfFlagged()
 
-    fun saveEmojiReaction(
-        reactionMessage: Message,
-        parsedReaction: ParsedEmojiReaction,
-        targetMessage: Message?,
-        realm: Realm,
-    )
-
-    fun deleteAndReparseAllEmojiReactions(
-        realm: Realm,
-        onProgress: (SyncRepository.SyncProgress) -> Unit
-    )
+    /** Re-parses every reaction in the background, then calls [onDone] or [onError]. */
+    fun reparseAll(onDone: () -> Unit, onError: (Throwable) -> Unit)
 }

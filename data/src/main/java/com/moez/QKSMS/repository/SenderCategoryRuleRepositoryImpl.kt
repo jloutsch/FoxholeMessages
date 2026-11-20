@@ -18,18 +18,19 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.SenderCategoryRule
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import io.realm.Realm
-import io.realm.RealmResults
 import javax.inject.Inject
 
 class SenderCategoryRuleRepositoryImpl @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils
 ) : SenderCategoryRuleRepository {
 
-    override fun getRules(): RealmResults<SenderCategoryRule> =
-        Realm.getDefaultInstance().where(SenderCategoryRule::class.java).findAllAsync()
+    override fun getRules(): Flow<List<SenderCategoryRule>> =
+        Realm.getDefaultInstance().let { realm -> realm.where(SenderCategoryRule::class.java).asLiveList(realm) }
 
     override fun getRule(address: String): SenderCategoryRule? =
         Realm.getDefaultInstance().use { realm ->

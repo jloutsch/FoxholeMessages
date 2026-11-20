@@ -23,7 +23,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.databinding.ConversationsTabPageBinding
 
 /**
@@ -44,21 +44,21 @@ class ConversationsPagerAdapter(
         abstract val tab: Tab
 
         /** The adapter to attach, regardless of what the page lists. */
-        abstract val adapter: QkRealmAdapter<*, *>
+        abstract val adapter: QkListAdapter<*, *>
 
         data class Conversations(
             override val tab: Tab,
             val conversationsAdapter: ConversationsAdapter,
             val touchCallback: ConversationItemTouchCallback
         ) : TabPage() {
-            override val adapter: QkRealmAdapter<*, *> get() = conversationsAdapter
+            override val adapter: QkListAdapter<*, *> get() = conversationsAdapter
         }
 
         data class Starred(
             override val tab: Tab,
             val starredAdapter: StarredMessagesAdapter
         ) : TabPage() {
-            override val adapter: QkRealmAdapter<*, *> get() = starredAdapter
+            override val adapter: QkListAdapter<*, *> get() = starredAdapter
         }
     }
 

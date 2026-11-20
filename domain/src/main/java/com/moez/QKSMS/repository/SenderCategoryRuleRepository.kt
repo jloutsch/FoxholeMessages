@@ -18,12 +18,12 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.SenderCategoryRule
-import io.realm.RealmResults
 
 interface SenderCategoryRuleRepository {
 
-    fun getRules(): RealmResults<SenderCategoryRule>
+    fun getRules(): Flow<List<SenderCategoryRule>>
 
     fun getRule(address: String): SenderCategoryRule?
 

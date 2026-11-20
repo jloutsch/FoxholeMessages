@@ -1,5 +1,7 @@
 package dev.octoshrimpy.quik.feature.scheduled
 
+import io.reactivex.disposables.Disposable
+import kotlinx.coroutines.rx2.asObservable
 import android.content.Context
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
@@ -24,7 +26,6 @@ class ScheduledViewModel @Inject constructor(
     private val sendScheduledMessageInteractor: SendScheduledMessage,
     private val deleteScheduledMessagesInteractor: DeleteScheduledMessages,
 ) : QkViewModel<ScheduledView, ScheduledState>(ScheduledState(
-    scheduledMessages = scheduledMessageRepo.getScheduledMessages(),
     conversationId = conversationId
 )) {
 
@@ -157,11 +158,17 @@ class ScheduledViewModel @Inject constructor(
             }
     }
 
+    // Replaced, not added to, when the conversation filter changes
+    private var messagesSubscription: Disposable? = null
+
     private fun loadMessages(conversationId: Long?) {
-        val results = if (conversationId != null)
+        val messages = if (conversationId != null)
             scheduledMessageRepo.getScheduledMessagesForConversation(conversationId)
         else
-            scheduledMessageRepo.getScheduledMessages()
-        newState { copy(scheduledMessages = results) }
+            scheduledMessageRepo.observeScheduledMessages()
+        messagesSubscription?.dispose()
+        messagesSubscription = messages.asObservable()
+            .subscribe { list -> newState { copy(scheduledMessages = list) } }
+            .also { disposables += it }
     }
 }

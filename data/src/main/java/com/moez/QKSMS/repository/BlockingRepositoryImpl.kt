@@ -18,13 +18,14 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.extensions.asLiveList
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.extensions.anyOf
 import dev.octoshrimpy.quik.model.BlockedNumber
 import dev.octoshrimpy.quik.model.MessageContentFilter
 import dev.octoshrimpy.quik.model.MessageContentFilterData
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import io.realm.Realm
-import io.realm.RealmResults
 import javax.inject.Inject
 
 class BlockingRepositoryImpl @Inject constructor(
@@ -52,11 +53,8 @@ class BlockingRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getBlockedNumbers(): RealmResults<BlockedNumber> {
-        return Realm.getDefaultInstance()
-                .where(BlockedNumber::class.java)
-                .findAllAsync()
-    }
+    override fun getBlockedNumbers(): Flow<List<BlockedNumber>> =
+        Realm.getDefaultInstance().let { realm -> realm.where(BlockedNumber::class.java).asLiveList(realm) }
 
     override fun exportBlockedAddresses(): List<String> = Realm.getDefaultInstance().use { realm ->
         // A background thread can be handed a cached instance pinned to an old version (some getters

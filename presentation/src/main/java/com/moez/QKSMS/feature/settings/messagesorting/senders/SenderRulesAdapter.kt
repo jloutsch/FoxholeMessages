@@ -21,13 +21,13 @@ package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.databinding.SenderRuleListItemBinding
 import dev.octoshrimpy.quik.model.SenderCategoryRule
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 
-class SenderRulesAdapter : QkRealmAdapter<SenderCategoryRule, QkBindingViewHolder<SenderRuleListItemBinding>>() {
+class SenderRulesAdapter : QkListAdapter<SenderCategoryRule, QkBindingViewHolder<SenderRuleListItemBinding>>(itemId = { it.id }) {
 
     val editRule: Subject<SenderCategoryRule> = PublishSubject.create()
     val removeRule: Subject<SenderCategoryRule> = PublishSubject.create()
