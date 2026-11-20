@@ -32,6 +32,11 @@ class KeyManagerImpl @Inject constructor(private val database: FoxholeDatabase) 
      * Should be called when a new sync is being started
      */
     @Synchronized
+    override fun forget() {
+        initialized = false
+    }
+
+    @Synchronized
     override fun reset() {
         initialized = true
         maxValue = 0L

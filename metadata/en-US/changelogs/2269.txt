@@ -2,4 +2,4 @@ What's new in 2.9.0:
 - Improved: smaller download. The old database library is gone, now that 2.8.0 moved your data to the new one.
 - Improved: the old database files are removed from your phone.
 
-Updating from 2.7 or older? Install 2.8.0 first, so your stars, Trash, sorting and drafts are moved over.
+Updating from 2.7 or older? Install 2.8.0 first. Skipping it loses stars, Trash, sorting, drafts, blocked numbers, filters and scheduled messages.

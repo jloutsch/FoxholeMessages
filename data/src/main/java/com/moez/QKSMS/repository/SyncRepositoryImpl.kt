@@ -107,6 +107,11 @@ class SyncRepositoryImpl @Inject constructor(
         syncProgress.onNext(SyncRepository.SyncProgress.Running(0, 0, true))
         try {
             database.runInTransaction { rebuildFromProvider(oldBlockedSenders.get()) }
+        } catch (e: Exception) {
+            // The rebuild reset the id counter to 0, but its rollback brought the old rows back:
+            // without this, later saves would reuse their ids and overwrite them
+            keys.forget()
+            throw e
         } finally {
             syncProgress.onNext(SyncRepository.SyncProgress.Idle)
         }
