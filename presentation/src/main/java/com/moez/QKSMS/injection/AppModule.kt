@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.injection
 
+import dev.octoshrimpy.quik.db.FoxholeDatabase
+import androidx.room.Room
 import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
@@ -116,6 +118,12 @@ class AppModule(private var application: Application) {
     fun provideRxPreferences(preferences: SharedPreferences): RxSharedPreferences {
         return RxSharedPreferences.create(preferences)
     }
+
+    @Provides
+    @Singleton
+    fun provideDatabase(context: Context): FoxholeDatabase =
+        // No allowMainThreadQueries: Room refuses database work on the main thread, like Realm writes
+        Room.databaseBuilder(context, FoxholeDatabase::class.java, "foxhole.db").build()
 
     @Provides
     @Singleton
