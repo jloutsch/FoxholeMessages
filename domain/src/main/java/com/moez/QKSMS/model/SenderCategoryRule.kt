@@ -18,16 +18,17 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 /**
  * A manual override that always classifies messages from [address] as [category] (the name of a
  * [dev.octoshrimpy.quik.classifier.Category] constant), regardless of what the classifier or
  * trusted sender list would otherwise decide.
  */
+@Entity
 open class SenderCategoryRule(
     @PrimaryKey var id: Long = 0,
     var address: String = "",
     var category: String = ""
-) : RealmObject()
+)

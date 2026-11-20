@@ -18,18 +18,22 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
 
+@Entity
 open class Contact(
     @PrimaryKey var lookupKey: String = "",
-    var numbers: RealmList<PhoneNumber> = RealmList(),
     var name: String = "",
     var photoUri: String? = null,
     var starred: Boolean = false,
     var lastUpdate: Long = 0
-) : RealmObject() {
+) {
+
+    /** Filled in by the repository from PhoneNumber.contactLookupKey; not stored here. */
+    @Ignore
+    var numbers: List<PhoneNumber> = emptyList()
 
     fun getDefaultNumber(): PhoneNumber? = numbers.find { number -> number.isDefault }
 

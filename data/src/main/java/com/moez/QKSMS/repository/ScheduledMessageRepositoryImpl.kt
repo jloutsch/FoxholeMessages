@@ -1,20 +1,22 @@
 package dev.octoshrimpy.quik.repository
 
-import dev.octoshrimpy.quik.extensions.asLiveList
+import dev.octoshrimpy.quik.db.FoxholeDatabase
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.ScheduledMessage
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import io.realm.Realm
-import io.realm.RealmList
 import timber.log.Timber
 import javax.inject.Inject
 
-class ScheduledMessageRepositoryImpl @Inject constructor() : ScheduledMessageRepository {
+class ScheduledMessageRepositoryImpl @Inject constructor(
+    private val database: FoxholeDatabase
+) : ScheduledMessageRepository {
 
     private val disposables = CompositeDisposable()
+
+    private val dao get() = database.scheduledMessageDao()
 
     override fun saveScheduledMessage(
         date: Long,
@@ -25,65 +27,29 @@ class ScheduledMessageRepositoryImpl @Inject constructor() : ScheduledMessageRep
         attachments: List<String>,
         conversationId: Long
     ): ScheduledMessage {
-        Realm.getDefaultInstance().use { realm ->
-            val id = (realm
-                .where(ScheduledMessage::class.java)
-                .max("id")
-                ?.toLong() ?: -1
-                    ) + 1
-
-            val recipientsRealmList = RealmList(*recipients.toTypedArray())
-            val attachmentsRealmList = RealmList(*attachments.toTypedArray())
-
-            val message = ScheduledMessage(id, date, subId, recipientsRealmList, sendAsGroup, body,
-                attachmentsRealmList, conversationId)
-
-            realm.executeTransaction { realm.insertOrUpdate(message) }
-
-            return message
+        lateinit var message: ScheduledMessage
+        database.runInTransaction {
+            val id = (dao.maxId() ?: -1) + 1
+            message = ScheduledMessage(id, date, subId, recipients, sendAsGroup, body, attachments, conversationId)
+            dao.upsert(message)
         }
+        return message
     }
 
-    override fun updateScheduledMessage(scheduledMessage: ScheduledMessage) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.executeTransaction { realm.insertOrUpdate(scheduledMessage) }
-        }
-    }
+    override fun updateScheduledMessage(scheduledMessage: ScheduledMessage) = dao.upsert(scheduledMessage)
 
-    override fun getScheduledMessages(): List<ScheduledMessage> =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.copyFromRealm(realm.where(ScheduledMessage::class.java).sort("date").findAll())
-        }
+    override fun getScheduledMessages(): List<ScheduledMessage> = dao.all()
 
-    override fun observeScheduledMessages(): Flow<List<ScheduledMessage>> =
-        Realm.getDefaultInstance().let { realm ->
-            realm.where(ScheduledMessage::class.java).sort("date").asLiveList(realm)
-        }
+    override fun observeScheduledMessages(): Flow<List<ScheduledMessage>> = dao.observeAll()
 
-    override fun getScheduledMessage(id: Long): ScheduledMessage? {
-        return Realm.getDefaultInstance()
-            .apply { refresh() }
-            .where(ScheduledMessage::class.java)
-            .equalTo("id", id)
-            .findFirst()
-    }
+    override fun getScheduledMessage(id: Long): ScheduledMessage? = dao.get(id)
 
     override fun getScheduledMessagesForConversation(conversationId: Long): Flow<List<ScheduledMessage>> =
-        Realm.getDefaultInstance().let { realm ->
-            realm.where(ScheduledMessage::class.java).equalTo("conversationId", conversationId).asLiveList(realm)
-        }
+        dao.observeForConversation(conversationId)
 
     override fun deleteScheduledMessage(id: Long) {
-        val subscription = Completable.fromAction {
-            Realm.getDefaultInstance().use { realm ->
-                val message = realm.where(ScheduledMessage::class.java)
-                    .equalTo("id", id)
-                    .findFirst()
-
-                realm.executeTransaction { message?.deleteFromRealm() }
-            }
-        }.subscribeOn(Schedulers.io()) // Run on a background thread and switch to main if needed
+        val subscription = Completable.fromAction { dao.delete(id) }
+            .subscribeOn(Schedulers.io()) // Run on a background thread and switch to main if needed
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 Timber.v("Successfully deleted scheduled messages.")
@@ -98,14 +64,5 @@ class ScheduledMessageRepositoryImpl @Inject constructor() : ScheduledMessageRep
         ids.forEach { deleteScheduledMessage(it) }
     }
 
-    override fun getAllScheduledMessageIdsSnapshot(): List<Long> {
-        Realm.getDefaultInstance().use { realm ->
-            return realm
-                .where(ScheduledMessage::class.java)
-                .sort("date")
-                .findAll()
-                .createSnapshot()
-                .map { it.id }
-        }
-    }
+    override fun getAllScheduledMessageIdsSnapshot(): List<Long> = dao.all().map { it.id }
 }

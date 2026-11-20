@@ -18,49 +18,34 @@
  */
 package dev.octoshrimpy.quik.repository
 
-import dev.octoshrimpy.quik.extensions.asLiveList
-import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.db.FoxholeDatabase
 import dev.octoshrimpy.quik.model.SenderCategoryRule
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import io.realm.Realm
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class SenderCategoryRuleRepositoryImpl @Inject constructor(
+    private val database: FoxholeDatabase,
     private val phoneNumberUtils: PhoneNumberUtils
 ) : SenderCategoryRuleRepository {
 
-    override fun getRules(): Flow<List<SenderCategoryRule>> =
-        Realm.getDefaultInstance().let { realm -> realm.where(SenderCategoryRule::class.java).asLiveList(realm) }
+    private val rules get() = database.senderCategoryRuleDao()
+
+    override fun getRules(): Flow<List<SenderCategoryRule>> = rules.observeAll()
 
     override fun getRule(address: String): SenderCategoryRule? =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(SenderCategoryRule::class.java).findAll()
-                .firstOrNull { phoneNumberUtils.compare(it.address, address) }
-                ?.let { realm.copyFromRealm(it) }
-        }
+        rules.all().firstOrNull { phoneNumberUtils.compare(it.address, address) }
 
     override fun setRule(address: String, category: String) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-
-            val existing = realm.where(SenderCategoryRule::class.java).findAll()
-                .filter { phoneNumberUtils.compare(it.address, address) }
-
-            val nextId = (realm.where(SenderCategoryRule::class.java).max("id")?.toLong() ?: -1) + 1
-            realm.executeTransaction {
-                existing.forEach { rule -> rule.deleteFromRealm() }
-                realm.insert(SenderCategoryRule(nextId, address, category))
-            }
+        // One rule per sender: replaces any rule whose address matches this one
+        database.runInTransaction {
+            val existing = rules.all().filter { phoneNumberUtils.compare(it.address, address) }
+            val nextId = (rules.maxId() ?: -1) + 1
+            rules.delete(existing.map { it.id })
+            rules.insert(SenderCategoryRule(nextId, address, category))
         }
     }
 
-    override fun removeRule(id: Long) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.executeTransaction {
-                realm.where(SenderCategoryRule::class.java).equalTo("id", id).findAll()
-                    .deleteAllFromRealm()
-            }
-        }
-    }
+    override fun removeRule(id: Long) = rules.delete(listOf(id))
 
 }

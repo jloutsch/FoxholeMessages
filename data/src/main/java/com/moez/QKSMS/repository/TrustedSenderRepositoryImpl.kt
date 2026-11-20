@@ -18,48 +18,37 @@
  */
 package dev.octoshrimpy.quik.repository
 
-import dev.octoshrimpy.quik.extensions.asLiveList
-import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.db.FoxholeDatabase
 import dev.octoshrimpy.quik.model.TrustedSender
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import io.realm.Realm
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class TrustedSenderRepositoryImpl @Inject constructor(
+    private val database: FoxholeDatabase,
     private val phoneNumberUtils: PhoneNumberUtils
 ) : TrustedSenderRepository {
 
-    override fun getTrustedSenders(): Flow<List<TrustedSender>> =
-        Realm.getDefaultInstance().let { realm -> realm.where(TrustedSender::class.java).asLiveList(realm) }
+    private val senders get() = database.trustedSenderDao()
+
+    override fun getTrustedSenders(): Flow<List<TrustedSender>> = senders.observeAll()
 
     override fun isTrusted(address: String): Boolean =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(TrustedSender::class.java).findAll()
-                .any { phoneNumberUtils.compare(it.address, address) }
-        }
+        senders.all().any { phoneNumberUtils.compare(it.address, address) }
 
     override fun addTrustedSender(address: String, locked: Boolean) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-
-            val alreadyTrusted = realm.where(TrustedSender::class.java).findAll()
-                .any { phoneNumberUtils.compare(it.address, address) }
-            if (alreadyTrusted) return@use
-
-            val nextId = (realm.where(TrustedSender::class.java).max("id")?.toLong() ?: -1) + 1
-            realm.executeTransaction {
-                realm.insert(TrustedSender(nextId, address, locked))
-            }
+        database.runInTransaction {
+            val alreadyTrusted = senders.all().any { phoneNumberUtils.compare(it.address, address) }
+            if (alreadyTrusted) return@runInTransaction
+            val nextId = (senders.maxId() ?: -1) + 1
+            senders.insert(TrustedSender(nextId, address, locked))
         }
     }
 
     override fun removeTrustedSender(id: Long, force: Boolean) {
-        Realm.getDefaultInstance().use { realm ->
-            realm.executeTransaction {
-                realm.where(TrustedSender::class.java).equalTo("id", id).findAll()
-                    .filter { sender -> force || !sender.locked }
-                    .forEach { sender -> sender.deleteFromRealm() }
-            }
+        database.runInTransaction {
+            val sender = senders.get(id) ?: return@runInTransaction
+            if (force || !sender.locked) senders.delete(id)
         }
     }
 

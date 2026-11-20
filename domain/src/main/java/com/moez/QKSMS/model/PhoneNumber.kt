@@ -18,13 +18,17 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity
 open class PhoneNumber(
     @PrimaryKey var id: Long = 0,
     var accountType: String? = "",
     var address: String = "",
     var type: String = "",
-    var isDefault: Boolean = false
-) : RealmObject()
+    var isDefault: Boolean = false,
+    // The contact this number belongs to (was Contact.numbers in Realm)
+    @ColumnInfo(index = true) var contactLookupKey: String = ""
+)

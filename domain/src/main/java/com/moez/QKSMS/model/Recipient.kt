@@ -19,16 +19,23 @@
 package dev.octoshrimpy.quik.model
 
 import android.telephony.PhoneNumberUtils
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
 import java.util.Locale
 
+@Entity
 open class Recipient(
     @PrimaryKey var id: Long = 0,
     var address: String = "",
-    var contact: Contact? = null,
-    var lastUpdate: Long = 0
-) : RealmObject() {
+    var lastUpdate: Long = 0,
+    // The contact matched to this address (was a Realm link)
+    var contactLookupKey: String? = null
+) {
+
+    /** Filled in by the repository from [contactLookupKey]; not stored here. */
+    @Ignore
+    var contact: Contact? = null
 
     /**
      * Return a string that can be displayed to represent the name of this contact

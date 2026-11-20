@@ -18,19 +18,19 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.annotations.Ignore
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
+import androidx.room.Ignore
+import androidx.room.Entity
+import androidx.room.ColumnInfo
+import androidx.room.PrimaryKey
 
+@Entity
 open class Conversation(
     @PrimaryKey var id: Long = 0,
-    @Index var archived: Boolean = false,
-    @Index var blocked: Boolean = false,
-    @Index var pinned: Boolean = false,
-    var recipients: RealmList<Recipient> = RealmList(),
-    var lastMessage: Message? = null,
+    @ColumnInfo(index = true) var archived: Boolean = false,
+    @ColumnInfo(index = true) var blocked: Boolean = false,
+    @ColumnInfo(index = true) var pinned: Boolean = false,
+    // The newest message not in Trash (was a Realm link); see [lastMessage]
+    var lastMessageId: Long? = null,
     var draft: String = "",
     var draftDate: Long = 0,
 
@@ -42,12 +42,21 @@ open class Conversation(
     var sendAsGroup: Boolean = true,
 
     // Message sorting: manual override of the classifier-derived category (see classifier/)
-    var categoryOverride: String? = null,
-) : RealmObject() {
+    @ColumnInfo(index = true) var categoryOverride: String? = null,
+) {
+
+    /** Filled in by the repository from ConversationRecipient rows; not stored here. */
+    @Ignore
+    var recipients: List<Recipient> = emptyList()
+
+    /** Filled in by the repository from [lastMessageId]; not stored here. */
+    @Ignore
+    var lastMessage: Message? = null
+
 
     /**
-     * The reaction emoji for [snippet], filled in on the copies screens receive: a copy can't query
-     * Realm for it. Not stored.
+     * The reaction emoji for [snippet], filled in by the repository when [lastMessage] is a
+     * reaction. Not stored.
      */
     @Ignore
     var lastReactionEmoji: String? = null
@@ -59,20 +68,10 @@ open class Conversation(
         // conversation it's shown as an emoji on the message instead, so lead with the emoji here
         // too, so the preview reads as a reaction rather than as something they typed. Skipped if
         // the text already contains it ("Reacted 🎉 to …").
-        (lastReactionEmoji ?: reactionEmoji(message))?.takeUnless { it in summary }?.let { "$it $summary" } ?: summary
+        lastReactionEmoji?.takeUnless { it in summary }?.let { "$it $summary" } ?: summary
     }
 
-    /** [lastMessage]'s reaction emoji, read from Realm; call on a managed conversation. */
-    fun lastMessageReactionEmoji(): String? = lastMessage?.let(::reactionEmoji)
 
-    /** The emoji of a recognised reaction message, or null (not a reaction, a removal, or unmanaged). */
-    private fun reactionEmoji(message: Message): String? {
-        if (!message.isEmojiReaction || !message.isManaged || !message.isValid) return null
-        return message.realm.where(EmojiReaction::class.java)
-            .equalTo("reactionMessageId", message.id)
-            .findFirst()
-            ?.emoji
-    }
     val unread: Boolean get() = lastMessage?.read == false
     val me: Boolean get() = lastMessage?.isMe() == true
 
