@@ -88,7 +88,7 @@ class ConversationRepositoryImpl @Inject constructor(
         unreadAtTop: Boolean,
         archived: Boolean
     ): Flow<List<Conversation>> =
-        Realm.getDefaultInstance().let { realm -> getConversationsBase(realm, unreadAtTop, archived).asLiveList(realm) }
+        Realm.getDefaultInstance().let { realm -> getConversationsBase(realm, unreadAtTop, archived).asLiveList(realm, ::copyReactionEmoji) }
 
     override fun getConversationsSnapshot(unreadAtTop: Boolean): List<Conversation> =
         Realm.getDefaultInstance().use { realm ->
@@ -188,7 +188,7 @@ class ConversationRepositoryImpl @Inject constructor(
         }
 
     override fun observeBlockedConversations(): Flow<List<Conversation>> =
-        Realm.getDefaultInstance().let { realm -> blockedConversationsQuery(realm).asLiveList(realm) }
+        Realm.getDefaultInstance().let { realm -> blockedConversationsQuery(realm).asLiveList(realm, ::copyReactionEmoji) }
 
     private fun blockedConversationsQuery(realm: Realm) = realm
             .where(Conversation::class.java)
@@ -200,7 +200,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun observeConversation(threadId: Long): Flow<Conversation?> =
         Realm.getDefaultInstance().let { realm ->
-            realm.where(Conversation::class.java).equalTo("id", threadId).asLiveFirst(realm)
+            realm.where(Conversation::class.java).equalTo("id", threadId).asLiveFirst(realm, ::copyReactionEmoji)
         }
 
     override fun getConversation(threadId: Long) =
@@ -492,7 +492,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun getConversationsByCategory(unreadAtTop: Boolean, category: String): Flow<List<Conversation>> =
         Realm.getDefaultInstance().let { realm ->
-            getConversationsByCategoryBase(realm, unreadAtTop, category).asLiveList(realm)
+            getConversationsByCategoryBase(realm, unreadAtTop, category).asLiveList(realm, ::copyReactionEmoji)
         }
 
     override fun getUnreadCountByCategory(category: String): Long =
@@ -592,6 +592,11 @@ class ConversationRepositoryImpl @Inject constructor(
             realm.executeTransaction { it.copyToRealmOrUpdate(conversation) }
             return conversation
         }
+    }
+
+
+    private fun copyReactionEmoji(managed: Conversation, copy: Conversation) {
+        copy.lastReactionEmoji = managed.lastMessageReactionEmoji()
     }
 
 }

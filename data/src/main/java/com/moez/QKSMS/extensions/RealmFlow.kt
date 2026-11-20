@@ -15,17 +15,27 @@ import kotlinx.coroutines.reactive.asFlow
  *
  * Phase 1 of the Room migration: screens stop holding RealmResults while Realm is still the store.
  */
-fun <T : RealmModel> RealmQuery<T>.asLiveList(realm: Realm): Flow<List<T>> =
+fun <T : RealmModel> RealmQuery<T>.asLiveList(
+    realm: Realm,
+    decorate: ((managed: T, copy: T) -> Unit)? = null
+): Flow<List<T>> =
     findAllAsync()
         .asFlowable()
         .filter { results -> results.isLoaded && results.isValid }
-        .map { results -> realm.copyFromRealm(results) as List<T> }
+        .map { results ->
+            val copies = realm.copyFromRealm(results)
+            // Anything a copy can't work out for itself (it can't query Realm) is filled in here
+            if (decorate != null) results.forEachIndexed { index, managed -> decorate(managed, copies[index]) }
+            copies as List<T>
+        }
         .onBackpressureLatest()
         .asFlow()
 
 /** The query's first result as an unmanaged copy, re-emitted on change; null when there is none. */
-fun <T : RealmModel> RealmQuery<T>.asLiveFirst(realm: Realm): Flow<T?> =
-    asLiveList(realm).map { results -> results.firstOrNull() }
+fun <T : RealmModel> RealmQuery<T>.asLiveFirst(
+    realm: Realm,
+    decorate: ((managed: T, copy: T) -> Unit)? = null
+): Flow<T?> = asLiveList(realm, decorate).map { results -> results.firstOrNull() }
 
 /** An unmanaged copy of these results. Call on the thread that owns them. */
 fun <T : RealmModel> RealmResults<T>.unmanaged(): List<T> =

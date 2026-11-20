@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.model.EmojiSyncNeeded
+import javax.inject.Singleton
 import android.content.Context
 import com.squareup.moshi.Moshi
 import dev.octoshrimpy.quik.manager.KeyManager
@@ -30,6 +32,7 @@ import io.realm.Sort
 import timber.log.Timber
 import javax.inject.Inject
 
+@Singleton
 class EmojiReactionRepositoryImpl @Inject constructor(
     private val context: Context,
     private val keyManager: KeyManager,
@@ -112,7 +115,7 @@ class EmojiReactionRepositoryImpl @Inject constructor(
      * Search for messages in the same thread with matching text content
      * We'll search recent messages first
      */
-    override fun findTargetMessage(
+    fun findTargetMessage(
         reactionMessage: Message,
         reaction: ParsedEmojiReaction,
         realm: Realm
@@ -198,7 +201,7 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         realm.insertOrUpdate(reactionMessage)
     }
 
-    override fun saveEmojiReaction(
+    fun saveEmojiReaction(
         reactionMessage: Message,
         parsedReaction: ParsedEmojiReaction,
         targetMessage: Message?,
@@ -236,7 +239,7 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun deleteAndReparseAllEmojiReactions(realm: Realm, onProgress: (SyncRepository.SyncProgress) -> Unit) {
+    fun deleteAndReparseAllEmojiReactions(realm: Realm, onProgress: (SyncRepository.SyncProgress) -> Unit) {
         val startTime = System.currentTimeMillis()
 
         realm.delete(EmojiReaction::class.java)
@@ -300,6 +303,25 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         Timber.i(
             "Reparsed emoji reactions in ${endTime - startTime}ms - scanned $max messages, " +
                 "parsed $reactionsParsed reactions, found targets for $targetsFound of them"
+        )
+    }
+
+
+    override fun reparseIfFlagged() {
+        Realm.getDefaultInstance().executeTransactionAsync { realm ->
+            val emojiSyncNeeded = realm.where(EmojiSyncNeeded::class.java).findFirst()
+            if (emojiSyncNeeded != null) {
+                deleteAndReparseAllEmojiReactions(realm) { /* No progress UI here */ }
+                emojiSyncNeeded.deleteFromRealm()
+            }
+        }
+    }
+
+    override fun reparseAll(onDone: () -> Unit, onError: (Throwable) -> Unit) {
+        Realm.getDefaultInstance().executeTransactionAsync(
+            { realm -> deleteAndReparseAllEmojiReactions(realm) { /* No progress UI here */ } },
+            { onDone() },
+            { error -> onError(error) }
         )
     }
 

@@ -50,7 +50,6 @@ import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.common.widget.MicInputCloudView
 import dev.octoshrimpy.quik.common.widget.QkContextMenuRecyclerView
 import dev.octoshrimpy.quik.compat.SubscriptionManagerCompat
-import dev.octoshrimpy.quik.extensions.asObservable
 import dev.octoshrimpy.quik.extensions.isAudio
 import dev.octoshrimpy.quik.extensions.isImage
 import dev.octoshrimpy.quik.extensions.isSafeToAttachFromOtherApp

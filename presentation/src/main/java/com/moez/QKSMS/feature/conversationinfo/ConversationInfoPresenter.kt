@@ -30,7 +30,6 @@ import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.ClipboardUtils
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
-import dev.octoshrimpy.quik.extensions.asObservable
 import kotlinx.coroutines.rx2.asObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoMedia

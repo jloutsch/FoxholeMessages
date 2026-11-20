@@ -38,4 +38,7 @@ interface SyncRepository {
 
     fun syncContacts()
 
+    /** When messages were last fully synced (ms), or 0 if never. */
+    fun getLastSyncDate(): Long
+
 }

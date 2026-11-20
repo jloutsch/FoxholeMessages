@@ -90,7 +90,8 @@ open class MessageRepositoryImpl @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils,
     private val prefs: Preferences,
     private val syncRepository: SyncRepository,
-    private val reactions: EmojiReactionRepository,
+    // The implementation, not the interface: these call its Realm-level methods
+    private val reactions: EmojiReactionRepositoryImpl,
     private val cursorToMessage: CursorToMessage,
     private val cursorToPart: CursorToPart,
     private val contactRepo: ContactRepository,

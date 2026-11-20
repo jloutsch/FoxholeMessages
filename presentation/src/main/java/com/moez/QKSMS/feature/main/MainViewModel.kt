@@ -29,7 +29,6 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkViewModel
-import dev.octoshrimpy.quik.extensions.asObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.conversations.Tab
 import dev.octoshrimpy.quik.interactor.DeleteConversations
@@ -48,8 +47,6 @@ import dev.octoshrimpy.quik.manager.ChangelogManager
 import dev.octoshrimpy.quik.manager.PermissionManager
 import dev.octoshrimpy.quik.manager.RatingManager
 import dev.octoshrimpy.quik.model.Conversation
-import dev.octoshrimpy.quik.model.EmojiSyncNeeded
-import dev.octoshrimpy.quik.model.SyncLog
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.EmojiReactionRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
@@ -61,7 +58,6 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
-import io.realm.Realm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -161,19 +157,13 @@ class MainViewModel @Inject constructor(
 
         // If we have all permissions and we've never run a sync, run a sync. This will be the case
         // when upgrading from 2.7.3, or if the app's data was cleared
-        val lastSync = Realm.getDefaultInstance().use { realm -> realm.where(SyncLog::class.java)?.max("date") ?: 0 }
-        if (lastSync == 0 && permissionManager.isDefaultSms() && permissionManager.hasReadSms() && permissionManager.hasContacts()) {
+        val lastSync = syncRepository.getLastSyncDate()
+        if (lastSync == 0L && permissionManager.isDefaultSms() && permissionManager.hasReadSms() && permissionManager.hasContacts()) {
             syncMessages.execute(Unit)
         }
 
         // This is only used when we update to a version that newly supports emoji reactions
-        Realm.getDefaultInstance().executeTransactionAsync { realm ->
-            val emojiSyncNeeded = realm.where(EmojiSyncNeeded::class.java).findFirst()
-            if (emojiSyncNeeded != null) {
-                reactions.deleteAndReparseAllEmojiReactions(realm) { /* No progress ui needed here */ }
-                emojiSyncNeeded.deleteFromRealm()
-            }
-        }
+        reactions.reparseIfFlagged()
 
         // The EmojiSyncNeeded row above is created by a schema migration, so it only ever fires
         // once per install and can't be used again. This re-runs the same reparse when
@@ -191,14 +181,13 @@ class MainViewModel @Inject constructor(
 
         if (prefs.emojiReparseVersion.get() < EMOJI_REPARSE_VERSION) {
             Timber.i("Emoji reparse requested (stored=${prefs.emojiReparseVersion.get()}, current=$EMOJI_REPARSE_VERSION)")
-            Realm.getDefaultInstance().executeTransactionAsync({ realm ->
-                reactions.deleteAndReparseAllEmojiReactions(realm) { /* No progress ui needed here */ }
-            }, {
-                prefs.emojiReparseVersion.set(EMOJI_REPARSE_VERSION)
-                Timber.i("Emoji reparse finished")
-            }, { error ->
-                Timber.e(error, "Emoji reparse failed")
-            })
+            reactions.reparseAll(
+                onDone = {
+                    prefs.emojiReparseVersion.set(EMOJI_REPARSE_VERSION)
+                    Timber.i("Emoji reparse finished")
+                },
+                onError = { error -> Timber.e(error, "Emoji reparse failed") }
+            )
         }
 
         // Sync contacts when we detect a change

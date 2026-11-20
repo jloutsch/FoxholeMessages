@@ -29,7 +29,6 @@ import dev.octoshrimpy.quik.common.ExternalNavigator
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkViewModel
 import dev.octoshrimpy.quik.compat.SubscriptionManagerCompat
-import dev.octoshrimpy.quik.extensions.asObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.interactor.DeleteMessages
 import dev.octoshrimpy.quik.interactor.MarkRead

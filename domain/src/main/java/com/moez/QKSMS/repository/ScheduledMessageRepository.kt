@@ -21,7 +21,6 @@ package dev.octoshrimpy.quik.repository
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.ScheduledMessage
-import io.realm.RealmList
 
 interface ScheduledMessageRepository {
 

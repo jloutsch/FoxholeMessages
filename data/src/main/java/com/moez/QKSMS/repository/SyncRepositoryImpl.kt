@@ -76,7 +76,8 @@ class SyncRepositoryImpl @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils,
     private val messageRepo: Provider<MessageRepository>,
     private val rxPrefs: RxSharedPreferences,
-    private val reactions: EmojiReactionRepository,
+    // The implementation, not the interface: these call its Realm-level methods
+    private val reactions: EmojiReactionRepositoryImpl,
 ) : SyncRepository {
 
     override val syncProgress: Subject<SyncRepository.SyncProgress> =
@@ -388,6 +389,10 @@ class SyncRepositoryImpl @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun getLastSyncDate(): Long = Realm.getDefaultInstance().use { realm ->
+        realm.where(SyncLog::class.java).max("date")?.toLong() ?: 0
     }
 
     override fun syncContacts() {
