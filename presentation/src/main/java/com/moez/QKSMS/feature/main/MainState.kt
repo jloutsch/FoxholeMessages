@@ -30,8 +30,6 @@ data class MainState(
     val drawerOpen: Boolean = false,
     val showRating: Boolean = false,
     val syncing: SyncRepository.SyncProgress = SyncRepository.SyncProgress.Idle,
-    // The one-time move of this app's own data into the new database is running
-    val movingData: Boolean = false,
     val defaultSms: Boolean = true,
     val smsPermission: Boolean = true,
     val contactPermission: Boolean = true,

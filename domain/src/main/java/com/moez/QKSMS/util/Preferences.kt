@@ -148,7 +148,7 @@ class Preferences @Inject constructor(
     val mmsSize = rxPrefs.getInteger("mmsSize", -1)
     val messageLinkHandling = rxPrefs.getInteger("messageLinkHandling", MESSAGE_LINK_HANDLING_ASK)
     val logging = rxPrefs.getBoolean("logging", false)
-    // RealmImporter.IMPORTER_VERSION of the last successful Realm → Room import (#44)
+    // Set by 2.8.0's one-time Realm → Room import (#44); the old Realm files are deleted once it's set
     val roomImportVersion = rxPrefs.getInteger("fh_roomImportVersion", 0)
     val unreadAtTop = rxPrefs.getBoolean("unreadAtTop", false)
 

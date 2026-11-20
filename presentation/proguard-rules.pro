@@ -120,13 +120,10 @@
 # threshold, with a Feb 2027 deadline). Narrowed to what's actually known to need it instead of
 # assuming the whole app does:
 #
-# - Realm model classes: Realm's schema/proxy generation reflects on these by exact field/class
-#   name. android-smsmms, WorkManager (androidx.work), and this project's other AndroidX/Google
-#   library dependencies all ship their own consumer ProGuard rules bundled in their AARs (a
-#   standard library practice AGP auto-merges), so Worker subclasses and manifest-declared
-#   components (Activities/Services/Receivers) don't need a rule here for that same reason -
-#   Realm models are the one case genuinely worth an explicit safety net.
--keep class dev.octoshrimpy.quik.model.** { *; }
+# android-smsmms, WorkManager (androidx.work), and this project's other AndroidX/Google library
+# dependencies ship their own consumer rules in their AARs, which AGP merges. The model classes
+# used to be kept whole for Realm, which found them by name; Room's generated code refers to them
+# directly, so they no longer need a rule (#44).
 
 # InjectionWorkerFactory rebuilds Workers with Class.forName(workerClassName), using the class
 # name WorkManager persisted in its own database back when the work was enqueued. That makes these

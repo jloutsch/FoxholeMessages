@@ -40,7 +40,7 @@ import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.worker.HousekeepingWorker
 import dev.octoshrimpy.quik.worker.RetentionWorker
 import timber.log.Timber
-import dev.octoshrimpy.quik.migration.RealmImporter
+import dev.octoshrimpy.quik.migration.RealmFilesCleanup
 import javax.inject.Inject
 
 class QKApplication : Application(), HasAndroidInjector {
@@ -55,7 +55,6 @@ class QKApplication : Application(), HasAndroidInjector {
     @Inject lateinit var fileLoggingTree: FileLoggingTree
     @Inject lateinit var nightModeManager: NightModeManager
     @Inject lateinit var prefs: Preferences
-    @Inject lateinit var realmImporter: RealmImporter
     @Inject lateinit var workerFactory: WorkerFactory
 
     override fun onCreate() {
@@ -74,9 +73,9 @@ class QKApplication : Application(), HasAndroidInjector {
         // configure timber logging
         Timber.plant(Timber.DebugTree(), fileLoggingTree)
 
-        // One-time copy of this app's own data from the old Realm file into Room (#44). Off the
-        // main thread; receiving messages never waits for it.
-        Thread({ realmImporter.importIfNeeded() }, "RealmImporter").start()
+        // 2.8.0 moved this app's data from Realm into Room (#44); the old files can go now. A phone
+        // that skipped 2.8.0 keeps them (nothing here can read them any more).
+        Thread({ RealmFilesCleanup.deleteIfImported(filesDir, prefs.roomImportVersion.get() >= 1) }, "RealmFilesCleanup").start()
 
         // FileLoggingTree only ever sees what's explicitly logged via Timber - an actual fatal
         // crash goes straight to the system's default handler and kills the process without

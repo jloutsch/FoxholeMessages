@@ -1104,7 +1104,7 @@ draft can be discarded.
 ## v2.x — Play Store release, obfuscation, and the traps found along the way
 
 The app is live on Google Play as of the 2.x line. Current shipped
-version is **`versionCode 2268` / `versionName '2.8.0'`**. (2.3.1 was
+version is **`versionCode 2269` / `versionName '2.9.0'`**. (2.3.1 was
 split across two versionCodes: the public GitHub release `v2.3.1`
 carries 2259, and 2260 is the same tree with `minSdk` raised, built as a
 draft for Play — see the minSdk note under Play Console notes.)
@@ -1136,8 +1136,8 @@ of a keep-rule change visible in five minutes instead of a release
 cycle.
 
 Rules that must **stay**, each for a real reflection dependency:
-- `dev.octoshrimpy.quik.model.**` — Realm reflects on model classes by
-  exact name.
+- (Until 2.9.0: `dev.octoshrimpy.quik.model.**`, because Realm reflected
+  on model classes by exact name. Room doesn't, so the rule was removed.)
 - `PhotoViewAttacher`'s private scale fields — `GalleryPagerAdapter`
   writes them reflectively to get around the library's public setter.
 - **`* extends androidx.work.Worker` plus its `(Context,
@@ -1180,8 +1180,9 @@ schedules or cancels each retention job from its setting, which also covers upgr
 
 ### Room (2.8.0) — the database since #44
 
-Realm was replaced by Room in 2.8.0. The Realm notes below describe the old code; the batching and
-"look up once per address" advice still applies.
+Realm was replaced by Room in 2.8.0 and removed from the app in 2.9.0 (no Realm library, plugin or
+kapt). Realm notes elsewhere in this file are history; the batching and "look up once per address"
+advice still applies.
 
 - **Relations are not stored inside objects.** `Conversation.recipients/lastMessage`, `Message.parts/
   emojiReactions`, `Recipient.contact`, `Contact.numbers` and `ContactGroup.contacts` are `@Ignore`
@@ -1196,10 +1197,11 @@ Realm was replaced by Room in 2.8.0. The Realm notes below describe the old code
   Realm. Moving those reads off the main thread is #71.
 - **App-only fields:** the full sync keeps `AppOnlyMessageFields` and `AppOnlyConversationFields`
   (`SyncRepositoryImpl.kt`); `SortingAndSyncDataTest` fails if a new field on either isn't classified.
-- **The importer** (`migration/RealmImporter.kt`) copies the app-only data from the old
-  `files/default.realm` once (`fh_roomImportVersion`), reading a copy so the original is never
-  changed, then runs the full sync. Raising `IMPORTER_VERSION` makes every phone import again. It
-  logs `Room import <kind>: Realm N, Room N` for each kind of data.
+- **The importer** (2.8.0 only, `RealmImporter`, removed in 2.9.0) copied the app-only data from
+  `files/default.realm` once and set `fh_roomImportVersion`. From 2.9.0, `RealmFilesCleanup` deletes
+  the old Realm files at launch when that marker is set. A phone that goes from 2.7.x straight to
+  2.9.0 or later keeps its messages (rebuilt from the phone's store) but loses stars, Trash, sorting,
+  drafts, tab moves and other app-only data; to recover them, install 2.8.0 first.
 - **Schema changes** need a Room `Migration` and the exported schema in `data/schemas/`.
 
 ### Realm performance rule for anything batch-shaped
@@ -1291,7 +1293,8 @@ classes.
 - The `.aab` embeds R8's mapping file automatically, so Play Console
   crash reports stay readable now that the app is genuinely obfuscated
   — nothing to upload manually.
-- **Native debug symbols**: `ndk { debugSymbolLevel 'FULL' }` was added
+- **Native debug symbols** (moot since 2.9.0: without Realm the app ships no native libraries, and
+  the `ndk` block was removed): `ndk { debugSymbolLevel 'FULL' }` was added
   to `presentation/build.gradle` in 2.3.0, but **Play Console still
   showed the no-symbols warning afterwards**, so treat this as attempted
   rather than done. A successful build only proves Gradle accepted the
@@ -1667,13 +1670,10 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
   reactions render, a backup's field names match `backup-format-v1.json`. The old-Kotlin pins (okio,
   unfurl, `androidx.core`) are #29.
 - **Java 11 everywhere** since #31 (every module's `compileOptions` and Kotlin's `jvmTarget`): current
-  AndroidX (WorkManager 2.12) ships Java 11 inline code. Consequence for Realm models: **no `val`
-  fields Realm writes**. Realm's transformer turns field writes into `realmSet$…` calls, and a Java 11
-  class may not write a final field outside its constructor (`IllegalAccessError`), which is why
-  `Message.emojiReactions` is a `var`. `@LinkingObjects` fields (e.g. `MmsPart.messages`) stay `val`;
-  Realm never writes them.
-- **Annotation processing is KSP** since #35 (Dagger, Glide, Moshi codegen). kapt runs only for Realm, in
-  `domain` and `presentation`; `data` has no kapt. Glide's KSP processor doesn't generate the `GlideApp`
+  AndroidX (WorkManager 2.12) ships Java 11 inline code. (Under Realm this meant no `val` fields Realm
+  wrote; that no longer applies.)
+- **Annotation processing is KSP** since #35 (Dagger, Glide, Moshi codegen). No module uses kapt since
+  2.9.0 (it was only for Realm). Glide's KSP processor doesn't generate the `GlideApp`
   API, so the code calls `Glide.with(...)` directly. Glide 4.16's generated
   `GeneratedAppGlideModuleImpl` triggers one Kotlin warning ("will become an error"), outside our code:
   a later Glide is the fix. **If KSP reports "… could not be resolved" for a Dagger-generated type**

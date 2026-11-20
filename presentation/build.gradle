@@ -17,9 +17,7 @@
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
 apply plugin: 'com.android.application'
-apply plugin: 'realm-android' // Realm needs to be before Kotlin or the build will fail
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt' // Realm only: it has no KSP processor
 apply plugin: 'com.google.devtools.ksp'
 
 android {
@@ -29,8 +27,8 @@ android {
         applicationId 'com.foxhole.messages'
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 2268
-        versionName '2.8.0'
+        versionCode 2269
+        versionName '2.9.0'
         setProperty("archivesBaseName", "FoxholeMessages-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -65,15 +63,6 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
-
-            // Realm ships native .so libraries, and without symbols a native crash or ANR shows
-            // up in Play Console's Android vitals as raw addresses instead of function names.
-            // AGP generates these and embeds them in the bundle, so Play picks them up on upload
-            // with nothing to attach by hand. FULL rather than SYMBOL_TABLE to get line numbers
-            // as well as names - it only grows the uploaded bundle, never the user's download.
-            ndk {
-                debugSymbolLevel 'FULL'
-            }
         }
         debug {
             applicationIdSuffix ".debug"
@@ -180,10 +169,6 @@ dependencies {
         exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
     })
 
-    // realm
-    implementation "com.github.realm:realm-android-adapters:$realm_adapters_version"
-    kapt "io.realm:realm-annotations:$realm_version"
-    kapt "io.realm:realm-annotations-processor:$realm_version"
 
     // rxjava
     implementation "io.reactivex.rxjava2:rxandroid:$rxandroid_version"
