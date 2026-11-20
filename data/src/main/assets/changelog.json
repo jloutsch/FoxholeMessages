@@ -1,5 +1,17 @@
 [
   {
+    "versionCode": 2268,
+    "versionName": "2.8.0",
+    "added": [
+      "Messages are stored in a new database (Room). Your stars, Trash, sorting, pins, drafts, blocking rules and scheduled messages are moved over automatically the first time you open the app"
+    ],
+    "fixed": [
+      "Drafts and \"Send as group\" were lost after Settings → Sync messages",
+      "Syncing could crash while \"Debug logging\" was on",
+      "A new emoji reaction could overwrite an earlier one"
+    ]
+  },
+  {
     "versionCode": 2267,
     "versionName": "2.7.0",
     "added": [

@@ -22,7 +22,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.databinding.TrashListItemBinding
 import dev.octoshrimpy.quik.interactor.PurgeTrash
 import dev.octoshrimpy.quik.model.Message
@@ -30,7 +30,7 @@ import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class TrashAdapter @Inject constructor() : QkRealmAdapter<Message, QkBindingViewHolder<TrashListItemBinding>>() {
+class TrashAdapter @Inject constructor() : QkListAdapter<Message, QkBindingViewHolder<TrashListItemBinding>>(itemId = { it.id }) {
 
     val restoreClicks: PublishSubject<Long> = PublishSubject.create()
     val deleteForeverClicks: PublishSubject<Long> = PublishSubject.create()

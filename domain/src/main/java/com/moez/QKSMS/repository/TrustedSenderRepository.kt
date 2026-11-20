@@ -18,12 +18,12 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.TrustedSender
-import io.realm.RealmResults
 
 interface TrustedSenderRepository {
 
-    fun getTrustedSenders(): RealmResults<TrustedSender>
+    fun getTrustedSenders(): Flow<List<TrustedSender>>
 
     fun isTrusted(address: String): Boolean
 

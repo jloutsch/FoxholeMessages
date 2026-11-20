@@ -18,9 +18,13 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-open class SyncLog : RealmObject() {
+@Entity
+open class SyncLog {
+    @PrimaryKey(autoGenerate = true) var id: Long = 0
+
 
     var date: Long = System.currentTimeMillis()
 

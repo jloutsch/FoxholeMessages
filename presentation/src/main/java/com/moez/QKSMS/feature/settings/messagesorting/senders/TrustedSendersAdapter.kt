@@ -22,13 +22,13 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.databinding.TrustedSenderListItemBinding
 import dev.octoshrimpy.quik.model.TrustedSender
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 
-class TrustedSendersAdapter : QkRealmAdapter<TrustedSender, QkBindingViewHolder<TrustedSenderListItemBinding>>() {
+class TrustedSendersAdapter : QkListAdapter<TrustedSender, QkBindingViewHolder<TrustedSenderListItemBinding>>(itemId = { it.id }) {
 
     val removeSender: Subject<TrustedSender> = PublishSubject.create()
 

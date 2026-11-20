@@ -18,8 +18,12 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-open class EmojiSyncNeeded : RealmObject() {
+@Entity
+open class EmojiSyncNeeded {
+    @PrimaryKey(autoGenerate = true) var id: Long = 0
+
     var createdAt: Long = System.currentTimeMillis()
 }

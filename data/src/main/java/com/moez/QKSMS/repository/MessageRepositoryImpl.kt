@@ -18,6 +18,11 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.db.FoxholeDatabase
+import dev.octoshrimpy.quik.db.Relations
+import dev.octoshrimpy.quik.db.Tables
+import dev.octoshrimpy.quik.db.observe
 import com.moez.QKSMS.manager.QkTransaction
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -39,8 +44,6 @@ import com.google.android.mms.ContentType
 import com.klinker.android.send_message.SmsManagerFactory
 import dev.octoshrimpy.quik.common.util.extensions.now
 import dev.octoshrimpy.quik.compat.TelephonyCompat
-import dev.octoshrimpy.quik.extensions.anyOf
-import dev.octoshrimpy.quik.extensions.insertOrUpdate
 import dev.octoshrimpy.quik.extensions.isImage
 import dev.octoshrimpy.quik.extensions.isVideo
 import dev.octoshrimpy.quik.extensions.map
@@ -50,7 +53,6 @@ import dev.octoshrimpy.quik.manager.KeyManager
 import dev.octoshrimpy.quik.mapper.CursorToMessage
 import dev.octoshrimpy.quik.mapper.CursorToPart
 import dev.octoshrimpy.quik.model.Attachment
-import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.Message.Companion.TYPE_MMS
 import dev.octoshrimpy.quik.model.Message.Companion.TYPE_SMS
@@ -68,11 +70,6 @@ import dev.octoshrimpy.quik.util.tryOrNull
 import io.reactivex.Flowable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.Subject
-import io.realm.Case
-import io.realm.Realm
-import io.realm.RealmList
-import io.realm.RealmResults
-import io.realm.Sort
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -87,10 +84,13 @@ open class MessageRepositoryImpl @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils,
     private val prefs: Preferences,
     private val syncRepository: SyncRepository,
-    private val reactions: EmojiReactionRepository,
+    // The implementation, not the interface: these call its database-level methods
+    private val reactions: EmojiReactionRepositoryImpl,
     private val cursorToMessage: CursorToMessage,
     private val cursorToPart: CursorToPart,
     private val contactRepo: ContactRepository,
+    private val database: FoxholeDatabase,
+    private val relations: Relations,
 ) : MessageRepository {
 
     override val deduplicationProgress: Subject<MessageRepository.DeduplicationProgress> =
@@ -100,162 +100,55 @@ open class MessageRepositoryImpl @Inject constructor(
         const val TELEPHONY_UPDATE_CHUNK_SIZE = 200
     }
 
-    private fun getMessagesBase(threadId: Long, query: String) =
-        Realm.getDefaultInstance()
-            .where(Message::class.java)
-            .equalTo("threadId", threadId)
-            .equalTo("isEmojiReaction", false)
-            .isNull("deletedAt")
-            .let {
-                when (query.isEmpty()) {
-                    true -> it
-                    false -> it
-                        .beginGroup()
-                        .contains("body", query, Case.INSENSITIVE)
-                        .or()
-                        .contains("parts.text", query, Case.INSENSITIVE)
-                        .endGroup()
-                }
-            }
-            .sort("date")
+    private val messageDao get() = database.messageDao()
+    private val partDao get() = database.mmsPartDao()
 
-    override fun getMessages(threadId: Long, query: String): RealmResults<Message> =
-        getMessagesBase(threadId, query).findAllAsync()
+    /** Live messages with their parts and reactions, refreshed when any of them changes. */
+    private fun observeMessages(query: () -> List<Message>): Flow<List<Message>> =
+        database.observe(Tables.MESSAGES) { relations.messages(query()) }
 
-    override fun getMessagesSync(threadId: Long, query: String): RealmResults<Message> =
-        getMessagesBase(threadId, query).findAll()
+    override fun getMessages(threadId: Long, query: String): Flow<List<Message>> =
+        database.observe(Tables.MESSAGES) { getMessagesSync(threadId, query) }
 
-    override fun getMessage(messageId: Long) =
-        Realm.getDefaultInstance()
-            .also { it.refresh() }
-            .where(Message::class.java)
-            .equalTo("id", messageId)
-            .findFirst()
+    override fun getMessagesSync(threadId: Long, query: String): List<Message> =
+        relations.threadMessages(
+            threadId,
+            if (query.isEmpty()) messageDao.thread(threadId) else messageDao.threadSearch(threadId, query)
+        )
 
-    override fun getUnmanagedMessage(messageId: Long) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.where(Message::class.java)
-                .equalTo("id", messageId)
-                .findFirst()
-                ?.let(realm::copyFromRealm)
-        }
+    override fun getMessage(messageId: Long) = relations.message(messageDao.get(messageId))
 
-    override fun getMessages(messageIds: Collection<Long>): RealmResults<Message> =
-        Realm.getDefaultInstance()
-            .also { it.refresh() }
-            .where(Message::class.java)
-            .anyOf("id", messageIds.toLongArray())
-            .findAll()
+    override fun getUnmanagedMessage(messageId: Long) = getMessage(messageId)
 
-    override fun getMessageForPart(id: Long) =
-        Realm.getDefaultInstance()
-            .where(Message::class.java)
-            .equalTo("parts.id", id)
-            .findFirst()
+    override fun getMessages(messageIds: Collection<Long>): List<Message> =
+        relations.messages(messageIds.toList().chunked(900).flatMap(messageDao::get))
 
-    override fun getLastIncomingMessage(threadId: Long): RealmResults<Message> =
-        Realm.getDefaultInstance()
-            .where(Message::class.java)
-            .equalTo("threadId", threadId)
-            // Trashed messages are excluded here for the same reason as the unread queries above -
-            // this feeds quick-reply and notification content
-            .isNull("deletedAt")
-            .beginGroup()
-            .beginGroup()
-            .equalTo("type", TYPE_SMS)
-            .`in`("boxId", arrayOf(Sms.MESSAGE_TYPE_INBOX, Sms.MESSAGE_TYPE_ALL))
-            .endGroup()
-            .or()
-            .beginGroup()
-            .equalTo("type", TYPE_MMS)
-            .`in`("boxId", arrayOf(Mms.MESSAGE_BOX_INBOX, Mms.MESSAGE_BOX_ALL))
-            .endGroup()
-            .endGroup()
-            .sort("date", Sort.DESCENDING)
-            .findAll()
+    override fun getMessageForPart(id: Long) = relations.message(messageDao.forPart(id))
 
-    override fun getUnreadCount() =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.where(Conversation::class.java)
-                .equalTo("archived", false)
-                .equalTo("blocked", false)
-                .equalTo("lastMessage.read", false)
-                .count()
-        }
+    // Trashed messages are excluded, as in the unread queries below: this feeds quick-reply and
+    // notification content
+    override fun getLastIncomingMessage(threadId: Long): Flow<List<Message>> =
+        observeMessages { messageDao.lastIncoming(threadId) }
 
-    // Same filter as getUnreadMessages(threadId) but a count() rather than findAll(), since this
-    // is called once per visible conversation row (to show an actual number instead of just a
-    // dot) and only needs the count, not the message objects themselves.
-    //
-    // Deliberately no realm.refresh() here (unlike most other methods in this file) - this is
-    // called from ConversationsAdapter.onBindViewHolder(), i.e. potentially while RecyclerView
-    // is mid-layout. refresh() synchronously flushes pending Realm change notifications on this
-    // thread, including the conversation list's own change listener, which calls
-    // notifyItemRangeChanged() back on the same RecyclerView - a reentrant call RecyclerView
-    // throws on if it's still laying out. A freshly-opened Realm.getDefaultInstance() already
-    // reads the latest committed data, so refresh() was redundant here anyway.
-    override fun getUnreadCountForConversation(threadId: Long) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(Message::class.java)
-                .equalTo("read", false)
-                .equalTo("threadId", threadId)
-                .isNull("deletedAt") // an unread message moved to Trash shouldn't keep the badge up
-                .count()
-        }
+    override fun getUnreadCount() = messageDao.unreadConversationCount()
 
-    override fun getPart(id: Long) =
-        Realm.getDefaultInstance()
-            .where(MmsPart::class.java)
-            .equalTo("id", id)
-            .findFirst()
+    // Same filter as getUnreadMessages(threadId) but a count, since this is called once per visible
+    // conversation row (to show a number instead of just a dot). An unread message moved to Trash
+    // doesn't keep the badge up.
+    override fun getUnreadCountForConversation(threadId: Long) = messageDao.unreadCount(threadId)
 
-    override fun getPartsForConversation(threadId: Long): RealmResults<MmsPart> =
-        Realm.getDefaultInstance()
-            .where(MmsPart::class.java)
-            .equalTo("messages.threadId", threadId)
-            .isNull("messages.deletedAt") // pictures of trashed messages stay out of the gallery
-            .beginGroup()
-            .contains("type", "image/")
-            .or()
-            .contains("type", "video/")
-            .endGroup()
-            .sort("id", Sort.DESCENDING)
-            .findAllAsync()
+    override fun getPart(id: Long) = partDao.get(id)
+
+    // Pictures of trashed messages stay out of the gallery
+    override fun getPartsForConversation(threadId: Long): Flow<List<MmsPart>> = partDao.observeMediaForThread(threadId)
 
     // Ascending, unlike getPartsForConversation above: the pager advances through this list as the
-    // user swipes left, so it has to run in the same direction the attachments do. Queries
-    // messageId directly for the same reason getPartsForMessage below does.
-    override fun getMediaPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart> =
-        Realm.getDefaultInstance()
-            .where(MmsPart::class.java)
-            // Either linkage - see the interface for why neither is trustworthy on its own
-            .beginGroup()
-            .equalTo("messages.id", messageId)
-            .or()
-            .equalTo("messageId", contentId)
-            .endGroup()
-            .beginGroup()
-            .contains("type", "image/")
-            .or()
-            .contains("type", "video/")
-            .endGroup()
-            .sort("id", Sort.ASCENDING)
-            .findAllAsync()
+    // user swipes left, so it has to run in the same direction the attachments do. Parts are linked
+    // by MmsPart.messageId == Message.contentId (the provider's id), so messageId isn't needed.
+    override fun getMediaPartsForMessage(messageId: Long, contentId: Long): List<MmsPart> =
+        partDao.mediaForMessage(contentId)
 
-    // Matches on either linkage - see the interface for why neither is trustworthy on its own.
-    // findAll() (not findAllAsync()) since callers need the result immediately, not on the next
-    // event loop tick.
-    override fun getPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart> =
-        Realm.getDefaultInstance()
-            .where(MmsPart::class.java)
-            .beginGroup()
-            .equalTo("messages.id", messageId)
-            .or()
-            .equalTo("messageId", contentId)
-            .endGroup()
-            .findAll()
+    override fun getPartsForMessage(messageId: Long, contentId: Long): List<MmsPart> = partDao.forMessage(contentId)
 
     override fun savePart(id: Long): Uri? {
         val part = getPart(id) ?: return null
@@ -272,7 +165,7 @@ open class MessageRepositoryImpl @Inject constructor(
             ?: "bin"
         // fileDateAndTime is divided by 1000 in order to remove the extra 0's after date and time
         // This way the file name isn't so long.
-        val fileDateAndTime = (part.messages?.first()?.date)?.div(1000)
+        val fileDateAndTime = messageDao.forPart(part.id)?.date?.div(1000)
         // part.id makes this unique per-attachment - without it, every picture/video in the same
         // MMS message (same parent message date) generated the identical filename, so saving
         // several of them at once (eg. "Save all to gallery") raced on the same MediaStore row
@@ -334,27 +227,15 @@ open class MessageRepositoryImpl @Inject constructor(
         return uri
     }
 
-    // isNull("deletedAt") on both: these drive notification contents, and a message the user has
-    // already moved to Trash shouldn't reappear in a notification afterwards
-    override fun getUnreadUnseenMessages(threadId: Long): RealmResults<Message> =
-        Realm.getDefaultInstance()
-            .also { it.refresh() }
-            .where(Message::class.java)
-            .equalTo("seen", false)
-            .equalTo("read", false)
-            .equalTo("threadId", threadId)
-            .isNull("deletedAt")
-            .sort("date")
-            .findAll()
+    // Trashed messages are excluded from both: these drive notification contents, and a message the
+    // user has already moved to Trash shouldn't reappear in a notification afterwards
+    override fun getUnreadUnseenMessages(threadId: Long): List<Message> =
+        relations.messages(messageDao.unreadUnseen(threadId))
 
-    override fun getUnreadMessages(threadId: Long): RealmResults<Message> =
-        Realm.getDefaultInstance()
-            .where(Message::class.java)
-            .equalTo("read", false)
-            .equalTo("threadId", threadId)
-            .isNull("deletedAt")
-            .sort("date")
-            .findAll()
+    override fun getUnreadMessages(threadId: Long): List<Message> = relations.messages(messageDao.unread(threadId))
+
+    override fun observeUnreadMessages(threadId: Long): Flow<List<Message>> =
+        observeMessages { messageDao.unread(threadId) }
 
     // marks all messages in threads as read and/or seen in the native provider
     private fun telephonyMarkSeenRead(
@@ -412,81 +293,29 @@ open class MessageRepositoryImpl @Inject constructor(
         return countUpdated  // a mix of convo and message updates, so not overly useful. meh
     }
 
-    override fun markAllSeen() =
-        mutableSetOf<Long>().let { threadIds ->
-            Realm.getDefaultInstance().use { realm ->
-                realm.where(Message::class.java)
-                    .equalTo("seen", false)
-                    .findAll()
-                    .takeIf { it.isNotEmpty() }
-                    ?.let { messages ->
-                        realm.executeTransaction {
-                            messages.forEach {
-                                it.seen = true
-                                threadIds += it.threadId
-                            }
-                        }
-                    }
-            }.run {
-                telephonyMarkSeenRead(true, null, threadIds)
-            }
+    override fun markAllSeen(): Int {
+        val threadIds = database.runInTransaction<List<Long>> {
+            messageDao.threadsWithUnseen().also { messageDao.markAllSeen() }
         }
+        return telephonyMarkSeenRead(true, null, threadIds)
+    }
 
-    override fun markSeen(threadIds: Collection<Long>) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(Message::class.java)
-                .anyOf("threadId", threadIds.toLongArray())
-                .equalTo("seen", false)
-                .findAll()
-                .let { messages ->
-                    realm.executeTransaction {
-                        messages.forEach { it.seen = true }
-                    }
-                }
-        }.run {
-            telephonyMarkSeenRead(true, null, threadIds)
-        }
+    override fun markSeen(threadIds: Collection<Long>): Int {
+        threadIds.toList().chunked(900).forEach { chunk -> messageDao.markSeen(chunk) }
+        return telephonyMarkSeenRead(true, null, threadIds)
+    }
 
-    override fun markRead(threadIds: Collection<Long>) =
-        threadIds.takeIf { it.isNotEmpty() }
-            ?.let {
-                Realm.getDefaultInstance()?.use { realm ->
-                    realm.where(Message::class.java)
-                        .anyOf("threadId", threadIds.toLongArray())
-                        .beginGroup()
-                        .equalTo("read", false)
-                        .or()
-                        .equalTo("seen", false)
-                        .endGroup()
-                        .findAll()
-                        .let { messages ->
-                            realm.executeTransaction {
-                                messages.forEach { it.seen = true; it.read = true }
-                            }
-                        }
-                }.run {
-                    telephonyMarkSeenRead(seen = true, read = true, threadIds = threadIds)
-                }
-            }
-            ?: 0
+    override fun markRead(threadIds: Collection<Long>): Int {
+        if (threadIds.isEmpty()) return 0
+        threadIds.toList().chunked(900).forEach { chunk -> messageDao.markRead(chunk) }
+        return telephonyMarkSeenRead(seen = true, read = true, threadIds = threadIds)
+    }
 
-    override fun markUnread(threadIds: Collection<Long>) =
-        threadIds.takeIf { it.isNotEmpty() }
-            ?.let {
-                Realm.getDefaultInstance()?.use { realm ->
-                    val conversations = realm.where(Conversation::class.java)
-                        .anyOf("id", threadIds.toLongArray())
-                        .equalTo("lastMessage.read", true)
-                        .findAll()
-
-                    realm.executeTransaction {
-                        conversations.forEach { it.lastMessage?.read = false }
-                    }
-                }.run {
-                    telephonyMarkSeenRead(null, false, threadIds)
-                }
-            }
-            ?: 0
+    override fun markUnread(threadIds: Collection<Long>): Int {
+        if (threadIds.isEmpty()) return 0
+        threadIds.toList().chunked(900).forEach { chunk -> messageDao.markLastUnread(chunk) }
+        return telephonyMarkSeenRead(null, false, threadIds)
+    }
 
     private fun syncProviderMessage(uri: Uri, sendAsGroup: Boolean): Message? {
         // if uri doesn't have valid type
@@ -515,16 +344,12 @@ open class MessageRepositoryImpl @Inject constructor(
                 this.sendAsGroup = sendAsGroup
 
                 if (isMms()) {
-                    parts = RealmList<MmsPart>().apply {
-                        addAll(
-                            cursorToPart.getPartsCursor(contentId)
+                    parts = cursorToPart.getPartsCursor(contentId)
                                 ?.map { cursorToPart.map(it) }
                                 .orEmpty()
-                        )
-                    }
                 }
 
-                insertOrUpdate()
+                database.runInTransaction { relations.saveMessage(this) }
             }
         }
     }
@@ -720,11 +545,7 @@ open class MessageRepositoryImpl @Inject constructor(
             val sendTime = (now() + delayMs)
 
             // set delay time on the db message
-            Realm.getDefaultInstance().use { realm ->
-                realm.executeTransaction {
-                    realm.copyToRealmOrUpdate(message.apply { date = sendTime })
-                }
-            }
+            messageDao.update(message.apply { date = sendTime })
 
             // create alarm that will trigger sending the message. Exact alarms need the "Alarms &
             // reminders" permission on Android 12+; without it setExact throws and the delayed
@@ -836,7 +657,7 @@ open class MessageRepositoryImpl @Inject constructor(
             ?.let { insertedUri -> ContentUris.parseId(insertedUri) }
             ?: 0
 
-        // insert the message to Realm
+        // insert the message into the database
         val message = Message().apply {
             id = messageIds.newId()
 
@@ -854,359 +675,221 @@ open class MessageRepositoryImpl @Inject constructor(
             read = (activeConversationManager.getActiveConversation() == threadId)
         }
 
-        Realm.getDefaultInstance().use { realm ->
-            var managedMessage: Message? = null
-            realm.executeTransaction {
-                // Android announces this insert to our own sync, which can save the message first;
-                // reuse that row's id so the message isn't stored twice
-                if (providerContentId != 0L) {
-                    realm.where(Message::class.java)
-                        .equalTo("type", Message.TYPE_SMS)
-                        .equalTo("contentId", providerContentId)
-                        .findFirst()
-                        ?.let { synced -> message.id = synced.id }
-                }
-                managedMessage = realm.copyToRealmOrUpdate(message)
+        database.runInTransaction {
+            // Android announces this insert to our own sync, which can save the message first;
+            // reuse that row's id so the message isn't stored twice
+            if (providerContentId != 0L) {
+                messageDao.getByProviderId(Message.TYPE_SMS, providerContentId)?.let { synced -> message.id = synced.id }
             }
+            messageDao.upsert(message)
 
-            managedMessage?.let { savedMessage ->
-                val parsedReaction = reactions.parseEmojiReaction(body)
-                if (parsedReaction != null) {
-                    val targetMessage = reactions.findTargetMessage(
-                        savedMessage,
-                        parsedReaction,
-                        realm
-                    )
-                    realm.executeTransaction {
-                        reactions.saveEmojiReaction(
-                            savedMessage,
-                            parsedReaction,
-                            targetMessage,
-                            realm,
-                        )
-                    }
-                }
+            reactions.parseEmojiReaction(body)?.let { parsedReaction ->
+                val targetMessage = reactions.findTargetMessage(message, parsedReaction)
+                reactions.saveEmojiReaction(message, parsedReaction, targetMessage)
             }
         }
 
         return message
     }
 
-    override fun markAsSendingNow(messageId: Long) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.where(Message::class.java)
-                .equalTo("id", messageId)
-                .findFirst()
-                ?.let { message ->
-                    realm.executeTransaction {
-                        message.date = System.currentTimeMillis()
-                    }
-                }
-            Unit
-        }
+    override fun markAsSendingNow(messageId: Long) {
+        editMessage(messageId) { date = System.currentTimeMillis() }
+    }
 
     /**
      * Marks the message as sending, in case we need to retry sending it
      */
-    private fun markSending(messageId: Long) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
+    private fun markSending(messageId: Long) {
+        val message = editMessage(messageId) {
+            boxId = when (isSms()) {
+                true -> Sms.MESSAGE_TYPE_OUTBOX
+                false -> Mms.MESSAGE_BOX_OUTBOX
+            }
+        } ?: return
 
-            realm.where(Message::class.java)
-                .equalTo("id", messageId)
-                .findFirst()
-                ?.let { message ->
-                    // Update the message in realm
-                    realm.executeTransaction {
-                        message.boxId = when (message.isSms()) {
-                            true -> Sms.MESSAGE_TYPE_OUTBOX
-                            false -> Mms.MESSAGE_BOX_OUTBOX
-                        }
-                    }
-
-                    // Update the message in the native ContentProvider
-                    context.contentResolver.update(
-                        message.getUri(),
-                        when (message.isSms()) {
-                            true -> contentValuesOf(Sms.TYPE to Sms.MESSAGE_TYPE_OUTBOX)
-                            false -> contentValuesOf(Mms.MESSAGE_BOX to Mms.MESSAGE_BOX_OUTBOX)
-                        },
-                        null,
-                        null
-                    )
-                }
-            Unit
-        }
+        // Update the message in the native ContentProvider
+        context.contentResolver.update(
+            message.getUri(),
+            when (message.isSms()) {
+                true -> contentValuesOf(Sms.TYPE to Sms.MESSAGE_TYPE_OUTBOX)
+                false -> contentValuesOf(Mms.MESSAGE_BOX to Mms.MESSAGE_BOX_OUTBOX)
+            },
+            null,
+            null
+        )
+    }
 
     override fun markSent(messageId: Long) {
         Timber.v("mark message id $messageId as sent")
 
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
+        val message = editMessage(messageId) {
+            boxId = if (isSms()) Sms.MESSAGE_TYPE_SENT else Mms.MESSAGE_BOX_SENT
+        } ?: return
 
-            realm.where(Message::class.java).equalTo("id", messageId).findFirst()
-                ?.let { message ->
-                    if (message.isSms()) {
-                        // update the message in realm
-                        realm.executeTransaction { message.boxId = Sms.MESSAGE_TYPE_SENT }
-
-                        // Update the message in the native ContentProvider
-                        context.contentResolver.update(
-                            message.getUri(),
-                            contentValuesOf(Sms.TYPE to Sms.MESSAGE_TYPE_SENT),
-                            null,
-                            null
-                        )
-                    } else {
-                        // update the message in realm
-                        realm.executeTransaction { message.boxId = Mms.MESSAGE_BOX_SENT }
-
-                        // Update the message in the native ContentProvider
-                        context.contentResolver.update(
-                            message.getUri(),
-                            contentValuesOf(Mms.MESSAGE_BOX to Mms.MESSAGE_BOX_SENT),
-                            null,
-                            null
-                        )
-                    }
-                }
-        }
+        // Update the message in the native ContentProvider
+        context.contentResolver.update(
+            message.getUri(),
+            if (message.isSms()) contentValuesOf(Sms.TYPE to Sms.MESSAGE_TYPE_SENT)
+            else contentValuesOf(Mms.MESSAGE_BOX to Mms.MESSAGE_BOX_SENT),
+            null,
+            null
+        )
     }
 
-    override fun markFailed(messageId: Long, resultCode: Int) =
-        Realm.getDefaultInstance().use { realm ->
-            Timber.v("mark message id $messageId as failed. code $resultCode")
+    override fun markFailed(messageId: Long, resultCode: Int): Boolean {
+        Timber.v("mark message id $messageId as failed. code $resultCode")
 
-            realm.refresh()
+        val message = messageDao.get(messageId) ?: return false
+        val failedBox = if (message.isSms()) Sms.MESSAGE_TYPE_FAILED else Mms.MESSAGE_BOX_FAILED
+        if (message.boxId == failedBox) return false
 
-            realm.where(Message::class.java).equalTo("id", messageId).findFirst()
-                ?.let { message ->
-                    if (message.isSms()) {
-                        if (message.boxId != Sms.MESSAGE_TYPE_FAILED) {
-                            // Update the message in realm
-                            realm.executeTransaction {
-                                message.boxId = Sms.MESSAGE_TYPE_FAILED
-                                message.errorCode = resultCode
-                            }
-
-                            // Update the message in the native ContentProvider
-                            context.contentResolver.update(
-                                message.getUri(),
-                                contentValuesOf(
-                                    Sms.TYPE to Sms.MESSAGE_TYPE_FAILED,
-                                    Sms.ERROR_CODE to resultCode,
-                                ),
-                                null,
-                                null
-                            )
-                            true
-                        } else false
-                    } else {  // mms
-                        if (message.boxId != Mms.MESSAGE_BOX_FAILED) {
-                            // Update the message in realm
-                            realm.executeTransaction {
-                                message.boxId = Mms.MESSAGE_BOX_FAILED
-                                message.errorCode = resultCode
-                            }
-
-                            // Update the message in the native ContentProvider
-                            context.contentResolver.update(
-                                message.getUri(),
-                                contentValuesOf(
-                                    Mms.MESSAGE_BOX to Mms.MESSAGE_BOX_FAILED
-                                ),
-                                null,
-                                null
-                            )
-
-                            // TODO this query isn't able to find any results
-                            // Need to figure out why the message isn't appearing in the PendingMessages Uri,
-                            // so that we can properly assign the error type
-                            context.contentResolver.update(
-                                Telephony.MmsSms.PendingMessages.CONTENT_URI,
-                                contentValuesOf(
-                                    Telephony.MmsSms.PendingMessages.ERROR_TYPE to Telephony.MmsSms.ERR_TYPE_GENERIC_PERMANENT
-                                ),
-                                "${Telephony.MmsSms.PendingMessages.MSG_ID} = ?",
-                                arrayOf(message.id.toString())
-                            )
-                            true
-                        } else false
-                    }
-            } ?: false
+        // Update the message in the app's database
+        editMessage(messageId) {
+            boxId = failedBox
+            errorCode = resultCode
         }
 
-    override fun markDelivered(messageId: Long) =
-        Realm.getDefaultInstance().use { realm ->
-            Timber.v("mark message id $messageId as delivered")
+        if (message.isSms()) {
+            // Update the message in the native ContentProvider
+            context.contentResolver.update(
+                message.getUri(),
+                contentValuesOf(
+                    Sms.TYPE to Sms.MESSAGE_TYPE_FAILED,
+                    Sms.ERROR_CODE to resultCode,
+                ),
+                null,
+                null
+            )
+        } else {
+            // Update the message in the native ContentProvider
+            context.contentResolver.update(
+                message.getUri(),
+                contentValuesOf(
+                    Mms.MESSAGE_BOX to Mms.MESSAGE_BOX_FAILED
+                ),
+                null,
+                null
+            )
 
-            realm.refresh()
-
-            realm.where(Message::class.java)
-                .equalTo("id", messageId)
-                .findFirst()
-                ?.let { message ->
-                    // Update the message in realm
-                    realm.executeTransaction {
-                        message.deliveryStatus = Sms.STATUS_COMPLETE
-                        message.dateSent = System.currentTimeMillis()
-                        message.read = true
-                    }
-
-                    // Update the message in the native ContentProvider
-                    context.contentResolver.update(
-                        message.getUri(),
-                        contentValuesOf(
-                            Sms.STATUS to Sms.STATUS_COMPLETE,
-                            Sms.DATE_SENT to System.currentTimeMillis(),
-                            Sms.READ to true,
-                        ),
-                        null,
-                        null
-                    )
-                }
-            Unit
+            // TODO this query isn't able to find any results
+            // Need to figure out why the message isn't appearing in the PendingMessages Uri,
+            // so that we can properly assign the error type
+            context.contentResolver.update(
+                Telephony.MmsSms.PendingMessages.CONTENT_URI,
+                contentValuesOf(
+                    Telephony.MmsSms.PendingMessages.ERROR_TYPE to Telephony.MmsSms.ERR_TYPE_GENERIC_PERMANENT
+                ),
+                "${Telephony.MmsSms.PendingMessages.MSG_ID} = ?",
+                arrayOf(message.id.toString())
+            )
         }
+        return true
+    }
 
-    override fun markDeliveryFailed(messageId: Long, resultCode: Int) =
-        Realm.getDefaultInstance().use { realm ->
-            Timber.v("mark message id $messageId as delivery failed result code $resultCode")
+    override fun markDelivered(messageId: Long) {
+        Timber.v("mark message id $messageId as delivered")
 
-            realm.refresh()
+        val message = editMessage(messageId) {
+            deliveryStatus = Sms.STATUS_COMPLETE
+            dateSent = System.currentTimeMillis()
+            read = true
+        } ?: return
 
-            realm.where(Message::class.java)
-                .equalTo("id", messageId)
-                .findFirst()
-                ?.let { message ->
-                    // Update the message in realm
-                    realm.executeTransaction {
-                        message.deliveryStatus = Sms.STATUS_FAILED
-                        message.dateSent = System.currentTimeMillis()
-                        message.read = true
-                        message.errorCode = resultCode
-                    }
+        // Update the message in the native ContentProvider
+        context.contentResolver.update(
+            message.getUri(),
+            contentValuesOf(
+                Sms.STATUS to Sms.STATUS_COMPLETE,
+                Sms.DATE_SENT to System.currentTimeMillis(),
+                Sms.READ to true,
+            ),
+            null,
+            null
+        )
+    }
 
-                    // Update the message in the native ContentProvider
-                    context.contentResolver.update(
-                        message.getUri(),
-                        contentValuesOf(
-                            Sms.STATUS to Sms.STATUS_FAILED,
-                            Sms.DATE_SENT to System.currentTimeMillis(),
-                            Sms.READ to true,
-                            Sms.ERROR_CODE to resultCode,
-                        ),
-                        null,
-                        null
-                    )
-                }
-            Unit
-        }
+    override fun markDeliveryFailed(messageId: Long, resultCode: Int) {
+        Timber.v("mark message id $messageId as delivery failed result code $resultCode")
+
+        val message = editMessage(messageId) {
+            deliveryStatus = Sms.STATUS_FAILED
+            dateSent = System.currentTimeMillis()
+            read = true
+            errorCode = resultCode
+        } ?: return
+
+        // Update the message in the native ContentProvider
+        context.contentResolver.update(
+            message.getUri(),
+            contentValuesOf(
+                Sms.STATUS to Sms.STATUS_FAILED,
+                Sms.DATE_SENT to System.currentTimeMillis(),
+                Sms.READ to true,
+                Sms.ERROR_CODE to resultCode,
+            ),
+            null,
+            null
+        )
+    }
 
     override fun deleteMessages(messageIds: Collection<Long>) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            hardDelete(realm, realm.where(Message::class.java).anyOf("id", messageIds.toLongArray()).findAll())
-        }
+        hardDelete(messageIds.toList().chunked(900).flatMap(messageDao::get))
 
     /**
      * Permanently deletes [messages] from this app's database and from the phone's message store.
      * Every permanent delete goes through here, so they all skip messages with no store entry and
      * keep going past one that fails.
      */
-    private fun hardDelete(realm: Realm, messages: List<Message>) {
+    private fun hardDelete(messages: List<Message>) {
         if (messages.isEmpty()) return
-
-        val ids = messages.map { it.id }.toLongArray()
         // Uri.EMPTY means the message has no entry in the phone's store; deleting it would throw
         val uris = messages.map { it.getUri() }.filter { it != Uri.EMPTY }
-
-        // Re-query by id inside the transaction rather than deleting the objects above: picking a
-        // retention period both runs a delete and schedules the daily job, which Android can start
-        // at the same moment, and deleting an object the other run already removed throws.
-        realm.executeTransaction {
-            realm.where(Message::class.java).anyOf("id", ids).findAll().deleteAllFromRealm()
+        // Deleting by id is a no-op for rows already gone: picking a retention period both runs a
+        // delete and schedules the daily job, which Android can start at the same moment.
+        database.runInTransaction {
+            messages.map { it.id }.chunked(900).forEach(messageDao::delete)
+            messages.filter { it.isMms() }.map { it.contentId }.chunked(900).forEach(partDao::deleteForMessages)
+            val reactionIds = messages.map { it.id }.chunked(900).flatMap { chunk ->
+                database.emojiReactionDao().forTargets(chunk) + database.emojiReactionDao().forReactionMessages(chunk)
+            }.map { it.id }.distinct()
+            reactionIds.chunked(900).forEach(database.emojiReactionDao()::delete)
         }
-
         uris.forEach { uri -> tryOrNull { context.contentResolver.delete(uri, null, null) } }
     }
 
-    override fun trashMessages(messageIds: Collection<Long>) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
+    override fun trashMessages(messageIds: Collection<Long>) {
+        val at = now()
+        database.runInTransaction { messageIds.toList().chunked(900).forEach { messageDao.setDeletedAt(it, at) } }
+    }
 
-            val messages = realm.where(Message::class.java)
-                .anyOf("id", messageIds.toLongArray())
-                .findAll()
+    override fun restoreMessages(messageIds: Collection<Long>) {
+        database.runInTransaction { messageIds.toList().chunked(900).forEach { messageDao.setDeletedAt(it, null) } }
+    }
 
-            realm.executeTransaction {
-                messages.forEach { message -> message.deletedAt = now() }
-            }
-        }
-
-    override fun restoreMessages(messageIds: Collection<Long>) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-
-            val messages = realm.where(Message::class.java)
-                .anyOf("id", messageIds.toLongArray())
-                .findAll()
-
-            realm.executeTransaction {
-                messages.forEach { message -> message.deletedAt = null }
-            }
-        }
-
-    override fun getDeletedMessages(): RealmResults<Message> =
-        Realm.getDefaultInstance()
-            .where(Message::class.java)
-            .isNotNull("deletedAt")
-            .sort("deletedAt", Sort.DESCENDING)
-            .findAllAsync()
+    override fun getDeletedMessages(): Flow<List<Message>> =
+        observeMessages { messageDao.trash() }
 
     override fun purgeTrash(maxAgeDays: Int) =
         deleteTrash(trashedBefore = now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
 
     override fun emptyTrash() = deleteTrash(trashedBefore = Long.MAX_VALUE)
 
-    private fun deleteTrash(trashedBefore: Long) =
-        Realm.getDefaultInstance().use { realm ->
-            hardDelete(realm, realm.where(Message::class.java)
-                .isNotNull("deletedAt")
-                .lessThan("deletedAt", trashedBefore)
-                .findAll())
-        }
+    private fun deleteTrash(trashedBefore: Long) = hardDelete(messageDao.trashedBefore(trashedBefore))
 
     override fun getOldMessageCounts(maxAgeDays: Int) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(Message::class.java)
-                .lessThan(
-                    "date",
-                    now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong())
-                )
-                .findAll()
-                .groupingBy { message -> message.threadId }
-                .eachCount()
-        }
+        messageDao.olderThan(now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
+            .groupingBy { message -> message.threadId }
+            .eachCount()
 
     override fun deleteOldMessages(maxAgeDays: Int) =
-        Realm.getDefaultInstance().use { realm ->
-            hardDelete(realm, realm.where(Message::class.java)
-                .lessThan("date", now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
-                .findAll())
-        }
+        hardDelete(messageDao.olderThan(now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong())))
 
     override fun getOldOtpCounts(maxAgeDays: Int) =
-        Realm.getDefaultInstance().use { realm ->
-            otpRetentionCandidates(realm, maxAgeDays)
-                .groupingBy { message -> message.threadId }
-                .eachCount()
-        }
+        otpRetentionCandidates(maxAgeDays)
+            .groupingBy { message -> message.threadId }
+            .eachCount()
 
-    override fun deleteOldOtps(maxAgeDays: Int) =
-        Realm.getDefaultInstance().use { realm ->
-            hardDelete(realm, otpRetentionCandidates(realm, maxAgeDays))
-        }
+    override fun deleteOldOtps(maxAgeDays: Int) = hardDelete(otpRetentionCandidates(maxAgeDays))
 
     /**
      * OTP-tagged messages old enough for retention to delete permanently. Tagging is a loose keyword
@@ -1215,15 +898,9 @@ open class MessageRepositoryImpl @Inject constructor(
      * only be a received code: incoming, not starred or locked, and not from a saved contact. This is
      * applied here, at deletion, so it also covers messages tagged under the older, looser rules.
      */
-    private fun otpRetentionCandidates(realm: Realm, maxAgeDays: Int): List<Message> {
-        realm.refresh()
+    private fun otpRetentionCandidates(maxAgeDays: Int): List<Message> {
         val isContact = HashMap<String, Boolean>()
-        return realm.where(Message::class.java)
-            .equalTo("isOtp", true)
-            .equalTo("isStarred", false)
-            .equalTo("locked", false)
-            .lessThan("date", now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
-            .findAll()
+        return messageDao.otpOlderThan(now() - TimeUnit.DAYS.toMillis(maxAgeDays.toLong()))
             .filter { message ->
                 OtpRetentionRule.isDeletable(
                     isIncoming = !message.isMe(),
@@ -1257,29 +934,20 @@ open class MessageRepositoryImpl @Inject constructor(
     private fun findDuplicateMessages(): Map<Long, Long> {
         val seenSignatures = HashSet<String>()
         val duplicates = HashMap<Long, Long>()
-
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            val allMessages = realm.where(Message::class.java)
-                .isNull("deletedAt")
-                .sort("id", Sort.ASCENDING)
-                .findAll()
-
-            val max = allMessages.size
-            var progress = 0
-
-            allMessages.forEach { message ->
-                ++progress
-                tryOrNull {
-                    if (progress % 100 == 0 || progress == max) {
-                        deduplicationProgress.onNext(
-                            MessageRepository.DeduplicationProgress.Running(max, progress, false)
-                        )
-                    }
-                    val signature = messageHash(message)
-                    if (!seenSignatures.add(signature)) {
-                        duplicates[message.id] = message.threadId
-                    }
+        val allMessages = relations.messages(messageDao.allVisibleById())
+        val max = allMessages.size
+        var progress = 0
+        allMessages.forEach { message ->
+            ++progress
+            tryOrNull {
+                if (progress % 100 == 0 || progress == max) {
+                    deduplicationProgress.onNext(
+                        MessageRepository.DeduplicationProgress.Running(max, progress, false)
+                    )
+                }
+                val signature = messageHash(message)
+                if (!seenSignatures.add(signature)) {
+                    duplicates[message.id] = message.threadId
                 }
             }
         }
@@ -1306,136 +974,94 @@ open class MessageRepositoryImpl @Inject constructor(
         categorize: (address: String, body: String, threadId: Long) -> String,
         includeAlreadyCategorized: Boolean,
         onProgress: (processed: Int, total: Int) -> Unit
-    ): Int = Realm.getDefaultInstance().use { realm ->
-        realm.refresh()
-        // toList() up front: the query is live, so writing a category back would drop the message
-        // out from under the iteration. Sent messages are left to inheritReplyCategories.
-        val pending = realm.where(Message::class.java)
-            .apply { if (!includeAlreadyCategorized) isNull("category") }
-            .findAll()
+    ): Int {
+        // Sent messages are left to inheritReplyCategories.
+        val pending = (if (includeAlreadyCategorized) messageDao.all() else messageDao.uncategorized())
             .filter { message -> !message.isMe() }
-
         val total = pending.size
         var processed = 0
-
         pending.chunked(500).forEach { chunk ->
             // Categorizing reaches the contacts provider, so resolve the whole chunk before
-            // opening the write transaction rather than holding Realm's write lock across
-            // cross-process queries.
+            // opening the write transaction rather than holding the write lock across
+            // cross-process queries. getText needs the parts of MMS messages.
+            relations.messages(chunk)
             val categorized = chunk.map { message ->
                 message to categorize(message.address, message.getText(), message.threadId)
             }
-
-            realm.executeTransaction {
-                categorized.forEach { (message, category) -> message.category = category }
-            }
-
+            setCategories(categorized)
             processed += chunk.size
             onProgress(processed, total)
         }
-
-        total
+        return total
     }
 
-    override fun inheritReplyCategories(threadIds: Collection<Long>?): Int =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            val messages = realm.where(Message::class.java)
-                .apply { if (threadIds != null) anyOf("threadId", threadIds.toLongArray()) }
-                .sort("date", Sort.ASCENDING)
-                .findAll()
-                .toList()
+    /** Writes each message's new category; only that column changes. */
+    private fun setCategories(changes: List<Pair<Message, String?>>) {
+        if (changes.isEmpty()) return
+        database.runInTransaction { changes.forEach { (message, category) -> messageDao.setCategory(message.id, category) } }
+    }
 
-            val updates = messages.groupBy { it.threadId }.values.flatMap { conversation ->
-                ReplyCategories.updates(conversation, isSent = { it.isMe() }, category = { it.category })
-            }
-
-            if (updates.isNotEmpty()) {
-                realm.executeTransaction { updates.forEach { (message, category) -> message.category = category } }
-            }
-            updates.size
+    override fun inheritReplyCategories(threadIds: Collection<Long>?): Int {
+        val messages = if (threadIds == null) messageDao.allOldestFirst()
+            else threadIds.toList().chunked(900).flatMap(messageDao::inThreadsOldestFirst).sortedBy { it.date }
+        val updates = messages.groupBy { it.threadId }.values.flatMap { conversation ->
+            ReplyCategories.updates(conversation, isSent = { it.isMe() }, category = { it.category })
         }
-
-    // Box ids of messages the user sent or tried to send. SMS: sent 2, outbox 4, failed 5, queued 6;
-    // MMS: sent 2, outbox 4, failed 5. Drafts (3) don't count as having replied.
-    private val sentBoxIds = arrayOf(2, 4, 5, 6)
+        setCategories(updates)
+        return updates.size
+    }
 
     override fun getThreadIdsWithSentMessages(threadIds: Collection<Long>?): Set<Long> =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.where(Message::class.java)
-                .apply { if (threadIds != null) anyOf("threadId", threadIds.toLongArray()) }
-                .`in`("boxId", sentBoxIds)
-                .findAll()
-                .mapTo(HashSet()) { it.threadId }
-        }
+        if (threadIds == null) messageDao.threadsWithSent().toHashSet()
+        else threadIds.toList().chunked(900).flatMapTo(HashSet(), messageDao::threadsWithSent)
 
     override fun recategorizeLatestReceived(
         threadIds: Collection<Long>,
         categorize: (address: String, body: String, threadId: Long) -> String
-    ) = Realm.getDefaultInstance().use { realm ->
-        realm.refresh()
+    ) {
         // Resolve outside the write transaction: categorizing can query the contacts provider.
         val changes = threadIds.mapNotNull { threadId ->
-            realm.where(Message::class.java)
-                .equalTo("threadId", threadId)
-                .isNull("deletedAt")
-                .sort("date", Sort.DESCENDING)
-                .findAll()
+            messageDao.visibleNewestFirst(threadId)
                 .firstOrNull { !it.isMe() }
+                ?.let { latest -> relations.message(latest)!! }
                 ?.let { latest -> latest to categorize(latest.address, latest.getText(), threadId) }
                 ?.takeIf { (latest, category) -> latest.category != category }
         }
-        if (changes.isNotEmpty()) {
-            realm.executeTransaction { changes.forEach { (message, category) -> message.category = category } }
-        }
+        setCategories(changes)
     }
 
-    override fun tagOtpMessages(isOtp: (String) -> Boolean): Int =
-        Realm.getDefaultInstance().use { realm ->
-            // Codes are only ever received, so don't tag anything the user sent.
-            val matches = realm.where(Message::class.java)
-                .equalTo("isOtp", false)
-                .findAll()
-                .filter { !it.isMe() && isOtp(it.getText()) }
-
-            if (matches.isNotEmpty()) {
-                realm.executeTransaction { matches.forEach { message -> message.isOtp = true } }
-            }
-
-            matches.size
+    override fun tagOtpMessages(isOtp: (String) -> Boolean): Int {
+        // Codes are only ever received, so don't tag anything the user sent.
+        val matches = relations.messages(messageDao.notOtp().filter { !it.isMe() })
+            .filter { isOtp(it.getText()) }
+        if (matches.isNotEmpty()) {
+            database.runInTransaction { matches.map { it.id }.chunked(900).forEach(messageDao::markOtp) }
         }
+        return matches.size
+    }
 
-    override fun updateReceivedSorting(messageId: Long, category: String?, isOtp: Boolean) =
+    override fun updateReceivedSorting(messageId: Long, category: String?, isOtp: Boolean) {
         editMessage(messageId) {
             category?.let { this.category = it }
             if (isOtp) this.isOtp = true
         }
+    }
 
-    override fun setStarred(messageId: Long, starred: Boolean) = editMessage(messageId) { isStarred = starred }
+    override fun setStarred(messageId: Long, starred: Boolean) {
+        editMessage(messageId) { isStarred = starred }
+    }
 
-    /** Applies [change] to message [messageId], if it still exists, in one write. */
-    private fun editMessage(messageId: Long, change: Message.() -> Unit) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.executeTransaction {
-                realm.where(Message::class.java).equalTo("id", messageId).findFirst()?.change()
+    /** Applies [change] to message [messageId], if it still exists, in one write; returns the changed message. */
+    private fun editMessage(messageId: Long, change: Message.() -> Unit): Message? =
+        database.runInTransaction<Message?> {
+            messageDao.get(messageId)?.also { message ->
+                message.change()
+                messageDao.update(message)
             }
         }
 
-    override fun getStarredMessages(): RealmResults<Message> =
-        Realm.getDefaultInstance()
-            .where(Message::class.java)
-            .equalTo("isStarred", true)
-            .isNull("deletedAt")
-            .sort("date", Sort.DESCENDING)
-            .findAllAsync()
+    override fun getStarredMessages(): Flow<List<Message>> =
+        observeMessages { messageDao.starred() }
 
-    override fun getUnreadStarredCount(): Long =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(Message::class.java)
-                .equalTo("isStarred", true)
-                .equalTo("read", false)
-                .isNull("deletedAt")
-                .count()
-        }
+    override fun getUnreadStarredCount(): Long = messageDao.unreadStarredCount()
 }

@@ -35,6 +35,7 @@ import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
 import dev.octoshrimpy.quik.databinding.GalleryActivityBinding
 import dev.octoshrimpy.quik.model.MmsPart
+import dev.octoshrimpy.quik.repository.MessageRepository
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -52,6 +53,7 @@ class GalleryActivity : QkActivity(), GalleryView {
     @Inject lateinit var dateFormatter: DateFormatter
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
     @Inject lateinit var pagerAdapter: GalleryPagerAdapter
+    @Inject lateinit var messageRepo: MessageRepository
 
     val partId by lazy { intent.getLongExtra("partId", 0L) }
 
@@ -75,6 +77,9 @@ class GalleryActivity : QkActivity(), GalleryView {
         })
 
         pagerAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            // The first list arrives as an insertion, later ones as changes
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) = onChanged()
+
             override fun onChanged() {
                 pagerAdapter.data?.takeIf { pagerAdapter.itemCount > 0 }
                         ?.indexOfFirst { part -> part.id == partId }
@@ -90,7 +95,7 @@ class GalleryActivity : QkActivity(), GalleryView {
     private var currentPart: MmsPart? = null
 
     fun onPageSelected(position: Int) {
-        binding.toolbarSubtitle.text = pagerAdapter.getItem(position)?.messages?.firstOrNull()?.date
+        binding.toolbarSubtitle.text = pagerAdapter.getItem(position)?.let { part -> messageRepo.getMessageForPart(part.id) }?.date
                 ?.let(dateFormatter::getDetailedTimestamp)
         binding.toolbarSubtitle.isVisible = binding.toolbarTitle.text.isNotBlank()
 

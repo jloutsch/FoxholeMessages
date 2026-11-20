@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.messages
 
+import io.reactivex.rxkotlin.plusAssign
+import kotlinx.coroutines.rx2.asObservable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
@@ -29,13 +31,16 @@ import dev.octoshrimpy.quik.repository.ConversationRepository
 import javax.inject.Inject
 
 class BlockedMessagesPresenter @Inject constructor(
-    conversationRepo: ConversationRepository,
+    private val conversationRepo: ConversationRepository,
     private val blockingClient: BlockingClient,
     private val deleteConversations: DeleteConversations,
     private val navigator: Navigator
-) : QkPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState(
-        data = conversationRepo.getBlockedConversationsAsync()
-)) {
+) : QkPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState()) {
+
+    init {
+        disposables += conversationRepo.observeBlockedConversations().asObservable()
+            .subscribe { conversations -> newState { copy(data = conversations) } }
+    }
 
     override fun bindIntents(view: BlockedMessagesView) {
         super.bindIntents(view)

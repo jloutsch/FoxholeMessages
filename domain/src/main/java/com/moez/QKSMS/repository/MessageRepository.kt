@@ -18,13 +18,13 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import android.net.Uri
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
 import io.reactivex.Flowable
 import io.reactivex.Observable
-import io.realm.RealmResults
 
 interface MessageRepository {
     sealed class DeduplicationProgress {
@@ -41,19 +41,19 @@ interface MessageRepository {
 
     val deduplicationProgress: Observable<DeduplicationProgress>
 
-    fun getMessages(threadId: Long, query: String = ""): RealmResults<Message>
+    fun getMessages(threadId: Long, query: String = ""): Flow<List<Message>>
 
-    fun getMessagesSync(threadId: Long, query: String = ""): RealmResults<Message>
+    fun getMessagesSync(threadId: Long, query: String = ""): List<Message>
 
     fun getMessage(messageId: Long): Message?
 
     fun getUnmanagedMessage(messageId: Long): Message?
 
-    fun getMessages(messageIds: Collection<Long>): RealmResults<Message>
+    fun getMessages(messageIds: Collection<Long>): List<Message>
 
     fun getMessageForPart(id: Long): Message?
 
-    fun getLastIncomingMessage(threadId: Long): RealmResults<Message>
+    fun getLastIncomingMessage(threadId: Long): Flow<List<Message>>
 
     fun getUnreadCount(): Long
 
@@ -61,7 +61,7 @@ interface MessageRepository {
 
     fun getPart(id: Long): MmsPart?
 
-    fun getPartsForConversation(threadId: Long): RealmResults<MmsPart>
+    fun getPartsForConversation(threadId: Long): Flow<List<MmsPart>>
 
     /**
      * The image/video parts of a single message, oldest id first - i.e. the order the attachments
@@ -76,7 +76,7 @@ interface MessageRepository {
      * has been seen coming back empty for a message whose MmsPart row provably existed. Matching
      * on either covers both.
      */
-    fun getMediaPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart>
+    fun getMediaPartsForMessage(messageId: Long, contentId: Long): List<MmsPart>
 
     /**
      * Every part of a single message - unlike [getMediaPartsForMessage], which keeps only the
@@ -87,13 +87,16 @@ interface MessageRepository {
      * relationship has been seen empty for a message whose MmsPart row provably existed. Passing
      * Message.id alone here silently matched nothing.
      */
-    fun getPartsForMessage(messageId: Long, contentId: Long): RealmResults<MmsPart>
+    fun getPartsForMessage(messageId: Long, contentId: Long): List<MmsPart>
 
     fun savePart(id: Long): Uri?
 
-    fun getUnreadUnseenMessages(threadId: Long): RealmResults<Message>
+    fun getUnreadUnseenMessages(threadId: Long): List<Message>
 
-    fun getUnreadMessages(threadId: Long): RealmResults<Message>
+    fun getUnreadMessages(threadId: Long): List<Message>
+
+    /** Live, for QRF Reply. */
+    fun observeUnreadMessages(threadId: Long): Flow<List<Message>>
 
     fun markAllSeen(): Int
 
@@ -130,7 +133,7 @@ interface MessageRepository {
 
     fun restoreMessages(messageIds: Collection<Long>)
 
-    fun getDeletedMessages(): RealmResults<Message>
+    fun getDeletedMessages(): Flow<List<Message>>
 
     fun purgeTrash(maxAgeDays: Int)
 
@@ -209,7 +212,7 @@ interface MessageRepository {
      * messages rather than the conversations holding them: starring is a per-message action, so
      * surfacing the whole thread would defeat the point of it.
      */
-    fun getStarredMessages(): RealmResults<Message>
+    fun getStarredMessages(): Flow<List<Message>>
 
     fun getUnreadStarredCount(): Long
 }

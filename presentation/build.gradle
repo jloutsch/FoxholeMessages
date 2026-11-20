@@ -29,8 +29,8 @@ android {
         applicationId 'com.foxhole.messages'
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 2267
-        versionName '2.7.0'
+        versionCode 2268
+        versionName '2.8.0'
         setProperty("archivesBaseName", "FoxholeMessages-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -133,6 +133,7 @@ dependencies {
     implementation "androidx.emoji2:emoji2-bundled:$androidx_emoji2_version"
     implementation "androidx.constraintlayout:constraintlayout:$androidx_constraintlayout_version"
     implementation "androidx.core:core-ktx:$androidx_core_version"
+    implementation "androidx.room:room-runtime:$room_version" // AppModule builds the database
     // androidx.core 1.12+ brings Lifecycle 2.6, which activity 1.6 (from appcompat) wasn't built
     // against: Kotlin then says the dialogs don't implement LifecycleOwner.lifecycle. 1.7+ matches.
     implementation "androidx.activity:activity:1.7.2"

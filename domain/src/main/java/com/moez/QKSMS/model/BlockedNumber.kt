@@ -1,10 +1,11 @@
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity
 open class BlockedNumber(
         @PrimaryKey var id: Long = 0,
 
         var address: String = ""
-) : RealmObject()
+)

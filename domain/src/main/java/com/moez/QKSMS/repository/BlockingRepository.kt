@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.BlockedNumber
 import dev.octoshrimpy.quik.model.MessageContentFilterData
-import io.realm.RealmResults
 
 interface BlockingRepository {
 
     fun blockNumber(vararg addresses: String)
 
-    fun getBlockedNumbers(): RealmResults<BlockedNumber>
+    fun getBlockedNumbers(): Flow<List<BlockedNumber>>
 
     fun exportBlockedAddresses(): List<String>
 

@@ -18,13 +18,12 @@
  */
 package dev.octoshrimpy.quik.manager
 
-import dev.octoshrimpy.quik.model.Message
-import io.realm.Realm
+import dev.octoshrimpy.quik.db.FoxholeDatabase
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class KeyManagerImpl @Inject constructor() : KeyManager {
+class KeyManagerImpl @Inject constructor(private val database: FoxholeDatabase) : KeyManager {
 
     private var initialized = false
     private var maxValue: Long = 0
@@ -32,6 +31,7 @@ class KeyManagerImpl @Inject constructor() : KeyManager {
     /**
      * Should be called when a new sync is being started
      */
+    @Synchronized
     override fun reset() {
         initialized = true
         maxValue = 0L
@@ -40,11 +40,13 @@ class KeyManagerImpl @Inject constructor() : KeyManager {
     /**
      * Returns a valid ID that can be used to store a new message
      */
+    // Synchronized: receiving and syncing ask for ids on different threads
+    @Synchronized
     override fun newId(): Long {
         if (!initialized) {
-            maxValue = Realm.getDefaultInstance().use { realm ->
-                realm.where(Message::class.java).max("id")?.toLong() ?: 0L
-            }
+            // Reactions take ids from the same counter, so start above both tables' highest id;
+            // starting from messages alone could reuse a reaction's id and overwrite it
+            maxValue = maxOf(database.messageDao().maxId() ?: 0L, database.emojiReactionDao().maxId() ?: 0L)
             initialized = true
         }
 

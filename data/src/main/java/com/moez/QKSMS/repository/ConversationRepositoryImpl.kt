@@ -21,28 +21,24 @@ package dev.octoshrimpy.quik.repository
 import android.content.Context
 import dev.octoshrimpy.quik.common.util.extensions.now
 import dev.octoshrimpy.quik.compat.TelephonyCompat
-import dev.octoshrimpy.quik.extensions.anyOf
-import dev.octoshrimpy.quik.extensions.asObservable
+import dev.octoshrimpy.quik.db.FoxholeDatabase
+import dev.octoshrimpy.quik.db.Relations
+import dev.octoshrimpy.quik.db.Tables
+import dev.octoshrimpy.quik.db.observe
 import dev.octoshrimpy.quik.extensions.map
 import dev.octoshrimpy.quik.filter.ConversationFilter
 import dev.octoshrimpy.quik.mapper.CursorToConversation
 import dev.octoshrimpy.quik.mapper.CursorToRecipient
-import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.Conversation
-import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.SearchResult
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.tryOrNull
 import io.reactivex.Completable
 import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import io.realm.Case
-import io.realm.Realm
-import io.realm.RealmQuery
-import io.realm.RealmResults
-import io.realm.Sort
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.rx2.asObservable
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -51,278 +47,106 @@ class ConversationRepositoryImpl @Inject constructor(
     private val conversationFilter: ConversationFilter,
     private val cursorToConversation: CursorToConversation,
     private val cursorToRecipient: CursorToRecipient,
-    private val phoneNumberUtils: PhoneNumberUtils
+    private val phoneNumberUtils: PhoneNumberUtils,
+    private val database: FoxholeDatabase,
+    private val relations: Relations
 ) : ConversationRepository {
-    private fun getConversationsBase(
-        realm: Realm,
-        unreadAtTop: Boolean,
-        archived: Boolean
-    ): RealmQuery<Conversation> {
-        val sortOrder = mutableListOf("pinned", "draft", "lastMessage.date")
-        val sortDirections = mutableListOf(Sort.DESCENDING, Sort.DESCENDING, Sort.DESCENDING)
 
-        if (unreadAtTop) {
-            sortOrder.add(0, "lastMessage.read")
-            sortDirections.add(0, Sort.ASCENDING)
-        }
+    private val conversationDao get() = database.conversationDao()
+    private val messageDao get() = database.messageDao()
 
-        return realm
-            .where(Conversation::class.java)
-            .notEqualTo("id", 0L)
-            .equalTo("archived", archived)
-            .equalTo("blocked", false)
-            .isNotEmpty("recipients")
-            .beginGroup()
-            .isNotNull("lastMessage")
-            .or()
-            .isNotEmpty("draft")
-            .endGroup()
-            .sort(sortOrder.toTypedArray(), sortDirections.toTypedArray())
-    }
+    /** Live conversations with their relations, refreshed when any of them changes. */
+    private fun observeConversations(query: () -> List<Conversation>): Flow<List<Conversation>> =
+        database.observe(Tables.CONVERSATIONS) { relations.conversations(query()) }
 
-    override fun getConversations(
-        unreadAtTop: Boolean,
-        archived: Boolean
-    ): RealmResults<Conversation> =
-        getConversationsBase(Realm.getDefaultInstance(), unreadAtTop, archived)
-            .findAllAsync()
+    override fun getConversations(unreadAtTop: Boolean, archived: Boolean): Flow<List<Conversation>> =
+        observeConversations { conversationDao.listed(archived, unreadAtTop) }
 
     override fun getConversationsSnapshot(unreadAtTop: Boolean): List<Conversation> =
-        Realm.getDefaultInstance().use { realm ->
-            getConversationsBase(realm, unreadAtTop, false)
-                .findAll()
-                .let(realm::copyFromRealm)
-        }
+        relations.conversations(conversationDao.listed(false, unreadAtTop))
 
-    override fun getTopConversations() =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(Conversation::class.java)
-                .notEqualTo("id", 0L)
-                .isNotNull("lastMessage")
-                .beginGroup()
-                .equalTo("pinned", true)
-                .or()
-                .greaterThan(
-                    "lastMessage.date",
-                    System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
-                )
-                .endGroup()
-                .equalTo("archived", false)
-                .equalTo("blocked", false)
-                .isNotEmpty("recipients")
-                .findAll()
-                .let(realm::copyFromRealm)
-                .let { conversations ->
-                    // Counted once each up front: a count inside the comparator re-ran the query
-                    // on every comparison the sort made.
-                    val weekAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
-                    val recentCounts = conversations.associate { conversation ->
-                        conversation.id to realm.where(Message::class.java)
-                            .equalTo("threadId", conversation.id)
-                            .isNull("deletedAt")
-                            .greaterThan("date", weekAgo)
-                            .count()
-                    }
-                    conversations.sortedWith(compareByDescending<Conversation> { it.pinned }
-                        .thenByDescending { recentCounts[it.id] })
-                }
-        }
+    override fun getTopConversations(): List<Conversation> {
+        val weekAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
+        val conversations = relations.conversations(conversationDao.top(weekAgo))
+        // Counted once each up front: a count inside the comparator re-ran the query on every comparison
+        val recentCounts = conversations.associate { it.id to messageDao.countSince(it.id, weekAgo) }
+        return conversations.sortedWith(compareByDescending<Conversation> { it.pinned }
+            .thenByDescending { recentCounts[it.id] })
+    }
 
-    override fun setConversationName(id: Long, name: String) =
-        Completable.fromAction {
-            Realm.getDefaultInstance().use { realm ->
-                realm.executeTransaction {
-                    realm.where(Conversation::class.java)
-                        .equalTo("id", id)
-                        .findFirst()
-                        ?.name = name
-                }
-            }
-        }.subscribeOn(Schedulers.io()) // Ensure the operation is performed on a background thread
+    override fun setConversationName(id: Long, name: String): Completable =
+        Completable.fromAction { editConversations(longArrayOf(id)) { this.name = name } }
+            .subscribeOn(Schedulers.io()) // Ensure the operation is performed on a background thread
 
     override fun searchConversations(query: CharSequence): List<SearchResult> {
-        val realm = Realm.getDefaultInstance()
-
         val searchQuery = query.toString()
-        val conversations = realm.copyFromRealm(realm
-            .where(Conversation::class.java)
-            .notEqualTo("id", 0L)
-            .isNotNull("lastMessage")
-            .equalTo("blocked", false)
-            .isNotEmpty("recipients")
-            .sort("pinned", Sort.DESCENDING, "lastMessage.date", Sort.DESCENDING)
-            .findAll())
+        val conversations = relations.conversations(conversationDao.searchable())
+        val byId = conversations.associateBy { it.id }
 
-        val messagesByConversation = realm.copyFromRealm(realm
-            .where(Message::class.java)
-            .isNull("deletedAt") // search shouldn't surface messages that are in Trash
-            .beginGroup()
-            .contains("body", searchQuery, Case.INSENSITIVE)
-            .or()
-            .contains("parts.text", searchQuery, Case.INSENSITIVE)
-            .endGroup()
-            .findAll())
+        // search shouldn't surface messages that are in Trash (the query already excludes them)
+        val messagesByConversation = messageDao.search(searchQuery)
             .groupBy { message -> message.threadId }
-            .filter { (threadId, _) -> conversations.firstOrNull { it.id == threadId } != null }
-            .map { (threadId, messages) -> Pair(conversations.first { it.id == threadId }, messages.size) }
+            .mapNotNull { (threadId, messages) -> byId[threadId]?.let { it to messages.size } }
             .map { (conversation, messages) -> SearchResult(searchQuery, conversation, messages) }
             .sortedByDescending { result -> result.messages }
-            .toList()
-
-        realm.close()
 
         return conversations
             .filter { conversation -> conversationFilter.filter(conversation, searchQuery) }
-            .map {
-                    conversation -> SearchResult(searchQuery, conversation, 0)
-            } + messagesByConversation
+            .map { conversation -> SearchResult(searchQuery, conversation, 0) } + messagesByConversation
     }
 
-    override fun getBlockedConversations(): RealmResults<Conversation> =
-        Realm.getDefaultInstance()
-            .where(Conversation::class.java)
-            .equalTo("blocked", true)
-            .sort(
-                arrayOf("lastMessage.date"),
-                arrayOf(Sort.DESCENDING)
-            )
-            .findAll()
+    override fun getBlockedConversations(): List<Conversation> = relations.conversations(conversationDao.blocked())
 
-    override fun getBlockedConversationsAsync(): RealmResults<Conversation> =
-        Realm.getDefaultInstance()
-            .where(Conversation::class.java)
-            .equalTo("blocked", true)
-            .sort(
-                arrayOf("lastMessage.date"),
-                arrayOf(Sort.DESCENDING)
-            )
-            .findAllAsync()
+    override fun observeBlockedConversations(): Flow<List<Conversation>> = observeConversations { conversationDao.blocked() }
 
-    override fun getConversationAsync(threadId: Long): Conversation =
-        Realm.getDefaultInstance()
-            .where(Conversation::class.java)
-            .equalTo("id", threadId)
-            .findFirstAsync()
+    override fun observeConversation(threadId: Long): Flow<Conversation?> =
+        database.observe(Tables.CONVERSATIONS) { relations.conversation(conversationDao.get(threadId)) }
 
-    override fun getConversation(threadId: Long) =
-        tryOrNull(true) {
-            Realm.getDefaultInstance()
-                .apply { refresh() }
-                .where(Conversation::class.java)
-                .equalTo("id", threadId)
-                .findFirst()
-        }
+    override fun getConversation(threadId: Long): Conversation? =
+        tryOrNull(true) { relations.conversation(conversationDao.get(threadId)) }
 
-    override fun updateSendAsGroup(threadId: Long, sendAsGroup: Boolean) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
+    override fun updateSendAsGroup(threadId: Long, sendAsGroup: Boolean): Unit? =
+        conversationDao.get(threadId)?.let { editConversations(longArrayOf(threadId)) { this.sendAsGroup = sendAsGroup } }
 
-            realm.where(Conversation::class.java)
-                .equalTo("id", threadId)
-                .findFirst()
-                ?.let { conversation ->
-                    realm.executeTransaction { conversation.sendAsGroup = sendAsGroup }
-                }
-        }
-
-    // A synchronous query: an async one is still empty when read straight away, so the "speak
-    // unseen" widget always said there were no messages.
-    override fun getUnseenIds(archived: Boolean): List<Long> =
-        Realm.getDefaultInstance().use { realm ->
-            realm.where(Conversation::class.java)
-                .notEqualTo("id", 0L)
-                .equalTo("archived", archived)
-                .equalTo("blocked", false)
-                .equalTo("lastMessage.seen", false)
-                .sort("lastMessage.date", Sort.DESCENDING)
-                .findAll()
-                .map { conversation -> conversation.id }
-        }
+    // A synchronous query: an async one was empty when read straight away, so the "speak unseen"
+    // widget always said there were no messages
+    override fun getUnseenIds(archived: Boolean): List<Long> = conversationDao.unseenIds(archived)
 
     override fun getConversationAndLastSenderContactName(threadId: Long): Pair<Conversation?, String?>? =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.where(Conversation::class.java)
-                .equalTo("id", threadId)
-                .findFirst()
-                ?.let(realm::copyFromRealm)
-                ?.let { conversation ->
-                    // A draft-only conversation has no last message
-                    val lastAddress = conversation.lastMessage?.address
-                    val conversationLastSmsSender: String? = lastAddress?.let { address ->
-                        conversation.recipients.find { recipient ->
-                            phoneNumberUtils.compare(recipient.address, address)
-                        }?.contact?.name
-                    }
-
-                    Pair(conversation, conversationLastSmsSender)
-                }
+        getConversation(threadId)?.let { conversation ->
+            // A draft-only conversation has no last message
+            val lastAddress = conversation.lastMessage?.address
+            val lastSenderName = lastAddress?.let { address ->
+                conversation.recipients.find { recipient -> phoneNumberUtils.compare(recipient.address, address) }?.contact?.name
+            }
+            Pair(conversation, lastSenderName)
         }
 
-    override fun getConversations(vararg threadIds: Long): RealmResults<Conversation> =
-        Realm.getDefaultInstance()
-            .where(Conversation::class.java)
-            .anyOf("id", threadIds)
-            .findAll()
+    override fun getConversations(vararg threadIds: Long): List<Conversation> =
+        relations.conversations(threadIds.toList().chunked(900).flatMap(conversationDao::get))
 
     override fun getUnmanagedConversations(): Observable<List<Conversation>> =
-        Realm.getDefaultInstance().let { realm->
-            realm.where(Conversation::class.java)
-                .sort("lastMessage.date", Sort.DESCENDING)
-                .notEqualTo("id", 0L)
-                .isNotNull("lastMessage")
-                .equalTo("archived", false)
-                .equalTo("blocked", false)
-                .isNotEmpty("recipients")
-                .limit(5)
-                .findAllAsync()
-                .asObservable()
-                .filter { it.isLoaded }
-                .filter { it.isValid }
-                .map { realm.copyFromRealm(it) }
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .observeOn(Schedulers.io())
-        }
+        observeConversations { conversationDao.recent() }.asObservable()
 
-    override fun getRecipients(): RealmResults<Recipient> =
-        Realm.getDefaultInstance()
-            .where(Recipient::class.java)
-            .findAll()
+    override fun getRecipients(): List<Recipient> = relations.recipients(database.recipientDao().all())
 
     override fun getUnmanagedRecipients(): Observable<List<Recipient>> =
-        Realm.getDefaultInstance().let { realm ->
-            realm.where(Recipient::class.java)
-                .isNotNull("contact")
-                .findAllAsync()
-                .asObservable()
-                .filter { it.isLoaded && it.isValid }
-                .map { realm.copyFromRealm(it) }
-                .subscribeOn(AndroidSchedulers.mainThread())
-        }
+        database.observe(Tables.RECIPIENTS) { relations.recipients(database.recipientDao().withContact()) }.asObservable()
 
     override fun getRecipient(recipientId: Long): Recipient? =
-        Realm.getDefaultInstance()
-            .where(Recipient::class.java)
-            .equalTo("id", recipientId)
-            .findFirst()
+        database.recipientDao().get(recipientId)?.let { relations.recipients(listOf(it)).first() }
 
     private fun createConversation(threadId: Long, sendAsGroup: Boolean) =
         createConversationFromCp(threadId, sendAsGroup)
 
-
     override fun getConversation(addresses: Collection<String>): Conversation? =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-            realm.where(Conversation::class.java)
-                .findAll()
-                .filter { conversation -> conversation.recipients.size == addresses.size }
-                .find { conversation ->
-                    conversation.recipients.map { it.address }.all { recipientAddress ->
-                        addresses.any { phoneNumberUtils.compare(it, recipientAddress) }
-                    }
+        relations.conversations(conversationDao.all())
+            .filter { conversation -> conversation.recipients.size == addresses.size }
+            .find { conversation ->
+                conversation.recipients.map { it.address }.all { recipientAddress ->
+                    addresses.any { phoneNumberUtils.compare(it, recipientAddress) }
                 }
-                ?.let { realm.copyFromRealm(it) }
-        }
+            }
 
     private fun createConversation(addresses: Collection<String>, sendAsGroup: Boolean) =
         TelephonyCompat.getOrCreateThreadId(context, addresses.toSet())
@@ -339,46 +163,19 @@ class ConversationRepositoryImpl @Inject constructor(
         getConversation(addresses) ?: createConversation(addresses, sendAsGroup)
 
     override fun saveDraft(threadId: Long, draft: String) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-
-            val conversation = realm.where(Conversation::class.java)
-                .equalTo("id", threadId)
-                .findFirst()
-
-            realm.executeTransaction {
-                conversation?.takeIf { it.isValid }?.draft = draft
-                conversation?.takeIf { it.isValid }?.draftDate = System.currentTimeMillis()
-            }
+        editConversations(longArrayOf(threadId)) {
+            this.draft = draft
+            this.draftDate = System.currentTimeMillis()
         }
 
-    override fun updateConversations(threadIds: Collection<Long>) =
-        Realm.getDefaultInstance().use { realm ->
-            realm.refresh()
-
-            realm.where(Conversation::class.java)
-                .anyOf("id", threadIds.toLongArray())
-                .findAll()
-                ?.map { conversation ->
-                    Pair(
-                        conversation,
-                        realm.where(Message::class.java)
-                            .equalTo("threadId", conversation.id)
-                            .isNull("deletedAt")
-                            .sort("date", Sort.DESCENDING)
-                            .findFirst()
-                    )
-                }
-                ?.let { conversationAndMessages ->
-                    realm.executeTransaction {
-                        conversationAndMessages.forEach { (conversation, message) ->
-                            conversation.lastMessage = message
-                        }
-                    }
-                }
-
-            Unit
+    override fun updateConversations(threadIds: Collection<Long>) {
+        // Each conversation's last message is its newest message that isn't in Trash
+        database.runInTransaction {
+            val conversations = threadIds.toList().chunked(900).flatMap(conversationDao::get)
+            conversations.forEach { conversation -> conversation.lastMessageId = messageDao.latestVisible(conversation.id)?.id }
+            conversationDao.update(conversations)
         }
+    }
 
     override fun markArchived(vararg threadIds: Long) = editConversations(threadIds) { archived = true }
 
@@ -390,114 +187,49 @@ class ConversationRepositoryImpl @Inject constructor(
     override fun markUnpinned(vararg threadIds: Long) = editConversations(threadIds) { pinned = false }
 
     /** Applies [change] to each of the conversations [threadIds] in one write. */
-    private fun editConversations(threadIds: LongArray, change: Conversation.() -> Unit) =
-        Realm.getDefaultInstance().use { realm ->
-            val conversations = realm.where(Conversation::class.java)
-                .anyOf("id", threadIds)
-                .findAll()
-
-            realm.executeTransaction { conversations.forEach(change) }
+    private fun editConversations(threadIds: LongArray, change: Conversation.() -> Unit) {
+        database.runInTransaction {
+            val conversations = threadIds.toList().chunked(900).flatMap(conversationDao::get)
+            conversations.forEach(change)
+            conversationDao.update(conversations)
         }
+    }
 
     override fun markBlocked(threadIds: Collection<Long>, blockingClient: Int, blockReason: String?) =
-        Realm.getDefaultInstance().use { realm ->
-            val conversations = realm.where(Conversation::class.java)
-                .anyOf("id", threadIds.toLongArray())
-                .equalTo("blocked", false)
-                .findAll()
-
-            realm.executeTransaction {
-                conversations.forEach { conversation ->
-                    conversation.blocked = true
-                    conversation.blockingClient = blockingClient
-                    conversation.blockReason = blockReason
-                }
+        editConversations(threadIds.toLongArray()) {
+            if (!blocked) {
+                blocked = true
+                this.blockingClient = blockingClient
+                this.blockReason = blockReason
             }
         }
 
-    override fun markUnblocked(vararg threadIds: Long) =
-        Realm.getDefaultInstance().use { realm ->
-            val conversations = realm.where(Conversation::class.java)
-                .anyOf("id", threadIds)
-                .findAll()
+    override fun markUnblocked(vararg threadIds: Long) = editConversations(threadIds) {
+        blocked = false
+        blockingClient = null
+        blockReason = null
+    }
 
-            realm.executeTransaction {
-                conversations.forEach { conversation ->
-                    conversation.blocked = false
-                    conversation.blockingClient = null
-                    conversation.blockReason = null
-                }
-            }
-        }
-
-    // Trashes (soft-deletes) the conversation's messages rather than removing them outright -
-    // matches how individual message deletion already works, so a deleted conversation is
-    // recoverable from Trash within the retention window (see PurgeTrash). The
-    // conversation row itself is kept (not deleted) with lastMessage/draft cleared, which is
-    // enough for getConversationsBase's isNotNull("lastMessage") OR isNotEmpty("draft") filter to
-    // hide it from every list; restoring any of its messages naturally brings it back via
-    // updateConversations() recomputing lastMessage.
+    // Trashes (soft-deletes) the conversation's messages rather than removing them outright, so a
+    // deleted conversation is recoverable from Trash within the retention window (see PurgeTrash).
+    // The conversation row is kept with its last message and draft cleared, which is enough for
+    // the inbox query (last message or draft required) to hide it; restoring any of its messages
+    // brings it back through updateConversations() recomputing the last message.
     override fun deleteConversations(vararg threadIds: Long) {
-        Realm.getDefaultInstance().use { realm ->
-            val conversations = realm.where(Conversation::class.java)
-                .anyOf("id", threadIds)
-                .findAll()
-            val messages = realm.where(Message::class.java)
-                .anyOf("threadId", threadIds)
-                .isNull("deletedAt")
-                .findAll()
-
-            realm.executeTransaction {
-                messages.forEach { message -> message.deletedAt = now() }
-                conversations.forEach { conversation ->
-                    conversation.lastMessage = null
-                    conversation.draft = ""
-                    conversation.draftDate = 0
-                }
+        database.runInTransaction {
+            threadIds.toList().chunked(900).forEach { chunk -> messageDao.trashThreads(chunk, now()) }
+            editConversations(threadIds) {
+                lastMessageId = null
+                draft = ""
+                draftDate = 0
             }
         }
     }
 
-    // Message sorting: conversations bucket into a Tab by their (possibly overridden) category.
-    // A conversation with no override falls back to its last message's category, and PERSONAL
-    // is the catch-all for anything that isn't TRANSACTIONAL or PROMOTIONAL (including
-    // unclassified messages).
-    private fun getConversationsByCategoryBase(
-        realm: Realm,
-        unreadAtTop: Boolean,
-        category: String
-    ): RealmQuery<Conversation> {
-        val query = getConversationsBase(realm, unreadAtTop, false)
-            .beginGroup()
-            .beginGroup()
-            .equalTo("categoryOverride", category)
-            .or()
-            .isNull("categoryOverride").equalTo("lastMessage.category", category)
-            .endGroup()
+    override fun getConversationsByCategory(unreadAtTop: Boolean, category: String): Flow<List<Conversation>> =
+        observeConversations { conversationDao.inCategory(category, unreadAtTop) }
 
-        if (category == "PERSONAL") {
-            query.or().beginGroup()
-                .isNull("categoryOverride")
-                .beginGroup()
-                .isNull("lastMessage")
-                .or()
-                .not().`in`("lastMessage.category", arrayOf("TRANSACTIONAL", "PROMOTIONAL"))
-                .endGroup()
-                .endGroup()
-        }
-
-        return query.endGroup()
-    }
-
-    override fun getConversationsByCategory(unreadAtTop: Boolean, category: String): RealmResults<Conversation> =
-        getConversationsByCategoryBase(Realm.getDefaultInstance(), unreadAtTop, category).findAllAsync()
-
-    override fun getUnreadCountByCategory(category: String): Long =
-        Realm.getDefaultInstance().use { realm ->
-            getConversationsByCategoryBase(realm, false, category)
-                .equalTo("lastMessage.read", false)
-                .count()
-        }
+    override fun getUnreadCountByCategory(category: String): Long = conversationDao.unreadCountInCategory(category)
 
     override fun updateCategoryOverride(threadIds: Collection<Long>, category: String?) =
         editConversations(threadIds.toLongArray()) { categoryOverride = category }
@@ -515,80 +247,56 @@ class ConversationRepositoryImpl @Inject constructor(
                 ?.map(cursorToConversation::map)
                 ?.firstOrNull { conversation -> conversation.id == threadId }
                 ?.also { conversation ->
-                    Realm.getDefaultInstance().use { realm ->
-                        val realmContacts = realm.where(Contact::class.java).findAll()
+                    val contacts = relations.contacts(database.contactDao().all())
 
-                        // match recipients from provider to recipients in realm
-                        val matchedRecipients = conversation.recipients
-                            .mapNotNull { recipient ->
-                                // map the recipient cursor to a list of recipients
-                                cursorToRecipient.getRecipientCursor(recipient.id)?.use { cursor ->
-                                    cursor.map { cursorToRecipient.map(it) }
+                    // match recipients from provider to the saved contacts
+                    val matchedRecipients = conversation.recipients
+                        .mapNotNull { recipient ->
+                            cursorToRecipient.getRecipientCursor(recipient.id)?.use { cursor ->
+                                cursor.map { cursorToRecipient.map(it) }
+                            }
+                        }
+                        .flatten()
+                        .map { recipient ->
+                            recipient.apply {
+                                contact = contacts.firstOrNull { contact ->
+                                    contact.numbers.any { phoneNumberUtils.compare(it.address, address) }
                                 }
                             }
-                            .flatten()
-                            .map { recipient ->
-                                recipient.apply {
-                                    contact = realmContacts.firstOrNull { realmContact ->
-                                        realmContact.numbers.any {
-                                            phoneNumberUtils.compare(it.address, address)
-                                        }
-                                    }
-                                    ?.let { realm.copyFromRealm(it) }
-                                }
-                            }
-
-                        conversation.apply {
-                            recipients.clear()
-                            recipients.addAll(matchedRecipients)
-
-                            this.sendAsGroup =
-                                if (recipients.size <= 1) false
-                                else sendAsGroup
-
-                            lastMessage = realm.where(Message::class.java)
-                                .equalTo("threadId", threadId)
-                                .sort("date", Sort.DESCENDING)
-                                .findFirst()
                         }
 
-                        realm.executeTransaction { it.insertOrUpdate(conversation) }
+                    conversation.apply {
+                        recipients = matchedRecipients
+                        this.sendAsGroup = if (recipients.size <= 1) false else sendAsGroup
+                        lastMessage = messageDao.latest(threadId)
                     }
+
+                    database.runInTransaction { relations.saveConversation(conversation) }
                 }
         }
 
     /**
-     * In some cases [createConversationFromCp] will return null if there are no messages present in the convo.
-     * In order to allow the conversation to be accessed
-     * we need to create an empty conversation in Realm to match the conversation created in the content provider.
-     *
-     * This is a bit of a hack, but is necessary on devices running HyperOS or variants.
+     * In some cases [createConversationFromCp] will return null if there are no messages present in
+     * the convo. To allow the conversation to be accessed, create an empty one here to match the
+     * conversation created in the content provider. A workaround needed on HyperOS and variants.
      */
     private fun createEmptyConversation(threadId: Long, addresses: Collection<String>, sendAsGroup: Boolean): Conversation {
-        Realm.getDefaultInstance().use { realm ->
-            val realmContacts = realm.where(Contact::class.java).findAll()
-            val matchedRecipients = addresses.map { address ->
-                Recipient().apply {
-                    this.address = address
-                    contact = realmContacts.firstOrNull { realmContact ->
-                            realmContact.numbers.any {
-                                phoneNumberUtils.compare(it.address, address)
-                            }
-                        }
-                        ?.let { realm.copyFromRealm(it) }
+        val contacts = relations.contacts(database.contactDao().all())
+        val matchedRecipients = addresses.map { address ->
+            Recipient().apply {
+                this.address = address
+                contact = contacts.firstOrNull { contact ->
+                    contact.numbers.any { phoneNumberUtils.compare(it.address, address) }
                 }
             }
-            val conversation = Conversation().apply {
-                id = threadId
-                recipients.clear()
-                recipients.addAll(matchedRecipients)
-                this.sendAsGroup =
-                    if (recipients.size <= 1) false
-                    else sendAsGroup
-            }
-            realm.executeTransaction { it.copyToRealmOrUpdate(conversation) }
-            return conversation
         }
+        val conversation = Conversation().apply {
+            id = threadId
+            recipients = matchedRecipients
+            this.sendAsGroup = if (recipients.size <= 1) false else sendAsGroup
+        }
+        database.runInTransaction { relations.saveConversation(conversation) }
+        return conversation
     }
 
 }

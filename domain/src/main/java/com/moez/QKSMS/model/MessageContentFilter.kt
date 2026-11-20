@@ -1,8 +1,9 @@
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity
 open class MessageContentFilter(
         @PrimaryKey var id: Long = 0,
 
@@ -10,8 +11,7 @@ open class MessageContentFilter(
         var caseSensitive: Boolean = false,
         var isRegex: Boolean = false,
         var includeContacts: Boolean = false
-) : RealmObject()
-
+)
 data class MessageContentFilterData(
         var value: String = "",
         var caseSensitive: Boolean = false,

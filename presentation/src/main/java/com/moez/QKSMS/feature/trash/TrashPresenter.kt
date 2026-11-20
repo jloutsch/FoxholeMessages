@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.trash
 
+import io.reactivex.rxkotlin.plusAssign
+import kotlinx.coroutines.rx2.asObservable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.common.base.QkPresenter
@@ -31,9 +33,12 @@ class TrashPresenter @Inject constructor(
     private val messageRepo: MessageRepository,
     private val restoreMessages: RestoreMessages,
     private val emptyTrash: EmptyTrash
-) : QkPresenter<TrashView, TrashState>(TrashState(
-        data = messageRepo.getDeletedMessages()
-)) {
+) : QkPresenter<TrashView, TrashState>(TrashState()) {
+
+    init {
+        disposables += messageRepo.getDeletedMessages().asObservable()
+            .subscribe { messages -> newState { copy(data = messages) } }
+    }
 
     override fun bindIntents(view: TrashView) {
         super.bindIntents(view)

@@ -19,8 +19,7 @@
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
 import dev.octoshrimpy.quik.model.TrustedSender
-import io.realm.RealmResults
 
 data class TrustedSendersState(
-    val senders: RealmResults<TrustedSender>? = null
+    val senders: List<TrustedSender>? = null
 )

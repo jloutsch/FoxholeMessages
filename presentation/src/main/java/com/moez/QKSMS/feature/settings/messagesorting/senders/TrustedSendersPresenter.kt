@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
+import io.reactivex.rxkotlin.plusAssign
+import kotlinx.coroutines.rx2.asObservable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.common.base.QkPresenter
@@ -27,9 +29,12 @@ import javax.inject.Inject
 
 class TrustedSendersPresenter @Inject constructor(
     private val trustedSenderRepo: TrustedSenderRepository
-) : QkPresenter<TrustedSendersView, TrustedSendersState>(
-    TrustedSendersState(senders = trustedSenderRepo.getTrustedSenders())
-) {
+) : QkPresenter<TrustedSendersView, TrustedSendersState>(TrustedSendersState()) {
+
+    init {
+        disposables += trustedSenderRepo.getTrustedSenders().asObservable()
+            .subscribe { list -> newState { copy(senders = list) } }
+    }
 
     override fun bindIntents(view: TrustedSendersView) {
         super.bindIntents(view)

@@ -22,7 +22,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
-import dev.octoshrimpy.quik.common.base.QkRealmAdapter
+import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.databinding.StarredMessageListItemBinding
 import dev.octoshrimpy.quik.model.Contact
@@ -41,7 +41,7 @@ class StarredMessagesAdapter @Inject constructor(
     private val dateFormatter: DateFormatter,
     private val navigator: Navigator,
     private val phoneNumberUtils: PhoneNumberUtils
-) : QkRealmAdapter<Message, QkBindingViewHolder<StarredMessageListItemBinding>>() {
+) : QkListAdapter<Message, QkBindingViewHolder<StarredMessageListItemBinding>>(itemId = { it.id }) {
 
     private val contacts by lazy { contactRepo.getContacts() }
     private val contactCache = ContactCache()
@@ -84,12 +84,12 @@ class StarredMessagesAdapter @Inject constructor(
     private inner class ContactCache : HashMap<String, Contact?>() {
 
         override fun get(key: String): Contact? {
-            if (super.get(key)?.isValid != true) {
+            if (super.get(key) == null) {
                 set(key, contacts.firstOrNull { contact ->
                     contact.numbers.any { phoneNumberUtils.compare(it.address, key) }
                 })
             }
-            return super.get(key)?.takeIf { it.isValid }
+            return super.get(key)
         }
     }
 }

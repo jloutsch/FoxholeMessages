@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.repository
 
+import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Message
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -113,6 +114,45 @@ class SortingAndSyncDataTest {
         assertTrue(
             "New Message field(s) $unaccounted: if only Foxhole stores them, add them to AppOnlyMessageFields " +
                 "(SyncRepositoryImpl) or every sync wipes them; then add them to the right list here.",
+            unaccounted.isEmpty()
+        )
+    }
+
+    private fun rebuiltFromAndroid(id: Long) = Conversation(id = id)  // what a full sync produces
+
+    @Test
+    fun draftsSurviveFullSync() {
+        val before = Conversation(id = 7, draft = "hi", draftDate = 5)
+        val rebuilt = rebuiltFromAndroid(7)
+        AppOnlyConversationFields.of(before).applyTo(rebuilt)
+        assertEquals("hi", rebuilt.draft)
+        assertEquals(5L, rebuilt.draftDate)
+    }
+
+    @Test
+    fun sendAsGroupSurvivesWithoutOtherFlags() {
+        // Not archived, blocked, pinned or renamed: the old sync only kept conversations with one of those
+        val before = Conversation(id = 7, sendAsGroup = false)
+        val rebuilt = rebuiltFromAndroid(7)
+        AppOnlyConversationFields.of(before).applyTo(rebuilt)
+        assertEquals(false, rebuilt.sendAsGroup)
+    }
+
+    /** Same guard as above, for Conversation fields. */
+    @Test
+    fun everyConversationFieldIsAccountedForAcrossSyncs() {
+        val rebuiltFromAndroid = setOf("id", "recipients")
+        val recomputedAfterSync = setOf("lastMessageId", "lastMessage", "lastReactionEmoji")
+        val keptByAppOnlyConversationFields = setOf(
+            "archived", "blocked", "pinned", "name", "blockingClient", "blockReason", "categoryOverride",
+            "sendAsGroup", "draft", "draftDate"
+        )
+        val known = rebuiltFromAndroid + recomputedAfterSync + keptByAppOnlyConversationFields
+        val fields = Conversation::class.java.declaredFields.filter { !Modifier.isStatic(it.modifiers) }.map { it.name }.toSet()
+        val unaccounted = fields - known
+        assertTrue(
+            "New Conversation field(s) $unaccounted: if only Foxhole stores them, add them to " +
+                "AppOnlyConversationFields (SyncRepositoryImpl) or every sync wipes them; then add them here.",
             unaccounted.isEmpty()
         )
     }

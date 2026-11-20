@@ -18,16 +18,17 @@
  */
 package dev.octoshrimpy.quik.model
 
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 /**
  * A sender that always gets classified as [dev.octoshrimpy.quik.classifier.Category.PERSONAL],
  * regardless of message content. [locked] entries (e.g. the user's own number) require a forced
  * removal to delete.
  */
+@Entity
 open class TrustedSender(
     @PrimaryKey var id: Long = 0,
     var address: String = "",
     var locked: Boolean = false
-) : RealmObject()
+)

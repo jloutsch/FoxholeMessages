@@ -244,6 +244,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             messageAdapter.emptyView = binding.messagesEmpty
 
             binding.messageList.setHasFixedSize(true)
+            messageAdapter.openedAt = SystemClock.elapsedRealtime()
             binding.messageList.adapter = messageAdapter
 
             // Pinch-to-zoom: only active while the Settings toggle is on, so normal scrolling
@@ -558,7 +559,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         )
 
         binding.messageList.setVisible(!state.editingMode || state.sendAsGroup || state.selectedChips.size == 1)
-        messageAdapter.data = state.messages
+        messageAdapter.threadData = state.messages
         messageAdapter.highlight = state.searchSelectionId
 
         binding.scheduledGroup.isVisible = state.scheduled != 0L
@@ -796,7 +797,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     }
 
     override fun scrollToMessage(id: Long) {
-        messageAdapter.data?.second
+        messageAdapter.threadData?.second
             ?.indexOfLast { message -> message.id == id }
             ?.takeIf { position -> position != -1 }
             ?.let(binding.messageList::scrollToPosition)

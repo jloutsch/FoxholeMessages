@@ -18,10 +18,9 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.ScheduledMessage
-import io.realm.RealmList
-import io.realm.RealmResults
 
 interface ScheduledMessageRepository {
 
@@ -46,7 +45,10 @@ interface ScheduledMessageRepository {
     /**
      * Returns all of the scheduled messages, sorted chronologically
      */
-    fun getScheduledMessages(): RealmResults<ScheduledMessage>
+    fun getScheduledMessages(): List<ScheduledMessage>
+
+    /** Live, for screens. */
+    fun observeScheduledMessages(): Flow<List<ScheduledMessage>>
 
     /**
      * Returns the scheduled message with the given [id]
@@ -56,7 +58,7 @@ interface ScheduledMessageRepository {
     /**
      * Returns all scheduled messages with the given [conversationId]
      */
-    fun getScheduledMessagesForConversation(conversationId: Long): RealmResults<ScheduledMessage>
+    fun getScheduledMessagesForConversation(conversationId: Long): Flow<List<ScheduledMessage>>
 
     /**
      * Deletes the scheduled message with the given [id]

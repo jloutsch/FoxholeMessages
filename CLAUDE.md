@@ -235,6 +235,10 @@ broken version of the code it covers. What's covered, and the past failure each 
   The Compose launcher shortcut names the installed app id, so `res/xml/shortcuts.xml` has one copy
   per build type (`src/main`, `src/debug`, `src/fdroid`), checked by `ShortcutsXmlTest`.
 
+Room (the database replacing Realm, #44) is tested in plain unit tests through **Robolectric**
+(`@RunWith(RobolectricTestRunner::class) @Config(sdk = [35])`, in-memory database from
+`data/src/test/.../db/TestDatabase.kt`). Room's schema history is exported to `data/schemas/` and checked in.
+
 Tests that read files (proguard rules, changelogs, emoji assets) declare them as Gradle test inputs,
 so editing those files re-runs the tests locally rather than reusing a stale pass.
 
@@ -248,9 +252,9 @@ version 1.3.0's detector crashes under AGP 8 lint. Before that it flagged three 
 (`BlockingController` lines 105 and 123, `CategoryNotificationActivity` line 69).
 
 On-device tests (`data/src/androidTest`) need a phone and aren't run by CI: phone-number matching
-(`PhoneNumberUtilsTest`) and `TrashFiltersTest`, which runs the real repository queries against an
-in-memory database to check that unread badges, search, the media gallery and shortcut ranking leave
-out messages in Trash (the database library doesn't run in plain JVM tests).
+(`PhoneNumberUtilsTest`). The Trash checks (unread badges, search, the media gallery and shortcut
+ranking leave out messages in Trash) used to be an on-device test because Realm couldn't run in plain
+JVM tests; on Room they are part of `MessageDaoTest` and run with `./gradlew test`.
 **Don't use `connectedAndroidTest`** — it uninstalls the app afterwards, wiping its data and its
 default-SMS role. Instead:
 `./gradlew :data:assembleDebugAndroidTest`, then
@@ -1100,7 +1104,7 @@ draft can be discarded.
 ## v2.x — Play Store release, obfuscation, and the traps found along the way
 
 The app is live on Google Play as of the 2.x line. Current shipped
-version is **`versionCode 2267` / `versionName '2.7.0'`**. (2.3.1 was
+version is **`versionCode 2268` / `versionName '2.8.0'`**. (2.3.1 was
 split across two versionCodes: the public GitHub release `v2.3.1`
 carries 2259, and 2260 is the same tree with `minSdk` raised, built as a
 draft for Play — see the minSdk note under Play Console notes.)
@@ -1173,6 +1177,30 @@ All scheduled work is WorkManager now: `RetentionWorker` replaced the `AutoDelet
 `OtpRetentionService`/`PurgeTrashService` JobServices after 2.6.2 (one worker, three unique-work
 names). `QKApplication` cancels their old JobScheduler jobs (ids 8120235–8120237) at start and
 schedules or cancels each retention job from its setting, which also covers upgrades.
+
+### Room (2.8.0) — the database since #44
+
+Realm was replaced by Room in 2.8.0. The Realm notes below describe the old code; the batching and
+"look up once per address" advice still applies.
+
+- **Relations are not stored inside objects.** `Conversation.recipients/lastMessage`, `Message.parts/
+  emojiReactions`, `Recipient.contact`, `Contact.numbers` and `ContactGroup.contacts` are `@Ignore`
+  fields that `db/Relations.kt` fills after a query. A repository must fill them for every object it
+  returns. Links are columns (`lastMessageId`, `contactLookupKey`, `targetMessageId`) and join tables
+  (`ConversationRecipient`, `ContactGroupMember`). An MMS part belongs to the message whose
+  `contentId` equals `MmsPart.messageId`.
+- **Live lists use `database.observe(Tables.X) { query }`** (`db/Observe.kt`), not Room's own Flow
+  DAO methods: Room only refreshes when a table named in the SQL changes, which misses relations
+  (a renamed contact on the inbox).
+- **`allowMainThreadQueries()` is on** because many screens read synchronously, as they did with
+  Realm. Moving those reads off the main thread is #71.
+- **App-only fields:** the full sync keeps `AppOnlyMessageFields` and `AppOnlyConversationFields`
+  (`SyncRepositoryImpl.kt`); `SortingAndSyncDataTest` fails if a new field on either isn't classified.
+- **The importer** (`migration/RealmImporter.kt`) copies the app-only data from the old
+  `files/default.realm` once (`fh_roomImportVersion`), reading a copy so the original is never
+  changed, then runs the full sync. Raising `IMPORTER_VERSION` makes every phone import again. It
+  logs `Room import <kind>: Realm N, Room N` for each kind of data.
+- **Schema changes** need a Room `Migration` and the exported schema in `data/schemas/`.
 
 ### Realm performance rule for anything batch-shaped
 

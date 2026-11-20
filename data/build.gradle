@@ -37,6 +37,12 @@ android {
     namespace 'dev.octoshrimpy.quik.data'
 }
 
+
+// Room's schema history, checked in, so later migrations can be tested against it
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
 
     // androidx
@@ -81,6 +87,13 @@ dependencies {
     // R8 can't break them (it did, silently, in 2.3.1, and again under Kotlin 2 + Moshi 1.15).
     // Through KSP: Moshi's kapt path can't read Kotlin 2.2 metadata.
     ksp "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
+
+    // Room (replacing Realm, #44)
+    implementation "androidx.room:room-runtime:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+    ksp "androidx.room:room-compiler:$room_version"
+    testImplementation "org.robolectric:robolectric:4.16.1"
+    testImplementation "androidx.test:core:1.6.1"
     implementation "com.squareup.okhttp3:okhttp:$okhttp3_version"
     implementation 'io.michaelrocks:libphonenumber-android:8.13.47'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -105,4 +118,7 @@ tasks.withType(Test).configureEach {
     inputs.file("../android-smsmms/src/main/java/com/android/mms/transaction/PushReceiver.java")
     inputs.dir("src/main/java/com/moez/QKSMS/receiver")
     inputs.dir("src/main/java/com/moez/QKSMS/service")
+    // ReceivePathIndependentOfImportTest reads these
+    inputs.dir("src/main/java/com/moez/QKSMS/worker")
+    inputs.file("../presentation/src/main/java/com/moez/QKSMS/common/util/NotificationManagerImpl.kt")
 }
