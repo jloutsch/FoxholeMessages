@@ -262,6 +262,8 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         )
     }
 
+    // Fire and forget: runs once in the background for the app's lifetime, nothing to cancel
+    @Suppress("CheckResult")
     override fun reparseIfFlagged() {
         Completable.fromAction {
             if (database.emojiSyncNeededDao().count() > 0) {
@@ -271,6 +273,8 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         }.subscribeOn(Schedulers.io()).subscribe({}, { error -> Timber.e(error, "Emoji reparse failed") })
     }
 
+    // Fire and forget: runs once in the background for the app's lifetime, nothing to cancel
+    @Suppress("CheckResult")
     override fun reparseAll(onDone: () -> Unit, onError: (Throwable) -> Unit) {
         Completable.fromAction { deleteAndReparseAllEmojiReactions { /* No progress UI here */ } }
             .subscribeOn(Schedulers.io())
