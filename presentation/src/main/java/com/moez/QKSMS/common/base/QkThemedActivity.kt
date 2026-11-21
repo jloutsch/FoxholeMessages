@@ -32,7 +32,7 @@ import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeBoolean
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.extensions.Optional
-import kotlinx.coroutines.rx2.asObservable
+import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
@@ -79,7 +79,7 @@ abstract class QkThemedActivity : QkActivity() {
                     conversation.recipients.size == 1 -> Observable.just(Optional(conversation.recipients.first()))
 
                     else -> messageRepo.getLastIncomingMessage(conversation.id)
-                            .asObservable()
+                            .asMainObservable()
                             .mapNotNull { messages -> messages.firstOrNull() }
                             .distinctUntilChanged { message -> message.address }
                             .mapNotNull { message ->

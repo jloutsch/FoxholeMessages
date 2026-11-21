@@ -27,8 +27,8 @@ android {
         applicationId 'com.foxhole.messages'
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 2270
-        versionName '2.9.1'
+        versionCode 2271
+        versionName '2.9.2'
         setProperty("archivesBaseName", "FoxholeMessages-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -224,6 +224,9 @@ gradle.taskGraph.whenReady { taskGraph ->
 // the tests instead of Gradle reusing an earlier pass.
 tasks.withType(Test).configureEach {
     inputs.file("proguard-rules.pro")
+    // MainThreadDatabaseUpdatesTest reads these
+    inputs.dir("src/main/java")
+    inputs.files("../data/src/main/java/com/moez/QKSMS/repository/ConversationRepositoryImpl.kt", "../data/src/main/java/com/moez/QKSMS/repository/ContactRepositoryImpl.kt")
     inputs.file("build.gradle")
     inputs.file("../data/src/main/assets/changelog.json")
     inputs.dir("../metadata/en-US/changelogs")

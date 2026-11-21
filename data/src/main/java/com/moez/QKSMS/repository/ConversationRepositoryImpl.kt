@@ -36,6 +36,7 @@ import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.tryOrNull
 import io.reactivex.Completable
 import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.rx2.asObservable
@@ -127,11 +128,13 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun getUnmanagedConversations(): Observable<List<Conversation>> =
         observeConversations { conversationDao.recent() }.asObservable()
+            .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
 
     override fun getRecipients(): List<Recipient> = relations.recipients(database.recipientDao().all())
 
     override fun getUnmanagedRecipients(): Observable<List<Recipient>> =
         database.observe(Tables.RECIPIENTS) { relations.recipients(database.recipientDao().withContact()) }.asObservable()
+            .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
 
     override fun getRecipient(recipientId: Long): Recipient? =
         database.recipientDao().get(recipientId)?.let { relations.recipients(listOf(it)).first() }

@@ -1,0 +1,2 @@
+What's new in 2.9.2:
+- Fixed: the app could crash when opening a group conversation (since 2.8.0).

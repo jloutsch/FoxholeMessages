@@ -19,7 +19,7 @@
 package dev.octoshrimpy.quik.feature.qkreply
 
 import io.reactivex.Observable
-import kotlinx.coroutines.rx2.asObservable
+import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import kotlinx.coroutines.flow.filterNotNull
 import android.telephony.SmsMessage
 import com.uber.autodispose.android.lifecycle.scope
@@ -62,7 +62,7 @@ class QkReplyViewModel @Inject constructor(
     private val conversation by lazy {
         conversationRepo.observeConversation(threadId)
                 .filterNotNull()
-                .asObservable()
+                .asMainObservable()
                 .distinctUntilChanged()
     }
 
@@ -73,7 +73,7 @@ class QkReplyViewModel @Inject constructor(
         showAll.distinctUntilChanged()
                 .switchMap { all ->
                     val source = if (all) messageRepo.getMessages(threadId) else messageRepo.observeUnreadMessages(threadId)
-                    source.asObservable()
+                    source.asMainObservable()
                 }
                 .replay(1)
                 .refCount()

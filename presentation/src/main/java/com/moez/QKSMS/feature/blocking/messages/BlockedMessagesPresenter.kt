@@ -19,7 +19,7 @@
 package dev.octoshrimpy.quik.feature.blocking.messages
 
 import io.reactivex.rxkotlin.plusAssign
-import kotlinx.coroutines.rx2.asObservable
+import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
@@ -38,7 +38,7 @@ class BlockedMessagesPresenter @Inject constructor(
 ) : QkPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState()) {
 
     init {
-        disposables += conversationRepo.observeBlockedConversations().asObservable()
+        disposables += conversationRepo.observeBlockedConversations().asMainObservable()
             .subscribe { conversations -> newState { copy(data = conversations) } }
     }
 
