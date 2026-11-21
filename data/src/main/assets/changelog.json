@@ -1,5 +1,12 @@
 [
   {
+    "versionCode": 2273,
+    "versionName": "2.9.4",
+    "improved": [
+      "The Starred tab shows how many messages you've starred"
+    ]
+  },
+  {
     "versionCode": 2272,
     "versionName": "2.9.3",
     "fixed": [

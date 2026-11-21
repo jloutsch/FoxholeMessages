@@ -1,0 +1,2 @@
+What's new in 2.9.4:
+- Improved: the Starred tab shows how many messages you've starred.
