@@ -16,6 +16,7 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import java.util.regex.Matcher
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import dev.octoshrimpy.quik.util.EmojiPatternStrings
@@ -114,7 +115,14 @@ internal class EmojiReactionPatterns {
     private fun matchedGroups(match: MatchResult): List<String> =
         match.groups.drop(1).mapNotNull { it?.value }
 
+    // One reused matcher per pattern for the yes/no check. A new Regex.find() per pattern per
+    // message cost about 1 ms a message on a phone (~140 patterns; Android's regex is native ICU):
+    // recognising a full sync's 13,101 messages took 13.5 s on the Note 10, 4.3 s with reuse (#72).
+    // A matcher isn't thread-safe and receiving can run alongside a sync, hence @Synchronized.
+    private val matchers = HashMap<Regex, Matcher>()
+
     /** The reaction [body] expresses, a removal first if it's one, or null if it isn't a reaction. */
+    @Synchronized
     fun parse(body: String): ParsedEmojiReaction? =
         firstMatch(removalPatterns, body) ?: firstMatch(reactionPatterns, body)
 
@@ -123,6 +131,9 @@ internal class EmojiReactionPatterns {
         body: String
     ): ParsedEmojiReaction? {
         for ((pattern, parser) in patterns) {
+            val matcher = matchers.getOrPut(pattern) { pattern.toPattern().matcher("") }
+            if (!matcher.reset(body).find()) continue
+            // A hit is rare (a reaction), so the full Kotlin match is only built then
             val match = pattern.find(body) ?: continue
             return parser(match) ?: continue
         }

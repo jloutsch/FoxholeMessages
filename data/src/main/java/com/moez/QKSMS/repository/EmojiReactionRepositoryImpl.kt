@@ -223,20 +223,33 @@ class EmojiReactionRepositoryImpl @Inject constructor(
 
         // parse oldest to newest to handle reactions & removals properly
         val allMessages = relations.messages(database.messageDao().reactionCandidates())
+        val loadMs = System.currentTimeMillis() - startTime
 
         val max = allMessages.size
         var progress = 0
         var reactionsParsed = 0
         var targetsFound = 0
+        // Where the time goes, for #72: each phase's total in nanoseconds
+        var parseNs = 0L
+        var lookupNs = 0L
+        var saveNs = 0L
 
         allMessages.forEach { message ->
             val text = message.getText(false)
-            val parsedReaction = parseEmojiReaction(text)
+            var mark = System.nanoTime()
+            // Not parseEmojiReaction: its "no pattern matched" log line, written for every ordinary
+            // message here, took the Note 10's re-check from 16 s to 38 s (#72)
+            val parsedReaction = patterns.parse(text)
+            parseNs += System.nanoTime() - mark
             if (parsedReaction != null) {
                 reactionsParsed++
+                mark = System.nanoTime()
                 val targetMessage = findTargetMessage(message, parsedReaction)
+                lookupNs += System.nanoTime() - mark
                 if (targetMessage != null) targetsFound++
+                mark = System.nanoTime()
                 saveEmojiReaction(message, parsedReaction, targetMessage)
+                saveNs += System.nanoTime() - mark
             }
             // Counts every message scanned, since max does; counting only reactions left the bar
             // near the start. Updated every 25 messages and at the end, so the UI isn't flooded.
@@ -258,7 +271,9 @@ class EmojiReactionRepositoryImpl @Inject constructor(
         // target lookup is what's failing.
         Timber.i(
             "Reparsed emoji reactions in ${endTime - startTime}ms - scanned $max messages, " +
-                "parsed $reactionsParsed reactions, found targets for $targetsFound of them"
+                "parsed $reactionsParsed reactions, found targets for $targetsFound of them " +
+                "(loading ${loadMs}ms, recognising ${parseNs / 1_000_000}ms, " +
+                "finding targets ${lookupNs / 1_000_000}ms, saving ${saveNs / 1_000_000}ms)"
         )
     }
 
