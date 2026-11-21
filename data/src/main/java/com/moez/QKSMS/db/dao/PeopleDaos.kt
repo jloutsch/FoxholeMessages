@@ -17,6 +17,7 @@ interface RecipientDao {
     @Query("SELECT * FROM Recipient WHERE id = :id") fun get(id: Long): Recipient?
     @Query("SELECT * FROM Recipient WHERE id IN (:ids)") fun get(ids: List<Long>): List<Recipient>
     @Query("SELECT MAX(id) FROM Recipient") fun maxId(): Long?
+    @Query("SELECT MIN(id) FROM Recipient") fun minId(): Long?
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun upsert(recipients: List<Recipient>)
     @Query("DELETE FROM Recipient") fun clear()
 }
