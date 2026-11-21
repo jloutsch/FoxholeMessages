@@ -30,7 +30,7 @@ import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.ClipboardUtils
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
-import kotlinx.coroutines.rx2.asObservable
+import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoMedia
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoRecipient
@@ -79,7 +79,7 @@ class ConversationInfoPresenter @Inject constructor(
         // A deleted conversation arrives as null, which closes the screen (hasError)
         disposables += conversationRepo.observeConversation(threadId)
                 .map { conversation -> Optional(conversation) }
-                .asObservable()
+                .asMainObservable()
                 .doOnNext { conversation ->
                     if (conversation.value == null) {
                         newState { copy(hasError = true) }
@@ -96,7 +96,7 @@ class ConversationInfoPresenter @Inject constructor(
         disposables += Observables
                 .combineLatest(
                         conversation,
-                        messageRepo.getPartsForConversation(threadId).asObservable(),
+                        messageRepo.getPartsForConversation(threadId).asMainObservable(),
                         prefs.backgroundUri(threadId).asObservable()
                 ) { conversation, parts, backgroundUri ->
                     val data = mutableListOf<ConversationInfoItem>()

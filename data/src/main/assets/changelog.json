@@ -1,5 +1,12 @@
 [
   {
+    "versionCode": 2271,
+    "versionName": "2.9.2",
+    "fixed": [
+      "The app could crash when opening a group conversation"
+    ]
+  },
+  {
     "versionCode": 2270,
     "versionName": "2.9.1",
     "fixed": [

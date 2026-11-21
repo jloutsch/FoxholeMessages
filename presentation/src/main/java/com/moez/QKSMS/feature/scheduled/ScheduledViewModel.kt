@@ -1,7 +1,7 @@
 package dev.octoshrimpy.quik.feature.scheduled
 
 import io.reactivex.disposables.Disposable
-import kotlinx.coroutines.rx2.asObservable
+import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import android.content.Context
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
@@ -167,7 +167,7 @@ class ScheduledViewModel @Inject constructor(
         else
             scheduledMessageRepo.observeScheduledMessages()
         messagesSubscription?.dispose()
-        messagesSubscription = messages.asObservable()
+        messagesSubscription = messages.asMainObservable()
             .subscribe { list -> newState { copy(scheduledMessages = list) } }
             .also { disposables += it }
     }
