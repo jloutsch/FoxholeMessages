@@ -36,9 +36,11 @@ class BlockedNumberTextWatcher(
         editText.removeTextChangedListener(this)
 
         val formatted = s?.let(phoneNumberUtils::formatNumber)
-        if (s?.toString() != formatted && formatted != null) {
-            editText.setText(formatted)
-            editText.setSelection(formatted.length)
+        if (s != null && formatted != null && s.toString() != formatted) {
+            // Edit the text in place: setText() makes Android restart the keyboard, which drops
+            // Samsung's keyboard from its number page back to letters mid-number (#69)
+            s.replace(0, s.length, formatted)
+            editText.setSelection(s.length)
         }
 
         editText.addTextChangedListener(this)
