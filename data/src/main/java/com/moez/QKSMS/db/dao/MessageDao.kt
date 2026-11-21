@@ -115,7 +115,7 @@ interface MessageDao {
 
     // Starred
     @Query("SELECT * FROM Message WHERE isStarred = 1 AND deletedAt IS NULL ORDER BY date DESC") fun starred(): List<Message>
-    @Query("SELECT COUNT(*) FROM Message WHERE isStarred = 1 AND read = 0 AND deletedAt IS NULL") fun unreadStarredCount(): Long
+    @Query("SELECT COUNT(*) FROM Message WHERE isStarred = 1 AND deletedAt IS NULL") fun starredCount(): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun upsert(message: Message)
     @Insert(onConflict = OnConflictStrategy.REPLACE) fun upsert(messages: List<Message>)

@@ -107,6 +107,15 @@ class MessageDaoTest {
     }
 
     @Test
+    fun starredCountIncludesReadMessagesAndSkipsTrash() {
+        // #77: the Starred tab shows how many messages are starred, read or not
+        val starred = listOf(message(1, read = true), message(2, read = false), message(3, deletedAt = 5))
+            .onEach { it.isStarred = true }
+        dao.upsert(starred + message(4))
+        assertEquals(2L, dao.starredCount())
+    }
+
+    @Test
     fun savingAProviderMessageAgainReusesItsRow() {
         // #82: the provider-changed sync can save a just-sent message before the send path does;
         // the send path must reuse that row instead of adding a second copy

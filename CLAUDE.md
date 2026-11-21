@@ -1458,6 +1458,9 @@ list**, which is the thing to know before touching that area:
   `ConversationRepository` onto `MessageRepository` as
   `getStarredMessages`/`getUnreadStarredCount` — neither was ever about
   conversations.
+- **The Starred badge counts every starred message** (`getStarredCount`, #77) and shows even at 0;
+  the other tabs count unread conversations and hide 0 (`Tab.badgeText`). The unread-only count was
+  nearly always 0 because people star messages they've already read.
 
 ### Reactions to pictures — shipped but UNVERIFIED
 

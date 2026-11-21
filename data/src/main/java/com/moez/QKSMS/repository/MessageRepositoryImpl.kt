@@ -1063,5 +1063,5 @@ open class MessageRepositoryImpl @Inject constructor(
     override fun getStarredMessages(): Flow<List<Message>> =
         observeMessages { messageDao.starred() }
 
-    override fun getUnreadStarredCount(): Long = messageDao.unreadStarredCount()
+    override fun getStarredCount(): Long = messageDao.starredCount()
 }
