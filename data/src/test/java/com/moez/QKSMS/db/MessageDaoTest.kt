@@ -86,4 +86,34 @@ class MessageDaoTest {
         assertEquals(listOf(301L), hydrated.single().parts.map { it.id })
         assertEquals(1L, dao.forPart(301)?.id)
     }
+
+    @Test
+    fun searchTreatsPercentLiterally() {
+        // #79: % is a wildcard in SQL LIKE; Realm matched it as a plain character
+        dao.upsert(listOf(message(1, body = "50% off today"), message(2, body = "500 items")))
+        assertEquals(listOf(1L), dao.search("50%").map { it.id })
+        assertEquals(listOf(1L), dao.threadSearch(1, "50%").map { it.id })
+    }
+
+    @Test
+    fun searchTreatsUnderscoreLiterally() {
+        dao.upsert(listOf(message(1, body = "file_name.txt"), message(2, body = "filexname")))
+        assertEquals(listOf(1L), dao.search("file_name").map { it.id })
+    }
+
+    @Test
+    fun searchTreatsBackslashLiterally() {
+        dao.upsert(listOf(message(1, body = "C:\\temp"), message(2, body = "C:temp")))
+        assertEquals(listOf(1L), dao.search("C:\\").map { it.id })
+    }
+
+    @Test
+    fun savingAProviderMessageAgainReusesItsRow() {
+        // #82: the provider-changed sync can save a just-sent message before the send path does;
+        // the send path must reuse that row instead of adding a second copy
+        val relations = Relations(db)
+        relations.saveProviderMessage(message(5, contentId = 70))
+        relations.saveProviderMessage(message(9, contentId = 70))
+        assertEquals(listOf(5L), dao.all().map { it.id })
+    }
 }
