@@ -124,10 +124,14 @@ class MessagesAdapter @Inject constructor(
         set(value) {
             if (field === value) return
 
+            val sameMessages = field?.second === value?.second
             field = value
             contactCache.clear()
 
-            updateData(value?.second)
+            // Only the conversation changed (a contact renamed, #81): redraw the rows so they show
+            // the new name; giving the list the same messages again wouldn't redraw anything
+            if (sameMessages) notifyItemRangeChanged(0, itemCount)
+            else updateData(value?.second)
         }
 
     /**

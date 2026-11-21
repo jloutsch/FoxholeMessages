@@ -227,16 +227,18 @@ class ComposeViewModel @Inject constructor(
             }
             .subscribe()
 
-        // When the conversation changes, mark read, and update the recipientId and the messages for the adapter
-        disposables += conversation
-                .distinctUntilChanged { conversation -> conversation.id }
-                .observeOn(AndroidSchedulers.mainThread())
-                .switchMap { conversation ->
-                    messageRepo.getMessages(conversation.id).asMainObservable().map { list -> conversation to list }
+        // Every conversation update (a renamed contact, #81) with its thread's messages, for the adapter
+        var lastMessages: List<Message>? = null
+        disposables += liveThread(conversation.observeOn(AndroidSchedulers.mainThread())) { threadId ->
+                    messageRepo.getMessages(threadId).asMainObservable()
                 }
                 .subscribe { (conversation, list) ->
                     newState { copy(threadId = conversation.id, messages = Pair(conversation, list)) }
-                    messages.onNext(list)
+                    // Only when the messages themselves changed, not for a conversation-only update
+                    if (list !== lastMessages) {
+                        lastMessages = list
+                        messages.onNext(list)
+                    }
                 }
 
         disposables += conversation
