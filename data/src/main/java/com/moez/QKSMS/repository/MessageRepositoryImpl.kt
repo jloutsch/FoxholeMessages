@@ -349,7 +349,7 @@ open class MessageRepositoryImpl @Inject constructor(
                                 .orEmpty()
                 }
 
-                database.runInTransaction { relations.saveMessage(this) }
+                relations.saveProviderMessage(this)
             }
         }
     }

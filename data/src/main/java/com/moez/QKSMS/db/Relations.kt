@@ -122,6 +122,18 @@ class Relations @Inject constructor(private val database: FoxholeDatabase) {
         }
     }
 
+    /**
+     * Saves a message read from the phone's store, reusing the row already saved for it (same
+     * type and store id) so it isn't stored twice. The provider-changed sync can save a message
+     * the app just sent before the send path does (#82).
+     */
+    fun saveProviderMessage(message: Message) = database.runInTransaction {
+        if (message.contentId != 0L) {
+            messageDao.getByProviderId(message.type, message.contentId)?.let { saved -> message.id = saved.id }
+        }
+        saveMessage(message)
+    }
+
     /** Saves recipients, recording which contact each one matched. Call inside a transaction. */
     fun saveRecipients(recipients: List<Recipient>) {
         recipients.forEach { recipient -> recipient.contact?.let { recipient.contactLookupKey = it.lookupKey } }

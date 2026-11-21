@@ -20,10 +20,14 @@ interface MessageDao {
     companion object {
         private const val IN_THREAD = "threadId = :threadId AND isEmojiReaction = 0 AND deletedAt IS NULL"
 
+        // :query as a LIKE pattern that matches it anywhere, with \, % and _ escaped so they're plain
+        // characters (as they were in Realm's contains), not wildcards (#79)
+        private const val CONTAINS_QUERY = "'%' || replace(replace(replace(:query, '\\', '\\\\'), '%', '\\%'), '_', '\\_') || '%' ESCAPE '\\'"
+
         // Case-insensitive substring match on the text, or on any text part of an MMS (SQLite's
         // LIKE folds ASCII letters only, as Realm's Case.INSENSITIVE did for most text)
-        private const val MATCHES = "(body LIKE '%' || :query || '%' OR (type = 'mms' AND EXISTS " +
-                "(SELECT 1 FROM MmsPart p WHERE p.messageId = Message.contentId AND p.text LIKE '%' || :query || '%')))"
+        private const val MATCHES = "(body LIKE $CONTAINS_QUERY OR (type = 'mms' AND EXISTS " +
+                "(SELECT 1 FROM MmsPart p WHERE p.messageId = Message.contentId AND p.text LIKE $CONTAINS_QUERY)))"
     }
 
     @Query("SELECT * FROM Message WHERE $IN_THREAD ORDER BY date") fun thread(threadId: Long): List<Message>
