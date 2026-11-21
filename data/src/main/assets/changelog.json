@@ -1,5 +1,16 @@
 [
   {
+    "versionCode": 2270,
+    "versionName": "2.9.1",
+    "fixed": [
+      "Searching for % or _ matched messages that don't contain them",
+      "A message you sent could appear twice until the next sync"
+    ],
+    "improved": [
+      "Saving a received message no longer reads through every stored message first"
+    ]
+  },
+  {
     "versionCode": 2269,
     "versionName": "2.9.0",
     "improved": [

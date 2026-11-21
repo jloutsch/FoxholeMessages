@@ -1104,7 +1104,7 @@ draft can be discarded.
 ## v2.x — Play Store release, obfuscation, and the traps found along the way
 
 The app is live on Google Play as of the 2.x line. Current shipped
-version is **`versionCode 2269` / `versionName '2.9.0'`**. (2.3.1 was
+version is **`versionCode 2270` / `versionName '2.9.1'`**. (2.3.1 was
 split across two versionCodes: the public GitHub release `v2.3.1`
 carries 2259, and 2260 is the same tree with `minSdk` raised, built as a
 draft for Play — see the minSdk note under Play Console notes.)
@@ -1202,7 +1202,10 @@ advice still applies.
   the old Realm files at launch when that marker is set. A phone that goes from 2.7.x straight to
   2.9.0 or later keeps its messages (rebuilt from the phone's store) but loses stars, Trash, sorting,
   drafts, tab moves and other app-only data; to recover them, install 2.8.0 first.
-- **Schema changes** need a Room `Migration` and the exported schema in `data/schemas/`.
+- **Schema changes:** raise `FoxholeDatabase`'s version, add an `AutoMigration` (or a `Migration` when
+  Room can't work it out), commit the new `data/schemas/.../N.json`, and add a case to `MigrationTest`
+  (version 2, #84, is the first). The first test run after a schema change can fail with "Missing
+  file N.json", because the tests copied the schema folder before the compiler wrote it. Run it again.
 
 ### Realm performance rule for anything batch-shaped
 

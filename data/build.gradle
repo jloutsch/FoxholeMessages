@@ -35,6 +35,14 @@ android {
     }
 
     namespace 'dev.octoshrimpy.quik.data'
+
+    // MigrationTest reads each released schema from data/schemas
+    sourceSets {
+        test.assets.srcDirs += files("$projectDir/schemas")
+    }
+    testOptions {
+        unitTests.includeAndroidResources = true
+    }
 }
 
 
@@ -92,6 +100,7 @@ dependencies {
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
     ksp "androidx.room:room-compiler:$room_version"
+    testImplementation "androidx.room:room-testing:$room_version"
     testImplementation "org.robolectric:robolectric:4.16.1"
     testImplementation "androidx.test:core:1.6.1"
     implementation "com.squareup.okhttp3:okhttp:$okhttp3_version"

@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.db
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -35,8 +36,9 @@ import dev.octoshrimpy.quik.model.SyncLog
 import dev.octoshrimpy.quik.model.TrustedSender
 
 /**
- * The app's Room database, replacing Realm (#44). Version 1 is the first Room schema; later
- * changes need a Room migration and a test against the exported schema in data/schemas.
+ * The app's Room database, replacing Realm (#44). Every schema change needs a new version, a
+ * migration (an AutoMigration where Room can work it out) and a case in MigrationTest; the
+ * exported schema for each version is committed in data/schemas.
  */
 @Database(
     entities = [
@@ -46,8 +48,11 @@ import dev.octoshrimpy.quik.model.TrustedSender
         ScheduledMessage::class, BlockedNumber::class, TrustedSender::class, SenderCategoryRule::class,
         MessageContentFilter::class, SyncLog::class, EmojiSyncNeeded::class,
     ],
-    version = 1,
-    exportSchema = true
+    version = 2,
+    exportSchema = true,
+    // Each released version must upgrade to the current one; MigrationTest checks every step.
+    // 1 → 2 (#84): index Message(type, contentId).
+    autoMigrations = [AutoMigration(from = 1, to = 2)]
 )
 @TypeConverters(StringListConverter::class)
 abstract class FoxholeDatabase : RoomDatabase() {

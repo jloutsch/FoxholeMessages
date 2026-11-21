@@ -15,7 +15,7 @@ class DatabaseOpensTest {
     @Test
     fun opensAndCloses() {
         val database = inMemoryDatabase()
-        assertEquals(1, database.openHelper.readableDatabase.version)
+        assertEquals(2, database.openHelper.readableDatabase.version) // FoxholeDatabase.version
         database.close()
         assertTrue(!database.isOpen)
     }
