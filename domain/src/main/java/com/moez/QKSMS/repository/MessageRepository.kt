@@ -214,5 +214,6 @@ interface MessageRepository {
      */
     fun getStarredMessages(): Flow<List<Message>>
 
-    fun getUnreadStarredCount(): Long
+    /** All starred messages outside Trash, read or not, for the Starred tab's count (#77). */
+    fun getStarredCount(): Long
 }

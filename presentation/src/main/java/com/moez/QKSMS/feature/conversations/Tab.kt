@@ -26,3 +26,10 @@ enum class Tab(val category: String?, val titleRes: Int) {
     PROMOTIONS("PROMOTIONAL", R.string.tab_promotions),
     STARRED(null, R.string.tab_starred),
 }
+
+/**
+ * The tab's title with its count. Starred counts every starred message and always shows it (#77);
+ * the other tabs count unread conversations and hide zero.
+ */
+fun Tab.badgeText(label: String, count: Long): String =
+    if (count > 0 || this == Tab.STARRED) "$label ($count)" else label

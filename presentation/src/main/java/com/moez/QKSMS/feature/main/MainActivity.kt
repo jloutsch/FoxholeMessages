@@ -67,6 +67,7 @@ import dev.octoshrimpy.quik.feature.conversations.ConversationsAdapter
 import dev.octoshrimpy.quik.feature.conversations.ConversationsPagerAdapter
 import dev.octoshrimpy.quik.feature.conversations.StarredMessagesAdapter
 import dev.octoshrimpy.quik.feature.conversations.Tab
+import dev.octoshrimpy.quik.feature.conversations.badgeText
 import dev.octoshrimpy.quik.manager.ChangelogManager
 import dev.octoshrimpy.quik.repository.SyncRepository
 import io.reactivex.Observable
@@ -280,7 +281,7 @@ class MainActivity : QkThemedActivity(), MainView {
         tabPages.forEachIndexed { index, page ->
             val count = unreadCounts[page.tab] ?: 0
             val label = tabDisplayName(page.tab)
-            binding.tabStrip.getTabAt(index)?.text = if (count > 0) "$label ($count)" else label
+            binding.tabStrip.getTabAt(index)?.text = page.tab.badgeText(label, count)
         }
     }
 

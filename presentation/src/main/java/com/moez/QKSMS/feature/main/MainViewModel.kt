@@ -720,6 +720,6 @@ private fun buildTabUnreadCounts(
     messageRepo: MessageRepository
 ): Map<Tab, Long> =
     Tab.values().associateWith { tab ->
-        if (tab == Tab.STARRED) messageRepo.getUnreadStarredCount()
+        if (tab == Tab.STARRED) messageRepo.getStarredCount()
         else conversationRepo.getUnreadCountByCategory(requireNotNull(tab.category))
     }
