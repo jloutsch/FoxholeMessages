@@ -1,0 +1,3 @@
+What's new in 2.9.5:
+- Fixed: in rare cases a conversation's preview showed the older of two messages sent at the same moment.
+- Fixed: on some phones, a new group conversation could show the wrong people.

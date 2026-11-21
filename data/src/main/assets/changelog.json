@@ -1,5 +1,13 @@
 [
   {
+    "versionCode": 2274,
+    "versionName": "2.9.5",
+    "fixed": [
+      "In rare cases a conversation's preview showed the older of two messages sent at the same moment",
+      "On some phones, a new group conversation could show the wrong people"
+    ]
+  },
+  {
     "versionCode": 2273,
     "versionName": "2.9.4",
     "improved": [
