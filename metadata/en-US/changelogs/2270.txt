@@ -1,0 +1,4 @@
+What's new in 2.9.1:
+- Fixed: searching for % or _ matched messages that don't contain them.
+- Fixed: a sent message could appear twice until the next sync.
+- Improved: saving a received message no longer reads through every stored message first.
