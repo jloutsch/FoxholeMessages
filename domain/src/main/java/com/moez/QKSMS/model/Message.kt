@@ -30,7 +30,9 @@ import androidx.room.Ignore
 import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 
-@Entity(indices = [Index("category"), Index("deletedAt")])
+// (type, contentId): every received message and single-message sync looks a message up by its
+// phone-store identity (MessageDao.getByProviderId), #84
+@Entity(indices = [Index("category"), Index("deletedAt"), Index("type", "contentId")])
 open class Message {
     companion object {
         const val TYPE_SMS = "sms"

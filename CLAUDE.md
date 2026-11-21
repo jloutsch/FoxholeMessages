@@ -1202,7 +1202,10 @@ advice still applies.
   the old Realm files at launch when that marker is set. A phone that goes from 2.7.x straight to
   2.9.0 or later keeps its messages (rebuilt from the phone's store) but loses stars, Trash, sorting,
   drafts, tab moves and other app-only data; to recover them, install 2.8.0 first.
-- **Schema changes** need a Room `Migration` and the exported schema in `data/schemas/`.
+- **Schema changes:** raise `FoxholeDatabase`'s version, add an `AutoMigration` (or a `Migration` when
+  Room can't work it out), commit the new `data/schemas/.../N.json`, and add a case to `MigrationTest`
+  (version 2, #84, is the first). The first test run after a schema change can fail with "Missing
+  file N.json", because the tests copied the schema folder before the compiler wrote it. Run it again.
 
 ### Realm performance rule for anything batch-shaped
 
