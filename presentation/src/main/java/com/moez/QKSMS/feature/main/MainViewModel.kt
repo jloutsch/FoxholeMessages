@@ -18,7 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
-import kotlinx.coroutines.rx2.asObservable
+import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import android.content.Context
 import androidx.recyclerview.widget.ItemTouchHelper
 import dev.octoshrimpy.quik.classifier.MessageCategoryBackfill
@@ -130,12 +130,12 @@ class MainViewModel @Inject constructor(
             .switchMap { unreadAtTop -> observeTabData(conversationRepo, unreadAtTop) }
             .subscribe { tabData -> newState { copy(tabData = tabData) } }
 
-        disposables += messageRepo.getStarredMessages().asObservable()
+        disposables += messageRepo.getStarredMessages().asMainObservable()
             .subscribe { starred -> newState { copy(starredMessages = starred) } }
 
         disposables += prefs.unreadAtTop.asObservable()
             .distinctUntilChanged()
-            .switchMap { unreadAtTop -> conversationRepo.getConversations(unreadAtTop, true).asObservable() }
+            .switchMap { unreadAtTop -> conversationRepo.getConversations(unreadAtTop, true).asMainObservable() }
             .subscribe { archived ->
                 newState { if (page is Archived) copy(page = page.copy(data = archived)) else this }
                 latestArchived = archived
@@ -146,7 +146,7 @@ class MainViewModel @Inject constructor(
 
         // Fetch scheduled messages and assign it to hasScheduledMessage
         disposables += scheduledMessageRepo.observeScheduledMessages()
-            .asObservable()
+            .asMainObservable()
             .map { messages ->
                 messages.map { it.conversationId }.toSet()
             }
@@ -705,7 +705,7 @@ class MainViewModel @Inject constructor(
 private fun observeTabData(conversationRepo: ConversationRepository, unreadAtTop: Boolean): Observable<Map<Tab, List<Conversation>?>> {
     val tabs = Tab.values().filter { tab -> tab.category != null }
     val sources = tabs.map { tab ->
-        conversationRepo.getConversationsByCategory(unreadAtTop, requireNotNull(tab.category)).asObservable()
+        conversationRepo.getConversationsByCategory(unreadAtTop, requireNotNull(tab.category)).asMainObservable()
     }
     return Observable.combineLatest(sources) { lists ->
         tabs.indices.associate { index ->

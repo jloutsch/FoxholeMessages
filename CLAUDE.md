@@ -1104,7 +1104,7 @@ draft can be discarded.
 ## v2.x — Play Store release, obfuscation, and the traps found along the way
 
 The app is live on Google Play as of the 2.x line. Current shipped
-version is **`versionCode 2270` / `versionName '2.9.1'`**. (2.3.1 was
+version is **`versionCode 2271` / `versionName '2.9.2'`**. (2.3.1 was
 split across two versionCodes: the public GitHub release `v2.3.1`
 carries 2259, and 2260 is the same tree with `minSdk` raised, built as a
 draft for Play — see the minSdk note under Play Console notes.)
@@ -1193,6 +1193,10 @@ advice still applies.
 - **Live lists use `database.observe(Tables.X) { query }`** (`db/Observe.kt`), not Room's own Flow
   DAO methods: Room only refreshes when a table named in the SQL changes, which misses relations
   (a renamed contact on the inbox).
+- **Screens get database updates on the main thread.** Room's live lists send updates from a
+  background thread; Realm used the main thread, and screens assume it. Convert a database Flow for
+  a screen with `asMainObservable()` (presentation `FlowExtensions.kt`), never `asObservable()`.
+  `MainThreadDatabaseUpdatesTest` enforces it. Missing this crashed group threads in 2.8.0–2.9.1.
 - **`allowMainThreadQueries()` is on** because many screens read synchronously, as they did with
   Realm. Moving those reads off the main thread is #71.
 - **App-only fields:** the full sync keeps `AppOnlyMessageFields` and `AppOnlyConversationFields`

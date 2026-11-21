@@ -30,6 +30,7 @@ import dev.octoshrimpy.quik.db.observe
 import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.ContactGroup
 import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.rx2.asObservable
 import javax.inject.Inject
@@ -67,11 +68,13 @@ class ContactRepositoryImpl @Inject constructor(
                     }
                 }
                 .asObservable()
+                .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
 
     // Only groups with at least one saved contact in them
     override fun getUnmanagedContactGroups(): Observable<List<ContactGroup>> =
         database.observe(Tables.GROUPS) { relations.contactGroups(contactDao.groups()).filter { it.contacts.isNotEmpty() } }
                 .asObservable()
+                .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
 
     override fun setDefaultPhoneNumber(lookupKey: String, phoneNumberId: Long) =
         contactDao.setDefaultNumber(lookupKey, phoneNumberId)

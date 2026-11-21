@@ -20,7 +20,7 @@ package dev.octoshrimpy.quik.feature.compose
 
 import kotlinx.coroutines.flow.map
 import dev.octoshrimpy.quik.extensions.Optional
-import kotlinx.coroutines.rx2.asObservable
+import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
@@ -169,7 +169,7 @@ class ComposeViewModel @Inject constructor(
 
         // A deleted conversation arrives as null, which closes the screen (hasError)
         val initialConversation: Observable<Conversation> = threadId.takeIf { it != 0L }
-            ?.let { id -> conversationRepo.observeConversation(id).map { Optional(it) }.asObservable() }
+            ?.let { id -> conversationRepo.observeConversation(id).map { Optional(it) }.asMainObservable() }
             ?.doOnNext { conversation -> if (conversation.value == null) newState { copy(hasError = true) } }
             ?.mapNotNull { conversation -> conversation.value }
             ?: Observable.empty()
@@ -185,7 +185,7 @@ class ComposeViewModel @Inject constructor(
             .switchMap { addresses ->
                 // monitors convos and triggers when wanted convo is present
                 conversationRepo.getConversations(false)
-                    .asObservable()
+                    .asMainObservable()
                     .mapNotNull { conversationRepo.getConversation(addresses) }
                     .doOnNext { newState { copy(loading = false) } }
             }
@@ -232,7 +232,7 @@ class ComposeViewModel @Inject constructor(
                 .distinctUntilChanged { conversation -> conversation.id }
                 .observeOn(AndroidSchedulers.mainThread())
                 .switchMap { conversation ->
-                    messageRepo.getMessages(conversation.id).asObservable().map { list -> conversation to list }
+                    messageRepo.getMessages(conversation.id).asMainObservable().map { list -> conversation to list }
                 }
                 .subscribe { (conversation, list) ->
                     newState { copy(threadId = conversation.id, messages = Pair(conversation, list)) }
@@ -254,7 +254,7 @@ class ComposeViewModel @Inject constructor(
                 ) { id, query -> id to query }
                 .switchMap<List<Message>> { (id, query) ->
                     if (query.isEmpty()) Observable.just(emptyList())
-                    else messageRepo.getMessages(id, query).asObservable()
+                    else messageRepo.getMessages(id, query).asMainObservable()
                 }
                 .subscribe(searchResults::onNext)
 
@@ -312,7 +312,7 @@ class ComposeViewModel @Inject constructor(
             .switchMap { conversation ->
                 scheduledMessageRepo
                     .getScheduledMessagesForConversation(conversation.id)
-                    .asObservable()
+                    .asMainObservable()
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { liveResults ->
