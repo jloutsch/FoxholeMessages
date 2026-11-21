@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.conversations
 
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+import timber.log.Timber
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.common.Navigator
@@ -43,8 +47,21 @@ class StarredMessagesAdapter @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils
 ) : QkListAdapter<Message, QkBindingViewHolder<StarredMessageListItemBinding>>(itemId = { it.id }) {
 
-    private val contacts by lazy { contactRepo.getContacts() }
+    // Loaded in the background (#71): reading every contact took about 20 ms on the main thread.
+    // Rows drawn before it arrives show the number, then redraw with the name.
+    private var contacts: List<Contact> = emptyList()
     private val contactCache = ContactCache()
+
+    init {
+        Single.fromCallable { contactRepo.getContacts() }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ loaded ->
+                contacts = loaded
+                contactCache.clear()
+                notifyDataSetChanged()
+            }, Timber::w)
+    }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
