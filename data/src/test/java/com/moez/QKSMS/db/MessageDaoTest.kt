@@ -64,9 +64,8 @@ class MessageDaoTest {
 
     @Test
     fun searchAccentedBehaviourRecorded() {
-        // Recorded, not designed: the SQLite under these unit tests matches "CAFÉ" to "café", as
-        // Realm's Case.INSENSITIVE did. Stock SQLite's LIKE folds ASCII letters only, so the phone's
-        // SQLite may not (not checked on a device). A change here means the test library changed.
+        // The SQLite under these unit tests matches "CAFÉ" to "café", as Realm's Case.INSENSITIVE did.
+        // The phone's own SQLite does too (DeviceSearchTest, on-device, passed on the Note 10, #80).
         dao.upsert(listOf(message(1, body = "café")))
         assertEquals(listOf(1L), dao.search("CAFÉ").map { it.id })
         assertEquals(listOf(1L), dao.search("CAF").map { it.id })

@@ -252,7 +252,8 @@ version 1.3.0's detector crashes under AGP 8 lint. Before that it flagged three 
 (`BlockingController` lines 105 and 123, `CategoryNotificationActivity` line 69).
 
 On-device tests (`data/src/androidTest`) need a phone and aren't run by CI: phone-number matching
-(`PhoneNumberUtilsTest`). The Trash checks (unread badges, search, the media gallery and shortcut
+(`PhoneNumberUtilsTest`) and search case-folding on the phone's own SQLite, including accented letters
+(`DeviceSearchTest`, #80). The Trash checks (unread badges, search, the media gallery and shortcut
 ranking leave out messages in Trash) used to be an on-device test because Realm couldn't run in plain
 JVM tests; on Room they are part of `MessageDaoTest` and run with `./gradlew test`.
 **Don't use `connectedAndroidTest`** — it uninstalls the app afterwards, wiping its data and its
