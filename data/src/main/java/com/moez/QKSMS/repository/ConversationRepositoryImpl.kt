@@ -271,7 +271,7 @@ class ConversationRepositoryImpl @Inject constructor(
                     conversation.apply {
                         recipients = matchedRecipients
                         this.sendAsGroup = if (recipients.size <= 1) false else sendAsGroup
-                        lastMessage = messageDao.latest(threadId)
+                        lastMessage = messageDao.latestVisible(threadId)
                     }
 
                     database.runInTransaction { relations.saveConversation(conversation) }
@@ -285,8 +285,10 @@ class ConversationRepositoryImpl @Inject constructor(
      */
     private fun createEmptyConversation(threadId: Long, addresses: Collection<String>, sendAsGroup: Boolean): Conversation {
         val contacts = relations.contacts(database.contactDao().all())
-        val matchedRecipients = addresses.map { address ->
+        val ids = relations.newLocalRecipientIds(addresses.size)
+        val matchedRecipients = addresses.zip(ids) { address, recipientId ->
             Recipient().apply {
+                id = recipientId
                 this.address = address
                 contact = contacts.firstOrNull { contact ->
                     contact.numbers.any { phoneNumberUtils.compare(it.address, address) }

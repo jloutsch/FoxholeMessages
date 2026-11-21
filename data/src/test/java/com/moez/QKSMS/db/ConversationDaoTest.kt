@@ -1,6 +1,7 @@
 package dev.octoshrimpy.quik.db
 
 import dev.octoshrimpy.quik.model.Contact
+import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Recipient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -121,5 +122,21 @@ class ConversationDaoTest {
         }
         assertEquals("Ann", withTimeout(5000) { names.receive() })
         watching.cancel()
+    }
+
+    @Test
+    fun conversationsMadeOnThePhoneKeepTheirOwnRecipients() {
+        // #83: recipients of a new empty conversation all got id 0, so each one overwrote the last
+        val relations = Relations(db)
+        db.recipientDao().upsert(listOf(Recipient(id = 5, address = "5550005")))
+        listOf(1L to listOf("5550001", "5550002"), 2L to listOf("5550003")).forEach { (thread, addresses) ->
+            val ids = relations.newLocalRecipientIds(addresses.size)
+            db.runInTransaction {
+                relations.saveConversation(Conversation(id = thread).apply {
+                    recipients = addresses.zip(ids) { address, id -> Recipient(id = id, address = address) }
+                })
+            }
+        }
+        assertEquals(listOf("5550001", "5550002", "5550003", "5550005"), db.recipientDao().all().map { it.address }.sorted())
     }
 }

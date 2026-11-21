@@ -134,6 +134,15 @@ class Relations @Inject constructor(private val database: FoxholeDatabase) {
         saveMessage(message)
     }
 
+    /**
+     * Ids for recipients of a conversation made on this phone before the phone's store lists it
+     * (#83). They go below zero, which the store's ids never do, so they can't replace its rows.
+     */
+    fun newLocalRecipientIds(count: Int): List<Long> {
+        val lowest = minOf(recipientDao.minId() ?: 0L, 0L)
+        return (1..count).map { lowest - it }
+    }
+
     /** Saves recipients, recording which contact each one matched. Call inside a transaction. */
     fun saveRecipients(recipients: List<Recipient>) {
         recipients.forEach { recipient -> recipient.contact?.let { recipient.contactLookupKey = it.lookupKey } }

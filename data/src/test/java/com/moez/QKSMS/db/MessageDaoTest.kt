@@ -116,6 +116,14 @@ class MessageDaoTest {
     }
 
     @Test
+    fun messagesWithTheSameTimeKeepAFixedOrder() {
+        // #83: two messages in the same millisecond show oldest-saved first, and the later one is the snippet
+        dao.upsert(listOf(message(2, date = 100), message(1, date = 100)))
+        assertEquals(listOf(1L, 2L), dao.thread(1).map { it.id })
+        assertEquals(2L, dao.latestVisible(1)?.id)
+    }
+
+    @Test
     fun savingAProviderMessageAgainReusesItsRow() {
         // #82: the provider-changed sync can save a just-sent message before the send path does;
         // the send path must reuse that row instead of adding a second copy
