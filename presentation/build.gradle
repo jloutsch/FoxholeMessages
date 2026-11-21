@@ -182,6 +182,9 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     // Android's org.json is only a stub in plain JVM unit tests; use the real library there.
     testImplementation "org.json:json:20240303"
+    // Real Android views and phone-number formatting in plain unit tests (BlockedNumberTextWatcherTest)
+    testImplementation "org.robolectric:robolectric:4.16.1"
+    testImplementation "androidx.test:core:1.6.1"
 
     // moshi
     implementation "com.squareup.moshi:moshi:$moshi_version"
