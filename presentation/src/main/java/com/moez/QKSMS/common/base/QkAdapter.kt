@@ -18,8 +18,6 @@
  */
 package dev.octoshrimpy.quik.common.base
 
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.channels.BufferOverflow
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
@@ -54,9 +52,6 @@ abstract class QkAdapter<T, VHT : RecyclerView.ViewHolder> : RecyclerView.Adapte
             field?.isVisible = data.isEmpty()
         }
 
-    // The current selection (a BehaviorSubject under RxJava): replays the latest to new collectors
-    private val selectionChanges = MutableSharedFlow<List<Long>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
     private val selection = mutableListOf<Long>()
 
     /**
@@ -72,8 +67,6 @@ abstract class QkAdapter<T, VHT : RecyclerView.ViewHolder> : RecyclerView.Adapte
             true -> selection.remove(id)
             false -> selection.add(id)
         }
-
-        selectionChanges.tryEmit(selection)
         return true
     }
 
@@ -83,7 +76,6 @@ abstract class QkAdapter<T, VHT : RecyclerView.ViewHolder> : RecyclerView.Adapte
 
     fun clearSelection() {
         selection.clear()
-        selectionChanges.tryEmit(selection)
         notifyDataSetChanged()
     }
 
