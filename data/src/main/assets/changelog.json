@@ -1,5 +1,13 @@
 [
   {
+    "versionCode": 2276,
+    "versionName": "2.9.7",
+    "improved": [
+      "A reaction's notification leads with its emoji, as in the inbox (for example \"❤️ Loved an image\")",
+      "Renaming a tab or conversation opens with the cursor in the box and the keyboard up"
+    ]
+  },
+  {
     "versionCode": 2275,
     "versionName": "2.9.6",
     "improved": [
