@@ -1,5 +1,16 @@
 [
   {
+    "versionCode": 2277,
+    "versionName": "2.9.8",
+    "improved": [
+      "The app's internals were rebuilt on Kotlin coroutines and Flow, replacing the old RxJava libraries; nothing should look different"
+    ],
+    "fixed": [
+      "Unblock in Blocked messages now unblocks the selected conversation",
+      "Replying from a notification or Android Auto no longer reads the whole conversation on the app's main thread, which could slow the reply in long conversations"
+    ]
+  },
+  {
     "versionCode": 2276,
     "versionName": "2.9.7",
     "improved": [

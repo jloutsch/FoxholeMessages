@@ -1,0 +1,4 @@
+What's new in 2.9.8:
+- Improved: the app's internals were rebuilt on Kotlin coroutines and Flow, replacing the old RxJava libraries. Nothing should look different.
+- Fixed: Unblock in Blocked messages now unblocks the selected conversation.
+- Fixed: replying from a notification or Android Auto no longer reads the whole conversation on the app's main thread, which could slow the reply in long conversations.
