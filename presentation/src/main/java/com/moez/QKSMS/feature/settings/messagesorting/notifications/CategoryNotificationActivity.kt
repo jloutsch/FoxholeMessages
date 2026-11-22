@@ -18,20 +18,22 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.notifications
 
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import androidx.lifecycle.lifecycleScope
 import android.app.Activity
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.jakewharton.rxbinding2.view.clicks
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.common.base.QkThemedActivity
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 import dev.octoshrimpy.quik.databinding.CategoryNotificationActivityBinding
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import androidx.core.content.IntentCompat
 
@@ -45,8 +47,16 @@ class CategoryNotificationActivity : QkThemedActivity(), CategoryNotificationVie
 
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
-    override val preferenceClickIntent: Subject<PreferenceView> = PublishSubject.create()
-    override val ringtoneSelectedIntent: Subject<String> = PublishSubject.create()
+    override val bindScope get() = lifecycleScope
+
+    // Built from this activity's own views; a rotation makes a new activity, so it never goes stale
+    override val preferenceClickIntent: Flow<PreferenceView>
+        get() = (0 until binding.preferences.childCount)
+            .map { index -> binding.preferences.getChildAt(index) }
+            .mapNotNull { view -> view as? PreferenceView }
+            .map { preference -> preference.clicks().map { preference } }
+            .merge()
+    override val ringtoneSelectedIntent = events<String>()
 
     private val viewModel by lazy {
         ViewModelProvider(this, viewModelFactory)[CategoryNotificationViewModel::class.java]
@@ -54,7 +64,7 @@ class CategoryNotificationActivity : QkThemedActivity(), CategoryNotificationVie
 
     private val ringtoneLauncher = launcherForResult { data ->
         val uri = data?.let { IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java) }
-        ringtoneSelectedIntent.onNext(uri?.toString() ?: "")
+        ringtoneSelectedIntent.tryEmit(uri?.toString() ?: "")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,13 +74,6 @@ class CategoryNotificationActivity : QkThemedActivity(), CategoryNotificationVie
         setContentView(binding.root)
         showBackButton(true)
         viewModel.bindView(this)
-
-        (0 until binding.preferences.childCount)
-            .map { index -> binding.preferences.getChildAt(index) }
-            .mapNotNull { view -> view as? PreferenceView }
-            .map { preference -> preference.clicks().map { preference } }
-            .let { Observable.merge(it) }
-            .subscribe(preferenceClickIntent)
     }
 
     override fun render(state: CategoryNotificationState) {
