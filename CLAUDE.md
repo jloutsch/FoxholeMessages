@@ -1661,6 +1661,13 @@ Fixed in the same pass:
   `InternalIntent` marks this app's own compose intents with a per-process random value; those skip
   the outside-share safety check (`isSafeToAttachFromOtherApp`), everything else still gets it. Use
   `InternalIntent.mark()` for any new in-app path that passes attachments to `ComposeActivity`.
+  **Android doesn't check the sending app when the receiver can already read a shared link**, and
+  this app holds READ_SMS (and the photo/video permissions on 13+), so the check also refuses the
+  SMS/MMS providers and a `0@` user prefix (security review, 2026-11-22). Gallery photos on 13+
+  remain attachable by any app; refusing MediaStore would break sharing from gallery apps, and
+  the user still sees the picture and must press Send. Compose's `mode`/`scheduleDateTime` extras
+  are honoured only on internal intents; `threadId` isn't, because notifications and shortcuts
+  made before a process restart carry an old token.
 - **Failed MMS downloads retry** after 1, 10 and 60 minutes once online (`MmsDownloadRetryWorker`).
   Not device-verified: needs a real failed picture download.
 - **Scheduled messages**: overdue ones are sent once (no alarm), and exact alarms fall back to

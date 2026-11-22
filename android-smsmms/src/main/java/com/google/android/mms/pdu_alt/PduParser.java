@@ -849,7 +849,15 @@ public class PduParser {
      * @return parts in PduBody structure
      */
     protected PduBody parseParts(ByteArrayInputStream pduDataStream) {
-        if (pduDataStream == null) {
+        return parseParts(pduDataStream, 0);
+    }
+
+    // Nested multipart/alternative parts recurse; a crafted message could nest them until the
+    // stack overflows. Real messages nest one or two levels.
+    private static final int MAX_PART_NESTING = 8;
+
+    private PduBody parseParts(ByteArrayInputStream pduDataStream, int depth) {
+        if (pduDataStream == null || depth > MAX_PART_NESTING) {
             return null;
         }
 
@@ -923,7 +931,10 @@ public class PduParser {
                 pduDataStream.read(partData, 0, dataLength);
                 if (partContentType.equalsIgnoreCase(ContentType.MULTIPART_ALTERNATIVE)) {
                     // parse "multipart/vnd.wap.multipart.alternative".
-                    PduBody childBody = parseParts(new ByteArrayInputStream(partData));
+                    PduBody childBody = parseParts(new ByteArrayInputStream(partData), depth + 1);
+                    if (childBody == null || childBody.getPartsNum() == 0) {
+                        return null;
+                    }
                     // take the first part of children.
                     part = childBody.getPart(0);
                 } else {
@@ -1722,8 +1733,9 @@ public class PduParser {
                                 thisEndPos = pduDataStream.available();
                                 if (thisStartPos - thisEndPos < len) {
                                     int last = len - (thisStartPos - thisEndPos);
-                                    byte[] temp = new byte[last];
-                                    pduDataStream.read(temp, 0, last);
+                                    // The length comes from the message: skip rather than
+                                    // allocate it (skip stops at the end of the data)
+                                    pduDataStream.skip(last);
                                 }
                             }
 

@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.common
 
+import android.util.Log
+import dev.octoshrimpy.quik.BuildConfig
 import android.app.Application
 import androidx.emoji2.bundled.BundledEmojiCompatConfig
 import androidx.emoji2.text.EmojiCompat
@@ -68,8 +70,12 @@ class QKApplication : Application(), HasAndroidInjector {
 
         nightModeManager.updateCurrentTheme()
 
-        // configure timber logging
-        Timber.plant(Timber.DebugTree(), fileLoggingTree)
+        // configure timber logging. Release builds leave verbose and debug lines (message, thread
+        // and part ids, content uris) out of logcat; the in-app file log is unchanged.
+        val logcat = if (BuildConfig.DEBUG) Timber.DebugTree() else object : Timber.DebugTree() {
+            override fun isLoggable(tag: String?, priority: Int) = priority >= Log.INFO
+        }
+        Timber.plant(logcat, fileLoggingTree)
 
         // 2.8.0 moved this app's data from Realm into Room (#44); the old files can go now. A phone
         // that skipped 2.8.0 keeps them (nothing here can read them any more).

@@ -67,10 +67,15 @@ class MmsPartProvider : ContentProvider() {
             .Builder()
             .scheme(ContentResolver.SCHEME_CONTENT)
             .authority("${context.packageName}.mmspart")
-            .encodedPath("part/$partId/$partName")
+            .appendPath("part")
+            .appendPath(partId.toString())
+            // The name comes from whoever sent the MMS; appendPath encodes "/", so a name like
+            // "1234/x.pdf" can't make the part id segment point at another conversation's part
+            .appendPath(partName)
             .build()
     }
 
+    // Apps given one part's link may read that part only: their selection is not passed on
     override fun query(
         uri: Uri,
         projection: Array<String>?,
@@ -78,48 +83,19 @@ class MmsPartProvider : ContentProvider() {
         selectionArgs: Array<String>?,
         sortOrder: String?
     ): Cursor? {
-        return context?.contentResolver?.query(
-            getUnderlyingUriFromUri(uri),
-            projection,
-            selection,
-            selectionArgs,
-            sortOrder
-        )
+        return context?.contentResolver?.query(getUnderlyingUriFromUri(uri), projection, null, null, null)
     }
 
     override fun getType(uri: Uri): String? {
         return context?.contentResolver?.getType(getUnderlyingUriFromUri(uri))
     }
 
-    override fun insert(uri: Uri, values: ContentValues?): Uri? {
-        return context?.contentResolver?.insert(getUnderlyingUriFromUri(uri), values)
-    }
+    // Read-only: other apps only ever get read access to a part
+    override fun insert(uri: Uri, values: ContentValues?): Uri? = null
 
-    override fun update(
-        uri: Uri,
-        values: ContentValues?,
-        selection: String?,
-        selectionArgs: Array<String>?
-    ): Int {
-        return context?.contentResolver?.update(
-            getUnderlyingUriFromUri(uri),
-            values,
-            selection,
-            selectionArgs
-        ) ?: 0
-    }
+    override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int = 0
 
-    override fun delete(
-        uri: Uri,
-        selection: String?,
-        selectionArgs: Array<String>?
-    ): Int {
-        return context?.contentResolver?.delete(
-            getUnderlyingUriFromUri(uri),
-            selection,
-            selectionArgs
-        ) ?: 0
-    }
+    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int = 0
 
     @Throws(FileNotFoundException::class)
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? {

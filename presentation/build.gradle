@@ -139,8 +139,8 @@ dependencies {
     implementation "com.github.bumptech.glide:glide:$glide_version"
     ksp "com.github.bumptech.glide:ksp:$glide_version"
 
-    // media3 - ExoPlayer's current name. 1.1.1 is the release matching ExoPlayer 2.19.1, the last
-    // 2.x (which replaced the 2018 JitPack r2.9.0 that rendered modern phone video badly).
+    // media3 - ExoPlayer's current name (it replaced the 2018 JitPack r2.9.0 that rendered modern
+    // phone video badly). It parses videos people send, so keep it current.
     implementation "androidx.media3:media3-exoplayer:$media3_version"
     implementation "androidx.media3:media3-ui:$media3_version"
 
@@ -156,10 +156,11 @@ dependencies {
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
 
     // ezvcard
-    implementation('com.googlecode.ez-vcard:ez-vcard:0.10.4', {
+    implementation('com.googlecode.ez-vcard:ez-vcard:0.12.2', {
         exclude group: "org.jsoup", module: "jsoup"
         exclude group: "org.freemarker", module: "freemarker"
         exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
     })
 
 

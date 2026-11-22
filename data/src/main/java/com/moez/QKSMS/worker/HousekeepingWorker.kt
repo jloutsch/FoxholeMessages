@@ -114,12 +114,17 @@ class HousekeepingWorker(appContext: Context, workerParams: WorkerParameters)
         }?.forEach { it.delete() }  // delete recording file
 
     private fun removeSavedMessagesTexts(removeOlderThan: Long) =
-        // find saved message text files in cache dir
-        applicationContext.cacheDir.listFiles { entry ->
-            entry.isFile &&
-                    entry.name.startsWith(Constants.SAVED_MESSAGE_TEXT_FILE_PREFIX) &&
-                    (entry.lastModified() < removeOlderThan)
-        }?.forEach { it.delete() }  // delete message text file
+        // find saved message text files in their cache folder (and the cache root, where they were
+        // written before they got a folder of their own)
+        listOf(applicationContext.cacheDir, File(applicationContext.cacheDir, Constants.SAVED_MESSAGE_TEXT_DIR))
+            .flatMap { dir ->
+                dir.listFiles { entry ->
+                    entry.isFile &&
+                            entry.name.startsWith(Constants.SAVED_MESSAGE_TEXT_FILE_PREFIX) &&
+                            (entry.lastModified() < removeOlderThan)
+                }.orEmpty().toList()
+            }
+            .forEach { it.delete() }  // delete message text file
 
 }
 

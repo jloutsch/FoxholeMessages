@@ -21,6 +21,8 @@ package dev.octoshrimpy.quik.util
 class Constants {
     companion object {
         const val SAVED_MESSAGE_TEXT_FILE_PREFIX = "FoxholeMessagesText-"
+        // The only cache folder the messagesText FileProvider can serve (messages_text_file_provider_paths.xml)
+        const val SAVED_MESSAGE_TEXT_DIR = "messages_text"
         const val SCHEDULED_MESSAGE_FILE_PREFIX = "scheduled-"
         const val DELAY_CANCELLED_CACHED_ATTACHMENTS_FILE_PREFIX = "delaycancelled-"
     }

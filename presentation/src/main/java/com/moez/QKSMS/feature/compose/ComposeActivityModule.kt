@@ -111,14 +111,16 @@ class ComposeActivityModule {
         }
         // Our own links point at this app's data by design; only outside shares are checked.
         val (safe, refused) = if (internal) uris to emptyList() else uris.partition { it.isSafeToAttachFromOtherApp(activity) }
-        if (refused.isNotEmpty()) Timber.w("Refused ${refused.size} shared attachment(s) pointing at this app's private data")
+        if (refused.isNotEmpty()) Timber.w("Refused ${refused.size} shared attachment(s) pointing at this app's private data or other conversations")
         return safe.map { Attachment(activity, it) }
     }
 
     @Provides
     @Named("mode")
     fun provideSharedAction(activity: ComposeActivity): String =
-        activity.intent.getStringExtra("mode") ?: ""
+        // Only this app opens Compose in scheduling mode; another app could otherwise turn the
+        // user's next Send into a scheduled send
+        activity.intent.takeIf(InternalIntent::isInternal)?.getStringExtra("mode") ?: ""
 
     @Provides
     @Named("subscriptionId")
@@ -134,7 +136,7 @@ class ComposeActivityModule {
     @Provides
     @Named("scheduleDateTime")
     fun provideSharedScheduleDateTime(activity: ComposeActivity): Long =
-        activity.intent.getLongExtra("scheduleDateTime", 0L)
+        activity.intent.takeIf(InternalIntent::isInternal)?.getLongExtra("scheduleDateTime", 0L) ?: 0L
 
     @Provides
     @IntoMap

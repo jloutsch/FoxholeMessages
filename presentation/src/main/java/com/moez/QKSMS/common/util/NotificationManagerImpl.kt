@@ -276,8 +276,9 @@ class NotificationManagerImpl @Inject constructor(
             else -> Preferences.NOTIFICATION_PREVIEWS_NONE
         }
         // A one-time code is drawn large instead (Settings > Message Sorting > Code notification
-        // size), and shown on the lock screen even where previews are hidden: turning the setting
-        // on asks for that. Only when the newest unread message is the code.
+        // size), only when the newest unread message is the code and previews show message text.
+        // It follows the preview settings and the lock screen's own rules like any other message:
+        // it used to be shown on the lock screen even with previews off.
         val newest = messages.last()
         val code = newest?.takeIf { it.isOtp }?.let { otpDetector.extractCode(it.getText()) }
         val codeTextSize = when (prefs.otpNotificationSize.get()) {
@@ -286,7 +287,7 @@ class NotificationManagerImpl @Inject constructor(
             Preferences.OTP_NOTIFICATION_HUGE -> 36f
             else -> null
         }
-        if (code != null && codeTextSize != null) {
+        if (code != null && codeTextSize != null && previewMode == Preferences.NOTIFICATION_PREVIEWS_ALL) {
             val codeView = RemoteViews(context.packageName, R.layout.notification_otp_code).apply {
                 setTextViewText(R.id.sender, conversation.getTitle())
                 setTextViewText(R.id.code, code)
@@ -304,7 +305,6 @@ class NotificationManagerImpl @Inject constructor(
                     .setCustomContentView(codeView)
                     .setCustomBigContentView(codeView)
                     .setCustomHeadsUpContentView(codeView)
-                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
             // Copy it on arrival, once per message: this also runs whenever the conversation's
             // notification is rebuilt (e.g. after a delete)
