@@ -21,12 +21,9 @@ package dev.octoshrimpy.quik.interactor
 import android.content.Context
 import dev.octoshrimpy.quik.classifier.MessageCategorizer
 import dev.octoshrimpy.quik.manager.ShortcutManager
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -50,62 +47,64 @@ class SendNewMessage @Inject constructor(
         val delay: Int = 0
     )
 
-    override fun buildObservable(params: Params): Flowable<*> = Flowable.just(Unit)
-        .mapNotNull {
-            // if addresses are provided, prefer them over the thread id because from a user
-            // perspective it is more important that the intended recipients are messaged rather
-            // than that messages go to a thread id
-            when {
-                params.addresses.isNotEmpty() ->
-                    conversationRepo.getOrCreateConversation(params.addresses)
+    /** Returns false when there was no conversation to send to, so nothing was sent. */
+    override suspend fun perform(params: Params): Boolean {
+        // if addresses are provided, prefer them over the thread id because from a user
+        // perspective it is more important that the intended recipients are messaged rather
+        // than that messages go to a thread id
+        val conversation = when {
+            params.addresses.isNotEmpty() ->
+                conversationRepo.getOrCreateConversation(params.addresses)
 
-                (params.threadId > 0) ->
-                    conversationRepo.getOrCreateConversation(params.threadId)
+            (params.threadId > 0) ->
+                conversationRepo.getOrCreateConversation(params.threadId)
 
-                else -> null
+            else -> null
+        }
+        if (conversation == null) {
+            Timber.e("unable to get or create a conversation record")
+            return false
+        }
+
+        // send the message
+        val threadIds = messageRepo.sendNewMessages(params.subId, conversation.recipients.map { it.address },
+            params.body, params.attachments, params.sendAsGroup, params.delay)
+            .map { it.threadId }
+
+        // Replying is a sorting signal: an unknown number's unanswered conversation was filed out
+        // of Personal, and answering it should bring it back. So re-check the latest received
+        // message now that this send exists, then give the reply the conversation's category
+        // (the tab follows the latest message). Both before updateConversations, which picks
+        // the new latest message up. Failures here must not affect the send itself.
+        try {
+            messageRepo.recategorizeLatestReceived(threadIds) { address, body, threadId ->
+                messageCategorizer.categorize(address, body, threadId).name
             }
-            ?:let { Timber.e("unable to get or create a conversation record"); null }
+            messageRepo.inheritReplyCategories(threadIds)
+        } catch (e: Exception) {
+            Timber.e(e, "re-sorting after send failed")
         }
-        .map { conversation ->
-            // send the message
-            messageRepo.sendNewMessages(params.subId, conversation.recipients.map { it.address },
-                params.body, params.attachments, params.sendAsGroup, params.delay)
-        }
-        .map { messages -> messages.map { it.threadId } }
-        .doOnNext { threadIds ->
-            // Replying is a sorting signal: an unknown number's unanswered conversation was filed out
-            // of Personal, and answering it should bring it back. So re-check the latest received
-            // message now that this send exists, then give the reply the conversation's category
-            // (the tab follows the latest message). Both before updateConversations, which picks
-            // the new latest message up. Failures here must not affect the send itself.
-            try {
-                messageRepo.recategorizeLatestReceived(threadIds) { address, body, threadId ->
-                    messageCategorizer.categorize(address, body, threadId).name
-                }
-                messageRepo.inheritReplyCategories(threadIds)
-            } catch (e: Exception) {
-                Timber.e(e, "re-sorting after send failed")
-            }
-            conversationRepo.updateConversations(threadIds)
-            conversationRepo.markUnarchived(threadIds)
+        conversationRepo.updateConversations(threadIds)
+        conversationRepo.markUnarchived(threadIds)
 
-            // Sending to a thread means the user has dealt with whatever came in on it, so mark it
-            // read. Done here, in the one interactor every send funnels through, rather than in
-            // each entry point (compose screen, notification reply, popup reply, respond-via-
-            // message from a car): replying from a car arrives by a route that never marked the
-            // thread read, and guessing at which entry point it uses didn't work.
-            Timber.i("Marking thread(s) $threadIds read after sending")
-            markRead.execute(threadIds)
+        // Sending to a thread means the user has dealt with whatever came in on it, so mark it
+        // read. Done here, in the one interactor every send funnels through, rather than in
+        // each entry point (compose screen, notification reply, popup reply, respond-via-
+        // message from a car): replying from a car arrives by a route that never marked the
+        // thread read, and guessing at which entry point it uses didn't work.
+        Timber.i("Marking thread(s) $threadIds read after sending")
+        markRead.execute(threadIds)
 
-            // On this background thread, not the main one: building a shortcut loads the contact's
-            // photo with a blocking Glide call, which Glide refuses on the main thread, so the
-            // shortcut silently fell back to initials.
-            threadIds.forEach { shortcutManager.getOrCreateShortcut(it) }
+        // On this background thread, not the main one: building a shortcut loads the contact's
+        // photo with a blocking Glide call, which Glide refuses on the main thread, so the
+        // shortcut silently fell back to initials.
+        threadIds.forEach { shortcutManager.getOrCreateShortcut(it) }
 
-            // delete attachment local files, if any, because they're saved to mms db by now
-            params.attachments.forEach { it.removeCacheFile(context) }
-        }
-        .observeOn(AndroidSchedulers.mainThread())
-        .flatMap { updateBadge.buildObservable(Unit) } // Update the widget
+        // delete attachment local files, if any, because they're saved to mms db by now
+        params.attachments.forEach { it.removeCacheFile(context) }
+
+        updateBadge.perform(Unit) // Update the widget
+        return true
+    }
 
 }

@@ -19,10 +19,8 @@
 package dev.octoshrimpy.quik.interactor
 
 import android.net.Uri
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.SyncRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class SyncMessage @Inject constructor(
@@ -33,13 +31,10 @@ class SyncMessage @Inject constructor(
 
     data class Params(val uri: Uri, val messageId: Long = 0)
 
-    override fun buildObservable(params: Params): Flowable<*> {
-        return Flowable.just(params)
-            .mapNotNull { syncManager.syncMessage(it.uri, it.messageId) }
-            .doOnNext {
-                message -> conversationRepo.updateConversations(listOf(message.threadId))
-            }
-            .flatMap { updateBadge.buildObservable(Unit) } // Update the badge
+    override suspend fun perform(params: Params) {
+        val message = syncManager.syncMessage(params.uri, params.messageId) ?: return
+        conversationRepo.updateConversations(listOf(message.threadId))
+        updateBadge.perform(Unit) // Update the badge
     }
 
 }

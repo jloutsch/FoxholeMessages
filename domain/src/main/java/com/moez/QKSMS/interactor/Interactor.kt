@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.interactor
 
-import io.reactivex.Flowable
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -31,7 +30,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.awaitSingleOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -46,16 +44,8 @@ abstract class Interactor<in Params> : Disposable {
 
     private val scope = CoroutineScope(SupervisorJob())
 
-    /**
-     * Does the work and returns its result, if callers use one. Until an interactor is converted,
-     * this runs its [buildObservable] to the end and returns the last item.
-     */
-    @Suppress("DEPRECATION")
-    open suspend fun perform(params: Params): Any? = buildObservable(params).lastElement().awaitSingleOrNull()
-
-    @Deprecated("Rx bridge until every interactor overrides perform(); removed in #34 Task 4")
-    open fun buildObservable(params: Params): Flowable<*> =
-        throw UnsupportedOperationException("${javaClass.simpleName} overrides neither perform() nor buildObservable()")
+    /** Does the work and returns its result, if callers use one. */
+    abstract suspend fun perform(params: Params): Any?
 
     /**
      * [onComplete] runs only on success. [onTerminate] runs once the work ends either way, so a

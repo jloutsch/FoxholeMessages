@@ -19,7 +19,6 @@
 package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class PurgeTrash @Inject constructor(
@@ -30,8 +29,6 @@ class PurgeTrash @Inject constructor(
         const val TRASH_RETENTION_DAYS = 30
     }
 
-    override fun buildObservable(params: Unit): Flowable<*> = Flowable.fromCallable {
-        messageRepo.purgeTrash(TRASH_RETENTION_DAYS)
-    }
+    override suspend fun perform(params: Unit) = messageRepo.purgeTrash(TRASH_RETENTION_DAYS)
 
 }

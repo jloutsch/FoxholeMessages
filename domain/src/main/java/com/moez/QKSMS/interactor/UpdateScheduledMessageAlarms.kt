@@ -20,7 +20,6 @@ package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.manager.AlarmManager
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class UpdateScheduledMessageAlarms @Inject constructor(
@@ -29,20 +28,18 @@ class UpdateScheduledMessageAlarms @Inject constructor(
     private val sendScheduledMessage: SendScheduledMessage
 ) : Interactor<Unit>() {
 
-    override fun buildObservable(params: Unit): Flowable<*> {
-        return Flowable.just(params)
-                .map { scheduledMessageRepo.getScheduledMessages() } // Get all the scheduled messages
-                .map { it.map { message -> Pair(message.id, message.date) } } // Map the data we need out of Realm
-                .flatMap { messages -> Flowable.fromIterable(messages) } // Turn the list into a stream
-                .filter { (id, date) ->
-                    // Messages still to come get an alarm. Overdue ones (the phone was off at send time)
-                    // are sent below instead. They used to get an alarm as well, and an alarm set in the
-                    // past fires straight away, so after a reboot they were sent twice.
-                    val overdue = date <= System.currentTimeMillis()
-                    if (!overdue) alarmManager.setAlarm(date, alarmManager.getScheduledMessageIntent(id))
-                    overdue
-                }
-                .flatMap { (id, _) -> sendScheduledMessage.buildObservable(id) } // Send them
+    override suspend fun perform(params: Unit) {
+        scheduledMessageRepo.getScheduledMessages()
+            .map { message -> Pair(message.id, message.date) }
+            .filter { (id, date) ->
+                // Messages still to come get an alarm. Overdue ones (the phone was off at send time)
+                // are sent below instead. They used to get an alarm as well, and an alarm set in the
+                // past fires straight away, so after a reboot they were sent twice.
+                val overdue = date <= System.currentTimeMillis()
+                if (!overdue) alarmManager.setAlarm(date, alarmManager.getScheduledMessageIntent(id))
+                overdue
+            }
+            .forEach { (id, _) -> sendScheduledMessage.perform(id) } // Send them
     }
 
 }

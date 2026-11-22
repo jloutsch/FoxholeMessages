@@ -19,11 +19,8 @@
 package dev.octoshrimpy.quik.interactor
 
 import com.moez.QKSMS.manager.SpeakManager
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
-import io.reactivex.Single
 import javax.inject.Inject
 
 class SpeakThreads @Inject constructor(
@@ -40,23 +37,28 @@ class SpeakThreads @Inject constructor(
         }
     }
 
-    override fun buildObservable(params: List<Long>): Flowable<*> {
-        if (params.isEmpty())
-              return Single.just(0)
-                  .doOnSubscribe { speakManager.startSpeakSession(noMessagesStr) }
-                  .map { speakManager.speak(noMessagesStr) }
-                  .doOnTerminate { speakManager.endSpeakSession() }
-                  .toFlowable()
+    override suspend fun perform(params: List<Long>) {
+        if (params.isEmpty()) {
+            speakManager.startSpeakSession(noMessagesStr)
+            try {
+                speakManager.speak(noMessagesStr)
+            } finally {
+                speakManager.endSpeakSession()
+            }
+            return
+        }
 
-        return Flowable.fromIterable(params)
-            .doOnSubscribe { speakManager.startSpeakSession("threads:" + params.sorted().joinToString()) }
-            .mapNotNull { threadId -> conversationRepo.getConversationAndLastSenderContactName(threadId) }
-            .map { (conversation, sender) ->
-                if (speakManager.speakConversationLastSms(Pair(conversation, sender)) &&
-                    conversation != null)
+        speakManager.startSpeakSession("threads:" + params.sorted().joinToString())
+        try {
+            params.forEach { threadId ->
+                val (conversation, sender) = conversationRepo.getConversationAndLastSenderContactName(threadId)
+                    ?: return@forEach
+                if (speakManager.speakConversationLastSms(Pair(conversation, sender)) && conversation != null)
                     messageRepo.markSeen(listOf(conversation.id))
             }
-            .doOnTerminate { speakManager.endSpeakSession() }
+        } finally {
+            speakManager.endSpeakSession()
+        }
     }
 
 }

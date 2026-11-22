@@ -1,11 +1,9 @@
 package dev.octoshrimpy.quik.interactor
 
-import io.reactivex.Flowable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -85,12 +83,5 @@ class InteractorTest {
         }.start(Unit)
         awaitTerminate()
         assertEquals("io-test", workThread)
-    }
-
-    @Suppress("DEPRECATION")
-    @Test
-    fun unconvertedInteractorRunsThroughBridge() = runBlocking {
-        val interactor = object : Interactor<Unit>() { override fun buildObservable(params: Unit) = Flowable.just(5, 7) }
-        assertEquals(7, interactor.perform(Unit))
     }
 }
