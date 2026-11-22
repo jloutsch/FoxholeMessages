@@ -18,12 +18,12 @@
  */
 package dev.octoshrimpy.quik.feature.settings.about
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.common.widget.PreferenceView
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
 
-interface AboutView : QkViewContract<Unit> {
+interface AboutView : QkFlowView<Unit> {
 
-    fun preferenceClicks(): Observable<PreferenceView>
+    fun preferenceClicks(): Flow<PreferenceView>
 
 }
