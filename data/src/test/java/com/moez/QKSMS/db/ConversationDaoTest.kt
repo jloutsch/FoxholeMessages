@@ -139,4 +139,15 @@ class ConversationDaoTest {
         }
         assertEquals(listOf("5550001", "5550002", "5550003", "5550005"), db.recipientDao().all().map { it.address }.sorted())
     }
+
+    @Test
+    fun conversationsComeWithTheirUnreadCount() {
+        // #71: the inbox drew each row's unread count with its own query on the main thread
+        db.messageDao().upsert(listOf(message(1, threadId = 1, read = false), message(2, threadId = 1, read = false),
+            message(3, threadId = 1, read = false, deletedAt = 5), message(4, threadId = 1), message(5, threadId = 2)))
+        db.addConversation(1, lastMessageId = 2)
+        db.addConversation(2, lastMessageId = 5)
+        val counts = Relations(db).conversations(listOf(dao.get(1)!!, dao.get(2)!!)).associate { it.id to it.unreadCount }
+        assertEquals(mapOf(1L to 2L, 2L to 0L), counts)
+    }
 }

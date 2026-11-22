@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.gallery
 
+import io.reactivex.schedulers.Schedulers
 import android.content.Context
 import com.moez.QKSMS.contentproviders.MmsPartProvider
 import com.uber.autodispose.android.lifecycle.scope
@@ -49,22 +50,18 @@ class GalleryViewModel @Inject constructor(
     init {
         // Paged over the tapped message's own attachments, not the whole thread's - swiping should
         // run to the end of this message and stop, rather than continuing into unrelated messages.
+        // Read in the background (#71); newState's block runs on the main thread, so nothing is read inside it
         disposables += Flowable.just(partId)
+                .subscribeOn(Schedulers.io())
                 .mapNotNull(messageRepo::getMessageForPart)
-                .doOnNext { message ->
+                .subscribe { message ->
                     // An empty result here shows as a black screen with no counter and no crash,
                     // so log the join keys - otherwise there's nothing to diagnose it from
                     Timber.v("opening part $partId of message id=${message.id} contentId=${message.contentId}")
-                    newState {
-                        copy(parts = messageRepo.getMediaPartsForMessage(message.id, message.contentId))
-                    }
+                    val parts = messageRepo.getMediaPartsForMessage(message.id, message.contentId)
+                    val title = conversationRepo.getConversation(message.threadId)?.getTitle()
+                    newState { copy(parts = parts, title = title, date = message.date) }
                 }
-                .doOnNext { message ->
-                    newState {
-                        copy(title = conversationRepo.getConversation(message.threadId)?.getTitle())
-                    }
-                }
-                .subscribe()
     }
 
     override fun bindView(view: GalleryView) {

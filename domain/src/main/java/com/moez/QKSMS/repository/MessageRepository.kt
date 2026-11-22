@@ -57,8 +57,6 @@ interface MessageRepository {
 
     fun getUnreadCount(): Long
 
-    fun getUnreadCountForConversation(threadId: Long): Long
-
     fun getPart(id: Long): MmsPart?
 
     fun getPartsForConversation(threadId: Long): Flow<List<MmsPart>>

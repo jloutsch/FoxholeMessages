@@ -34,7 +34,6 @@ import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.databinding.ConversationListItemBinding
 import dev.octoshrimpy.quik.model.Conversation
-import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import javax.inject.Inject
 
@@ -42,7 +41,6 @@ class ConversationsAdapter @Inject constructor(
     private val colors: Colors,
     private val context: Context,
     private val dateFormatter: DateFormatter,
-    private val messageRepo: MessageRepository,
     private val navigator: Navigator,
     private val phoneNumberUtils: PhoneNumberUtils
 ) : QkListAdapter<Conversation, QkBindingViewHolder<ConversationListItemBinding>>(itemId = { it.id }) {
@@ -143,7 +141,7 @@ class ConversationsAdapter @Inject constructor(
         // silent no-op here since this view has no foreground drawable set.
         binding.unread.backgroundTintList = ColorStateList.valueOf(theme)
         if (conversation.unread) {
-            binding.unread.text = messageRepo.getUnreadCountForConversation(conversation.id).toString()
+            binding.unread.text = conversation.unreadCount.toString()
         }
     }
 

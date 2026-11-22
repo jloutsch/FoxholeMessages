@@ -41,7 +41,6 @@ import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.PhoneNumber
 import dev.octoshrimpy.quik.receiver.StartActivityFromWidgetReceiver
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.tryOrNull
@@ -57,7 +56,6 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
     @Inject lateinit var colors: Colors
     @Inject lateinit var conversationRepo: ConversationRepository
     @Inject lateinit var dateFormatter: DateFormatter
-    @Inject lateinit var messageRepo: MessageRepository
     @Inject lateinit var phoneNumberUtils: PhoneNumberUtils
     @Inject lateinit var prefs: Preferences
 
@@ -179,8 +177,7 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
                 lastMessage != null && phoneNumberUtils.compare(recipient.address, lastMessage.address)
             } ?: conversation.recipients.firstOrNull()
             remoteViews.setInt(R.id.unreadBackground, "setColorFilter", colors.theme(recipient).theme)
-            remoteViews.setTextViewText(R.id.unreadCount,
-                messageRepo.getUnreadCountForConversation(conversation.id).toString())
+            remoteViews.setTextViewText(R.id.unreadCount, conversation.unreadCount.toString())
         }
 
         // set fill-in intent to be used for current item

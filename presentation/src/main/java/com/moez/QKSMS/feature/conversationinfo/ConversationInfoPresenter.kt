@@ -121,7 +121,9 @@ class ConversationInfoPresenter @Inject constructor(
 
         // Add or display the contact
         view.recipientClicks()
+                .observeOn(Schedulers.io())
                 .mapNotNull(conversationRepo::getRecipient)
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext { recipient ->
                     recipient.contact?.lookupKey?.let(externalNavigator::showContact)
                             ?: externalNavigator.addContact(recipient.address)
@@ -131,6 +133,7 @@ class ConversationInfoPresenter @Inject constructor(
 
         // Copy phone number
         view.recipientLongClicks()
+                .observeOn(Schedulers.io())
                 .mapNotNull(conversationRepo::getRecipient)
                 .map { recipient -> recipient.address }
                 .observeOn(AndroidSchedulers.mainThread())

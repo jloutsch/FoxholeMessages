@@ -61,6 +61,10 @@ open class Conversation(
     @Ignore
     var lastReactionEmoji: String? = null
 
+    /** Unread messages outside Trash, filled in by the repository when [unread]; not stored. */
+    @Ignore
+    var unreadCount: Long = 0
+
     val date: Long get() = lastMessage?.date ?: if (draft.isNotEmpty()) draftDate else 0
     val snippet: String? get() = lastMessage?.let { message ->
         val summary = message.getSummary()

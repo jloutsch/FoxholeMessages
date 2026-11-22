@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.common.base
 
+import io.reactivex.schedulers.Schedulers
+import dev.octoshrimpy.quik.model.Conversation
 import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.graphics.BitmapFactory
@@ -72,7 +74,13 @@ abstract class QkThemedActivity : QkActivity() {
     val theme: Observable<Colors.Theme> = threadId
             .distinctUntilChanged()
             .switchMap { threadId ->
-                val conversation = conversationRepo.getConversation(threadId)
+                // Looked up in the background (#71). 0 means no conversation, so there's nothing to read.
+                if (threadId == 0L) Observable.just(Optional<Conversation>(null))
+                else Observable.fromCallable { Optional(conversationRepo.getConversation(threadId)) }
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+            }
+            .switchMap { (conversation) ->
                 when {
                     conversation == null -> Observable.just(Optional(null))
 

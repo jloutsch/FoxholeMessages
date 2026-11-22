@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.injection
 
+import dev.octoshrimpy.quik.BuildConfig
 import dev.octoshrimpy.quik.db.FoxholeDatabase
 import androidx.room.Room
 import android.app.Application
@@ -122,11 +123,10 @@ class AppModule(private var application: Application) {
     @Provides
     @Singleton
     fun provideDatabase(context: Context): FoxholeDatabase =
-        // allowMainThreadQueries: many screens read synchronously on the main thread, as they did
-        // with Realm. Moving those reads off it is a follow-up; Room's writes here run in the
-        // repositories' background paths.
+        // Release builds still allow main-thread reads while #71 finishes. Debug builds don't, so
+        // Room throws at any read left on the main thread and testing finds it.
         Room.databaseBuilder(context, FoxholeDatabase::class.java, "foxhole.db")
-            .allowMainThreadQueries()
+            .apply { if (!BuildConfig.DEBUG) allowMainThreadQueries() }
             .build()
 
     @Provides

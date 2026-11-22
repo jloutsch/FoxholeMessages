@@ -88,7 +88,7 @@ class Relations @Inject constructor(private val database: FoxholeDatabase) {
         return recipients
     }
 
-    /** Fills each conversation's recipients, last message, and the reaction emoji for its preview. */
+    /** Fills each conversation's recipients, last message, the reaction emoji for its preview, and its unread count. */
     fun conversations(conversations: List<Conversation>): List<Conversation> {
         if (conversations.isEmpty()) return conversations
         val links = conversations.map { it.id }.distinct().chunked(CHUNK).flatMap(conversationDao::recipientLinks)
@@ -100,6 +100,8 @@ class Relations @Inject constructor(private val database: FoxholeDatabase) {
             .chunked(CHUNK).flatMap(messageDao::get)).associateBy { it.id }
         val reactionEmoji = lastMessages.values.filter { it.isEmojiReaction }.map { it.id }.chunked(CHUNK)
             .flatMap(reactionDao::forReactionMessages).associate { it.reactionMessageId to it.emoji }
+        val unreadIds = conversations.filter { lastMessages[it.lastMessageId]?.read == false }.map { it.id }.distinct()
+        val unreadCounts = unreadIds.chunked(CHUNK).flatMap(messageDao::unreadCounts).associate { it.threadId to it.count }
 
         conversations.forEach { conversation ->
             conversation.recipients = linksByConversation[conversation.id].orEmpty()
@@ -107,6 +109,7 @@ class Relations @Inject constructor(private val database: FoxholeDatabase) {
                 .mapNotNull { link -> recipients[link.recipientId] }
             conversation.lastMessage = conversation.lastMessageId?.let(lastMessages::get)
             conversation.lastReactionEmoji = conversation.lastMessageId?.let(reactionEmoji::get)
+            conversation.unreadCount = unreadCounts[conversation.id] ?: 0
         }
         return conversations
     }

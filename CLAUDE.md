@@ -1198,8 +1198,11 @@ advice still applies.
   background thread; Realm used the main thread, and screens assume it. Convert a database Flow for
   a screen with `asMainObservable()` (presentation `FlowExtensions.kt`), never `asObservable()`.
   `MainThreadDatabaseUpdatesTest` enforces it. Missing this crashed group threads in 2.8.0–2.9.1.
-- **`allowMainThreadQueries()` is on** because many screens read synchronously, as they did with
-  Realm. Moving those reads off the main thread is #71.
+- **Main-thread reads (#71):** debug builds no longer call `allowMainThreadQueries()`, so Room throws
+  on any database read on the main thread; release builds still allow them until debug has run
+  clean for a while. Read in the background (`observeOn(Schedulers.io())`, then back to the main
+  thread for the screen). `newState {}`'s block runs on the main thread: read first, then pass the
+  result in. Conversations carry `unreadCount`, filled by `Relations.conversations`.
 - **App-only fields:** the full sync keeps `AppOnlyMessageFields` and `AppOnlyConversationFields`
   (`SyncRepositoryImpl.kt`); `SortingAndSyncDataTest` fails if a new field on either isn't classified.
 - **The importer** (2.8.0 only, `RealmImporter`, removed in 2.9.0) copied the app-only data from
