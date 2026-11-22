@@ -126,11 +126,12 @@ class FileLoggingTree @Inject constructor(
     private fun existingLogFile(filename: String): Uri? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Without storage permissions an app only sees its own files here
+            // MediaStore adds ".txt" to a text/plain file named "....log"
             context.contentResolver.query(
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                 arrayOf(MediaStore.MediaColumns._ID),
-                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
-                arrayOf(filename),
+                "${MediaStore.MediaColumns.DISPLAY_NAME} IN (?, ?)",
+                arrayOf(filename, "$filename.txt"),
                 null
             )?.use { cursor ->
                 if (cursor.moveToFirst()) ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cursor.getLong(0))
