@@ -60,7 +60,6 @@ class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
             .mapNotNull { view -> view as? PreferenceView }
             .map { preference -> preference.clicks().map { preference } }
             .merge()
-    // QkDialog is shared with screens still on RxJava: bridged until its last user converts
     override val previewModeSelectedIntent by lazy { previewModeDialog.adapter.menuItemClicks }
     override val ringtoneSelectedIntent = events<String>()
     override val actionsSelectedIntent by lazy { actionsDialog.adapter.menuItemClicks }

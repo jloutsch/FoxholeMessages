@@ -52,7 +52,6 @@ class SettingsPresenter @Inject constructor(
 )) {
 
     init {
-        // Colors is still RxJava (other screens read it): bridged until Task 29
         colors.themeChanges()
                 .collectIn(presenterScope) { theme -> newState { copy(theme = theme.theme) } }
 
@@ -126,7 +125,6 @@ class SettingsPresenter @Inject constructor(
                 }
             }
 
-        // The repository is still RxJava (the sync worker and Main read it too): bridged
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
         syncRepo.syncProgress
                 .sample(16)

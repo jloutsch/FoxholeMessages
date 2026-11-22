@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.backup
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -43,7 +44,6 @@ class BackupPresenter @Inject constructor(
 ) : QkPresenter<BackupView, BackupState>(BackupState()) {
 
     init {
-        // The repository's progress is still RxJava (RestoreBackupService reads it too): bridged
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
         backupRepo.getBackupProgress()
                 .sample(16)
@@ -117,6 +117,8 @@ class BackupPresenter @Inject constructor(
                 val date = dateFormatter.getDetailedTimestamp(backupFile.date)
                 val details = context.getString(R.string.backup_details, date, backupFile.messages)
                 newState { copy(selectedBackupDetails = details) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.w(e, "Couldn't read the selected backup file")
                 newState { copy(showSelectedBackupError = true) }

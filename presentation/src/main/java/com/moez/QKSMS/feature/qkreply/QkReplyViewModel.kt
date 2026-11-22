@@ -22,7 +22,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -102,7 +101,6 @@ class QkReplyViewModel @Inject constructor(
                 .map { messages -> messages.lastOrNull()?.subId ?: -1 }
                 .distinctUntilChanged()
 
-        // ActiveSubscriptionObservable is still RxJava (Compose reads it too): bridged until Task 29
         val subscriptions = activeSubscriptions(subscriptionManager)
         combine(latestSubId, subscriptions) { subId, subs ->
             if (subs.size > 1) subs.firstOrNull { it.subscriptionId == subId } ?: subs[0] else null
@@ -175,7 +173,9 @@ class QkReplyViewModel @Inject constructor(
 
         // Show the remaining character counter when necessary
         view.textChangedIntent
-                .map { draft -> SmsMessage.calculateLength(draft, false) }
+                // The listener stays on the main thread; only the counting runs on Default
+                .map { draft -> draft.toString() }
+                .map { draft -> withContext(Dispatchers.Default) { SmsMessage.calculateLength(draft, false) } }
                 .map { array ->
                     val messages = array[0]
                     val remaining = array[2]
@@ -186,7 +186,6 @@ class QkReplyViewModel @Inject constructor(
                         else -> "$remaining / $messages"
                     }
                 }
-                .flowOn(Dispatchers.Default)
                 .distinctUntilChanged()
                 .collectIn(view.bindScope) { remaining -> newState { copy(remaining = remaining) } }
 

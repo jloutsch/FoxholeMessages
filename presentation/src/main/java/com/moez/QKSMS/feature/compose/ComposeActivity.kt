@@ -121,7 +121,6 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     override val activityVisibleIntent = events<Boolean>()
     override val chipsSelectedIntent = events<HashMap<String, String?>>()
     override val chipDeletedIntent by lazy { chipsAdapter.chipDeleted }
-    // QkActivity's menu is still RxJava: bridged until Task 29
     override val menuReadyIntent: Flow<Unit> = menu.map { }
     override val optionsItemIntent = events<Int>()
     override val contextItemIntent = events<MenuItem>()
@@ -130,7 +129,6 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     override val messagePartClickIntent by lazy { messageAdapter.partClicks }
     override val messagePartSaveIntent by lazy { messageAdapter.partSaveClicks }
     override val messagePartContextMenuRegistrar by lazy { messageAdapter.partContextMenuRegistrar }
-    // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
     override val messagesSelectedIntent by lazy { messageAdapter.selectionChanges }
     override val cancelDelayedIntent by lazy { messageAdapter.cancelSendingClicks }
     override val sendDelayedNowIntent by lazy { messageAdapter.sendNowClicks }
@@ -281,7 +279,6 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
             binding.message.supportsInputContent = true
 
-            // QkThemedActivity's theme is still RxJava: bridged until Task 29
             theme.collectIn(lifecycleScope) {
                     binding.loading.setTint(it.theme)
 

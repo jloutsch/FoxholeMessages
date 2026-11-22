@@ -20,6 +20,8 @@
 
 package dev.octoshrimpy.quik.feature.compose
 
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.take
@@ -27,7 +29,6 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
@@ -296,7 +297,8 @@ class ComposeViewModel @Inject constructor(
             .collectIn(viewModelScope) { (selected, messages) ->
                 when {
                     messages.isEmpty() ->
-                        newState { copy(searchSelectionPosition = 0, searchResults = 0) }
+                        // Also drops the highlight: a cleared search ends here, after the clear's own reducer
+                        newState { copy(searchSelectionPosition = 0, searchResults = 0, searchSelectionId = -1) }
 
                     selected == -1L ->
                         messages.lastOrNull()?.let { message -> searchSelection.emit(message.id) }
@@ -312,7 +314,6 @@ class ComposeViewModel @Inject constructor(
                 .map { messages -> messages.lastOrNull()?.subId ?: -1 }
                 .distinctUntilChanged()
 
-        // ActiveSubscriptionObservable is still RxJava (QRF Reply reads it too): bridged until Task 29
         val subscriptions = activeSubscriptions(subscriptionManager)
         combine(latestSubId, subscriptions) { subId, subs ->
             if (subs.size > 1) subs.firstOrNull { it.subscriptionId == subId } ?: subs[0] else null
@@ -859,7 +860,8 @@ class ComposeViewModel @Inject constructor(
             val threadId = latestConversation?.id ?: return@collectIn
             val draftText = messageText
             val saveDraft = state.value.saveDraft
-            viewModelScope.launch(Dispatchers.IO) {
+            // NonCancellable: not a child of viewModelScope, so a screen being destroyed can't stop the write
+            viewModelScope.launch(NonCancellable + Dispatchers.IO) {
                 if (saveDraft)
                     conversationRepo.saveDraft(
                         threadId,
@@ -933,6 +935,8 @@ class ComposeViewModel @Inject constructor(
             try {
                 val attachment = withContext(Dispatchers.IO) { Attachment(context, uri = uri) }
                 newState { copy(attachments = attachments + attachment) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 context.makeToast(R.string.compose_contact_error)
                 Timber.w(e)
@@ -974,7 +978,9 @@ class ComposeViewModel @Inject constructor(
 
         // Show the remaining character counter when necessary
         view.textChangedIntent
-                .mapNotNull { draft -> tryOrNull { SmsMessage.calculateLength(draft, false) } }
+                // The listener stays on the main thread; only the counting runs on Default
+                .map { draft -> draft.toString() }
+                .mapNotNull { draft -> withContext(Dispatchers.Default) { tryOrNull { SmsMessage.calculateLength(draft, false) } } }
                 .map { array ->
                     val messages = array[0]
                     val remaining = array[2]
@@ -985,7 +991,6 @@ class ComposeViewModel @Inject constructor(
                         else -> "$remaining / $messages"
                     }
                 }
-                .flowOn(Dispatchers.Default)
                 .distinctUntilChanged()
                 .collectIn(view.bindScope) { remaining -> newState { copy(remaining = remaining) } }
 

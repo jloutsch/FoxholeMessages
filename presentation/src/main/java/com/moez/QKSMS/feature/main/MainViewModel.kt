@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.onEach
@@ -121,7 +122,7 @@ class MainViewModel @Inject constructor(
     private val interactors = listOf(deleteConversations, markAllSeen, markArchived, markUnarchived, syncContacts, syncMessages)
 
     init {
-        // Show the syncing UI. The repository is still RxJava (other screens read it): bridged
+        // Show the syncing UI
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
         syncRepository.syncProgress
                 .sample(16)
@@ -146,7 +147,7 @@ class MainViewModel @Inject constructor(
                 latestArchived = archived
             }
 
-        // Show the rating UI. RatingManager is still RxJava: bridged until Task 29
+        // Show the rating UI
         ratingManager.shouldShowRating
                 .collectIn(viewModelScope) { show -> newState { copy(showRating = show) } }
 
@@ -165,6 +166,8 @@ class MainViewModel @Inject constructor(
                             permissionManager.hasReadSms() && permissionManager.hasContacts()
                 }
                 if (neverSynced) syncMessages.execute(Unit)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.w(e)
             }
@@ -198,7 +201,7 @@ class MainViewModel @Inject constructor(
             )
         }
 
-        // Sync contacts when we detect a change. The listener is still RxJava: bridged until Task 29
+        // Sync contacts when we detect a change
         if (permissionManager.hasContacts()) {
             @OptIn(FlowPreview::class) // debounce is stable in practice; still marked preview
             contactAddedListener.listen()
@@ -284,8 +287,7 @@ class MainViewModel @Inject constructor(
                 .onEach { query ->
                     if (query.isEmpty()) newState { if (page is Searching) copy(page = Inbox()) else this }
                 }
-                .filter { query -> query.length >= 2 }
-                .distinctUntilChanged()
+                .searchableQueries()
                 .collectIn(view.bindScope) { query ->
                     newState { copy(page = (page as? Searching) ?: Searching()) }
                     val data = withContext(Dispatchers.IO) { conversationRepo.searchConversations(query) }
@@ -530,6 +532,8 @@ class MainViewModel @Inject constructor(
                                 ?.recipients?.firstOrNull()?.address  // first recipient in convo
                         }
                         address?.let(externalNavigator::makePhoneCall)
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.w(e)
                     }
@@ -610,3 +614,12 @@ private fun buildTabUnreadCounts(
         if (tab == Tab.STARRED) messageRepo.getStarredCount()
         else conversationRepo.getUnreadCountByCategory(requireNotNull(tab.category))
     }
+
+/**
+ * Queries worth searching for: at least two characters, and not a repeat of the one before. Repeats
+ * are dropped before short queries are, so emptying the box resets it: the same query typed again
+ * after clearing the search searches again.
+ */
+internal fun Flow<String>.searchableQueries(): Flow<String> =
+    distinctUntilChanged()
+        .filter { query -> query.length >= 2 }

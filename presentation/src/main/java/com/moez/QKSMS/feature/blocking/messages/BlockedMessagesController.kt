@@ -45,7 +45,6 @@ class BlockedMessagesController : QkController<BlockedMessagesControllerBinding,
     override val menuReadyIntent = events<Unit>()
     override val optionsItemIntent = events<Int>()
     override val conversationClicks by lazy { blockedMessagesAdapter.clicks }
-    // The shared list adapter's selection is still RxJava: bridged until QkListAdapter converts
     override val selectionChanges by lazy { blockedMessagesAdapter.selectionChanges }
     override val confirmDeleteIntent = events<List<Long>>()
     override val backClicked = events<Unit>()

@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose.part
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -281,6 +282,8 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
             MainScope().launch {
                 val metadata = try {
                     withContext(Dispatchers.IO) { readMetadata(uri) }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     return@launch // leave the plain placeholder
                 }
