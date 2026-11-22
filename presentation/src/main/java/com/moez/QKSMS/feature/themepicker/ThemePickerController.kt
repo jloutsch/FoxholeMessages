@@ -18,14 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.themepicker
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.animation.ObjectAnimator
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.jakewharton.rxbinding2.view.clicks
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.dpToPx
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
@@ -33,12 +34,11 @@ import dev.octoshrimpy.quik.common.util.extensions.setVisible
 import dev.octoshrimpy.quik.databinding.ThemePickerControllerBinding
 import dev.octoshrimpy.quik.feature.themepicker.injection.ThemePickerModule
 import dev.octoshrimpy.quik.injection.appComponent
-import io.reactivex.Observable
 import javax.inject.Inject
 
 class ThemePickerController(
     val recipientId: Long = 0L
-) : QkController<ThemePickerControllerBinding, ThemePickerView, ThemePickerState, ThemePickerPresenter>(), ThemePickerView {
+) : QkFlowController<ThemePickerControllerBinding, ThemePickerView, ThemePickerState, ThemePickerPresenter>(), ThemePickerView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): ThemePickerControllerBinding =
         ThemePickerControllerBinding.inflate(inflater, container, false)
@@ -88,13 +88,13 @@ class ThemePickerController(
         }
     }
 
-    override fun themeSelected(): Observable<Int> = themeAdapter.colorSelected
+    override fun themeSelected(): Flow<Int> = themeAdapter.colorSelected
 
-    override fun hsvThemeSelected(): Observable<Int> = binding.hsvPicker.picker.selectedColor
+    override fun hsvThemeSelected(): Flow<Int> = binding.hsvPicker.picker.selectedColor
 
-    override fun clearHsvThemeClicks(): Observable<*> = binding.hsvPicker.clear.clicks()
+    override fun clearHsvThemeClicks(): Flow<Unit> = binding.hsvPicker.clear.clicks()
 
-    override fun applyHsvThemeClicks(): Observable<*> = binding.hsvPicker.apply.clicks()
+    override fun applyHsvThemeClicks(): Flow<Unit> = binding.hsvPicker.apply.clicks()
 
     override fun render(state: ThemePickerState) {
         binding.tabs.setRecipientId(state.recipientId)

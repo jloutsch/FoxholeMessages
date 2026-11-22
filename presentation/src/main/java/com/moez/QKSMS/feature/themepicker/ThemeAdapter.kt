@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.themepicker
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.content.Context
 import android.content.res.Resources
 import android.view.LayoutInflater
@@ -34,8 +35,6 @@ import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
 import dev.octoshrimpy.quik.databinding.ThemeListItemBinding
 import dev.octoshrimpy.quik.databinding.ThemePaletteListItemBinding
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class ThemeAdapter @Inject constructor(
@@ -43,7 +42,7 @@ class ThemeAdapter @Inject constructor(
     private val colors: Colors
 ) : QkAdapter<List<Int>, QkBindingViewHolder<ThemePaletteListItemBinding>>() {
 
-    val colorSelected: Subject<Int> = PublishSubject.create()
+    val colorSelected = events<Int>()
 
     var selectedColor: Int = -1
         set(value) {
@@ -88,7 +87,7 @@ class ThemeAdapter @Inject constructor(
                     val itemBinding = ThemeListItemBinding.inflate(LayoutInflater.from(context), binding.palette, false)
 
                     // Send clicks to the selected subject
-                    itemBinding.root.setOnClickListener { colorSelected.onNext(color) }
+                    itemBinding.root.setOnClickListener { colorSelected.tryEmit(color) }
 
                     // Apply the color to the view
                     itemBinding.theme.setBackgroundTint(color)

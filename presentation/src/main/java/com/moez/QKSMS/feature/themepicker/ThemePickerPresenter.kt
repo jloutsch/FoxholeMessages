@@ -19,13 +19,12 @@
 package dev.octoshrimpy.quik.feature.themepicker
 
 import dev.octoshrimpy.quik.util.Preference
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import kotlinx.coroutines.flow.combine
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.manager.WidgetManager
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.rxkotlin.Observables
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -34,56 +33,44 @@ class ThemePickerPresenter @Inject constructor(
     @Named("recipientId") private val recipientId: Long,
     private val colors: Colors,
     private val widgetManager: WidgetManager
-) : QkPresenter<ThemePickerView, ThemePickerState>(ThemePickerState(recipientId = recipientId)) {
+) : QkFlowPresenter<ThemePickerView, ThemePickerState>(ThemePickerState(recipientId = recipientId)) {
 
     private val theme: Preference<Int> = prefs.theme(recipientId)
 
     override fun bindIntents(view: ThemePickerView) {
         super.bindIntents(view)
+        val scope = view.bindScope
 
-        theme.asObservable()
-                .autoDisposable(view.scope())
-                .subscribe { color -> view.setCurrentTheme(color) }
+        theme.asFlow().collectIn(scope) { color -> view.setCurrentTheme(color) }
 
         // Update the theme when a material theme is clicked
-        view.themeSelected()
-                .autoDisposable(view.scope())
-                .subscribe { color ->
-                    theme.set(color)
-                    if (recipientId == 0L) {
-                        widgetManager.updateTheme()
-                    }
-                }
+        view.themeSelected().collectIn(scope) { color -> applyTheme(color) }
 
-        // Update the color of the apply button
-        view.hsvThemeSelected()
-                .doOnNext { color -> newState { copy(newColor = color) } }
-                .map { color -> colors.textPrimaryOnThemeForColor(color) }
-                .doOnNext { color -> newState { copy(newTextColor = color) } }
-                .autoDisposable(view.scope())
-                .subscribe()
+        // Update the color of the apply button; remember the latest colour for Apply
+        var latestHsvColor: Int? = null
+        view.hsvThemeSelected().collectIn(scope) { color ->
+            latestHsvColor = color
+            newState { copy(newColor = color) }
+            val textColor = colors.textPrimaryOnThemeForColor(color)
+            newState { copy(newTextColor = textColor) }
+        }
 
         // Toggle the visibility of the apply group
-        Observables.combineLatest(theme.asObservable(), view.hsvThemeSelected()) { old, new -> old != new }
-                .autoDisposable(view.scope())
-                .subscribe { themeChanged -> newState { copy(applyThemeVisible = themeChanged) } }
+        combine(theme.asFlow(), view.hsvThemeSelected()) { old, new -> old != new }
+            .collectIn(scope) { themeChanged -> newState { copy(applyThemeVisible = themeChanged) } }
 
-        // Update the theme, when apply is clicked
-        view.applyHsvThemeClicks()
-                .withLatestFrom(view.hsvThemeSelected()) { _, color -> color }
-                .autoDisposable(view.scope())
-                .subscribe { color ->
-                    theme.set(color)
-                    if (recipientId == 0L) {
-                        widgetManager.updateTheme()
-                    }
-                }
+        // Update the theme, when apply is clicked (ignored until a colour has been picked, as before)
+        view.applyHsvThemeClicks().collectIn(scope) { latestHsvColor?.let(::applyTheme) }
 
         // Reset the theme
-        view.clearHsvThemeClicks()
-                .withLatestFrom(theme.asObservable()) { _, color -> color }
-                .autoDisposable(view.scope())
-                .subscribe { color -> view.setCurrentTheme(color) }
+        view.clearHsvThemeClicks().collectIn(scope) { view.setCurrentTheme(theme.get()) }
+    }
+
+    private fun applyTheme(color: Int) {
+        theme.set(color)
+        if (recipientId == 0L) {
+            widgetManager.updateTheme()
+        }
     }
 
 }
