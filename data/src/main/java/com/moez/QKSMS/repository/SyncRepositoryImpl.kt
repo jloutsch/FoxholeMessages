@@ -24,7 +24,7 @@ import android.content.Context
 import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker
 import android.net.Uri
 import android.provider.Telephony
-import com.f2prateek.rx.preferences2.RxSharedPreferences
+import dev.octoshrimpy.quik.util.PreferenceStore
 import dev.octoshrimpy.quik.extensions.forEach
 import dev.octoshrimpy.quik.extensions.map
 import dev.octoshrimpy.quik.manager.KeyManager
@@ -74,7 +74,7 @@ class SyncRepositoryImpl @Inject constructor(
     private val keys: KeyManager,
     private val phoneNumberUtils: PhoneNumberUtils,
     private val messageRepo: Provider<MessageRepository>,
-    private val rxPrefs: RxSharedPreferences,
+    private val rxPrefs: PreferenceStore,
     // The implementation, not the interface: these call its database-level methods
     private val reactions: EmojiReactionRepositoryImpl,
     private val database: FoxholeDatabase,

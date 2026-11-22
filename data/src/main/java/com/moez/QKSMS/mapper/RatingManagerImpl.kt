@@ -18,13 +18,13 @@
  */
 package dev.octoshrimpy.quik.mapper
 
-import com.f2prateek.rx.preferences2.RxSharedPreferences
+import dev.octoshrimpy.quik.util.PreferenceStore
 import dev.octoshrimpy.quik.manager.RatingManager
 import io.reactivex.rxkotlin.Observables
 import javax.inject.Inject
 
 class RatingManagerImpl @Inject constructor(
-    rxPrefs: RxSharedPreferences,
+    rxPrefs: PreferenceStore,
 ) : RatingManager {
 
     companion object {

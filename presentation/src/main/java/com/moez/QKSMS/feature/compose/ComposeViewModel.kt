@@ -773,7 +773,7 @@ class ComposeViewModel @Inject constructor(
                 .subscribe(view::scrollToMessage)
 
         // Theme changes
-        prefs.keyChanges
+        prefs.keyChangesObservable
                 .filter { key -> key.contains("theme") }
                 .doOnNext { view.themeChanged() }
                 .autoDisposable(view.scope())

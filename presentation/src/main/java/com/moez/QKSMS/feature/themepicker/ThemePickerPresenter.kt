@@ -18,7 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.themepicker
 
-import com.f2prateek.rx.preferences2.Preference
+import dev.octoshrimpy.quik.util.Preference
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.common.base.QkPresenter
