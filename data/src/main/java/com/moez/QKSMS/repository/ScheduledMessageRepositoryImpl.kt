@@ -1,12 +1,12 @@
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import dev.octoshrimpy.quik.db.FoxholeDatabase
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.ScheduledMessage
-import io.reactivex.Completable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -14,7 +14,8 @@ class ScheduledMessageRepositoryImpl @Inject constructor(
     private val database: FoxholeDatabase
 ) : ScheduledMessageRepository {
 
-    private val disposables = CompositeDisposable()
+    // Lives as long as the app (a singleton); the deletes below run in it
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val dao get() = database.scheduledMessageDao()
 
@@ -48,16 +49,14 @@ class ScheduledMessageRepositoryImpl @Inject constructor(
         dao.observeForConversation(conversationId)
 
     override fun deleteScheduledMessage(id: Long) {
-        val subscription = Completable.fromAction { dao.delete(id) }
-            .subscribeOn(Schedulers.io()) // Run on a background thread and switch to main if needed
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
+        scope.launch {
+            try {
+                dao.delete(id)
                 Timber.v("Successfully deleted scheduled messages.")
-            }, {
-                Timber.e("Deleting scheduled messages failed.")
-            })
-
-        disposables.add(subscription)
+            } catch (e: Exception) {
+                Timber.e(e, "Deleting scheduled messages failed.")
+            }
+        }
     }
 
     override fun deleteScheduledMessages(ids: List<Long>) {

@@ -19,7 +19,7 @@
 package dev.octoshrimpy.quik.feature.themepicker
 
 import dev.octoshrimpy.quik.util.Preference
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import kotlinx.coroutines.flow.combine
 import dev.octoshrimpy.quik.common.util.Colors
@@ -33,7 +33,7 @@ class ThemePickerPresenter @Inject constructor(
     @Named("recipientId") private val recipientId: Long,
     private val colors: Colors,
     private val widgetManager: WidgetManager
-) : QkFlowPresenter<ThemePickerView, ThemePickerState>(ThemePickerState(recipientId = recipientId)) {
+) : QkPresenter<ThemePickerView, ThemePickerState>(ThemePickerState(recipientId = recipientId)) {
 
     private val theme: Preference<Int> = prefs.theme(recipientId)
 

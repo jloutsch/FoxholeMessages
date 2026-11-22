@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.conversationinfo
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import android.net.Uri
 
-interface ConversationInfoView : QkFlowView<ConversationInfoState> {
+interface ConversationInfoView : QkView<ConversationInfoState> {
 
     fun recipientClicks(): Flow<Long>
     fun recipientLongClicks(): Flow<Long>

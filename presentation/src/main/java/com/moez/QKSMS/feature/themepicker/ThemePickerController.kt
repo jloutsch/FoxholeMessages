@@ -20,7 +20,7 @@ package dev.octoshrimpy.quik.feature.themepicker
 
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.animation.ObjectAnimator
 import android.view.LayoutInflater
 import android.view.View
@@ -38,7 +38,7 @@ import javax.inject.Inject
 
 class ThemePickerController(
     val recipientId: Long = 0L
-) : QkFlowController<ThemePickerControllerBinding, ThemePickerView, ThemePickerState, ThemePickerPresenter>(), ThemePickerView {
+) : QkController<ThemePickerControllerBinding, ThemePickerView, ThemePickerState, ThemePickerPresenter>(), ThemePickerView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): ThemePickerControllerBinding =
         ThemePickerControllerBinding.inflate(inflater, container, false)

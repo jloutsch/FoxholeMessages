@@ -19,13 +19,13 @@
 package dev.octoshrimpy.quik.feature.blocking
 
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.util.Preferences
 import javax.inject.Inject
 
 class BlockingPresenter @Inject constructor(
     private val prefs: Preferences
-) : QkFlowPresenter<BlockingView, BlockingState>(BlockingState()) {
+) : QkPresenter<BlockingView, BlockingState>(BlockingState()) {
 
     init {
         prefs.drop.asFlow().collectIn(presenterScope) { enabled -> newState { copy(dropEnabled = enabled) } }

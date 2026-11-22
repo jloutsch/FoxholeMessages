@@ -18,10 +18,10 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.StateFlow
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import dev.octoshrimpy.quik.model.BackupFile
-import io.reactivex.Observable
 
 interface BackupRepository {
 
@@ -43,13 +43,13 @@ interface BackupRepository {
 
     fun performBackup()
 
-    fun getBackupProgress(): Observable<Progress>
+    fun getBackupProgress(): StateFlow<Progress>
 
     fun parseBackup(uri: Uri): BackupFile
 
     fun performRestore(uri: Uri)
 
-    fun getRestoreProgress(): Observable<Progress>
+    fun getRestoreProgress(): StateFlow<Progress>
 
     fun stopRestore()
 

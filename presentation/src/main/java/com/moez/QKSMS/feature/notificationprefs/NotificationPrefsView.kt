@@ -19,11 +19,11 @@
 package dev.octoshrimpy.quik.feature.notificationprefs
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import android.net.Uri
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 
-interface NotificationPrefsView : QkFlowView<NotificationPrefsState> {
+interface NotificationPrefsView : QkView<NotificationPrefsState> {
 
     val preferenceClickIntent: Flow<PreferenceView>
     val previewModeSelectedIntent: Flow<Int>

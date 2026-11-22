@@ -19,8 +19,6 @@
 package dev.octoshrimpy.quik.feature.main
 
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.rx2.await
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.merge
@@ -37,7 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -104,7 +102,7 @@ class MainViewModel @Inject constructor(
     private val reactions: EmojiReactionRepository,
     private val syncContacts: SyncContacts,
     private val syncMessages: SyncMessages
-) : QkFlowViewModel<MainView, MainState>(
+) : QkViewModel<MainView, MainState>(
     MainState(
         page = Inbox()
     )
@@ -125,7 +123,7 @@ class MainViewModel @Inject constructor(
     init {
         // Show the syncing UI. The repository is still RxJava (other screens read it): bridged
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
-        syncRepository.syncProgress.asFlow()
+        syncRepository.syncProgress
                 .sample(16)
                 .distinctUntilChanged()
                 .collectIn(viewModelScope) { syncing -> newState { copy(syncing = syncing) } }
@@ -149,7 +147,7 @@ class MainViewModel @Inject constructor(
             }
 
         // Show the rating UI. RatingManager is still RxJava: bridged until Task 29
-        ratingManager.shouldShowRating.asFlow()
+        ratingManager.shouldShowRating
                 .collectIn(viewModelScope) { show -> newState { copy(showRating = show) } }
 
         // Fetch scheduled messages and assign it to hasScheduledMessage
@@ -203,7 +201,7 @@ class MainViewModel @Inject constructor(
         // Sync contacts when we detect a change. The listener is still RxJava: bridged until Task 29
         if (permissionManager.hasContacts()) {
             @OptIn(FlowPreview::class) // debounce is stable in practice; still marked preview
-            contactAddedListener.listen().asFlow()
+            contactAddedListener.listen()
                     .debounce(1000)
                     .flowOn(Dispatchers.IO)
                     .collectIn(viewModelScope) { syncContacts.execute(Unit) }
@@ -485,7 +483,7 @@ class MainViewModel @Inject constructor(
             val conversationId = selectedConversations.firstOrNull() ?: return@collectIn
             view.clearSelection()
             withContext(Dispatchers.IO) {
-                conversationRepo.setConversationName(conversationId, newConversationName).await()
+                conversationRepo.setConversationName(conversationId, newConversationName)
             }
         }
 

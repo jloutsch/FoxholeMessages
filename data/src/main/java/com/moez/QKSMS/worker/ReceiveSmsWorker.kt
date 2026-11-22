@@ -79,7 +79,7 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
         Timber.v("classified. messageId=${message.id} autoSort=$autoSort category=$category")
         messageRepo.updateReceivedSorting(message.id, category?.name, otpDetector.isOtp(message.getText()))
 
-        val action = blockingClient.shouldBlock(message.address).blockingGet()
+        val action = blockingClient.shouldBlock(message.address)
 
         when {
             ((action is BlockingClient.Action.Block) && prefs.drop.get()) -> {

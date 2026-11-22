@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.interactor
 
-import kotlinx.coroutines.rx2.await
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import javax.inject.Inject
@@ -28,7 +27,7 @@ class DeduplicateMessages @Inject constructor(
     private val conversationRepo: ConversationRepository
 ) : Interactor<Unit>() {
     override suspend fun perform(params: Unit): MessageRepository.DeduplicationResult =
-        messageRepo.deduplicateMessages().singleOrError().await().also { result ->
+        messageRepo.deduplicateMessages().also { result ->
             // Duplicates go to Trash, so recompute snippets/dates for the conversations they were in.
             if (result is MessageRepository.DeduplicationResult.Success) {
                 conversationRepo.updateConversations(result.threadIds)

@@ -18,13 +18,14 @@
  */
 package dev.octoshrimpy.quik.listener
 
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.channels.awaitClose
 import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.provider.ContactsContract
-import io.reactivex.Observable
-import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
 import android.os.Looper
 
@@ -39,27 +40,19 @@ class ContactAddedListenerImpl @Inject constructor(
         private val URI = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
     }
 
-    override fun listen(): Observable<*> {
-        return ContactContentObserver(context).observable
-    }
+    override fun listen(): Flow<Unit> = callbackFlow {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                this.onChange(selfChange, null)
+            }
 
-    private class ContactContentObserver(context: Context) : ContentObserver(Handler(Looper.getMainLooper())) {
-
-        private val subject = BehaviorSubject.createDefault(Unit)
-
-        val observable: Observable<Unit> = subject
-                .doOnSubscribe { context.contentResolver.registerContentObserver(URI, true, this) }
-                .doOnDispose { context.contentResolver.unregisterContentObserver(this) }
-                .share()
-
-        override fun onChange(selfChange: Boolean) {
-            this.onChange(selfChange, null)
+            override fun onChange(selfChange: Boolean, uri: Uri?) {
+                trySend(Unit)
+            }
         }
-
-        override fun onChange(selfChange: Boolean, uri: Uri?) {
-            subject.onNext(Unit)
-        }
-
+        trySend(Unit) // what the BehaviorSubject's default value gave
+        context.contentResolver.registerContentObserver(URI, true, observer)
+        awaitClose { context.contentResolver.unregisterContentObserver(observer) }
     }
 
 }

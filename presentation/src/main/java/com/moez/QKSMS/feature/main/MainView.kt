@@ -19,11 +19,11 @@
 package dev.octoshrimpy.quik.feature.main
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import android.content.Intent
 import dev.octoshrimpy.quik.manager.ChangelogManager
 
-interface MainView : QkFlowView<MainState> {
+interface MainView : QkView<MainState> {
 
     val onNewIntentIntent: Flow<Intent>
     val activityResumedIntent: Flow<Boolean>

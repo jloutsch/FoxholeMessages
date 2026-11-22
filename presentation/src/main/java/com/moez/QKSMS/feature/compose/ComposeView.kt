@@ -20,7 +20,7 @@ package dev.octoshrimpy.quik.feature.compose
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import android.net.Uri
 import android.view.MenuItem
 import android.view.View
@@ -30,7 +30,7 @@ import dev.octoshrimpy.quik.common.widget.MicInputCloudView
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.Recipient
 
-interface ComposeView : QkFlowView<ComposeState> {
+interface ComposeView : QkView<ComposeState> {
 
     companion object {
         const val CAMERA_DESTINATION_KEY = "camera_destination"

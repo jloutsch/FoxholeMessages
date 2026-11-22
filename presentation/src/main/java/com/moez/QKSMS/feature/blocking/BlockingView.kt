@@ -19,9 +19,9 @@
 package dev.octoshrimpy.quik.feature.blocking
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 
-interface BlockingView : QkFlowView<BlockingState> {
+interface BlockingView : QkView<BlockingState> {
 
     val blockedNumbersIntent: Flow<Unit>
     val messageContentFiltersIntent: Flow<Unit>

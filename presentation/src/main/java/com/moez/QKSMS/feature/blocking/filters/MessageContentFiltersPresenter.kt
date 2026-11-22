@@ -21,13 +21,13 @@ package dev.octoshrimpy.quik.feature.blocking.filters
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
 import javax.inject.Inject
 
 class MessageContentFiltersPresenter @Inject constructor(
     private val filterRepo: MessageContentFilterRepository,
-) : QkFlowPresenter<MessageContentFiltersView, MessageContentFiltersState>(MessageContentFiltersState()) {
+) : QkPresenter<MessageContentFiltersView, MessageContentFiltersState>(MessageContentFiltersState()) {
 
     init {
         filterRepo.getMessageContentFilters().collectIn(presenterScope) { list -> newState { copy(filters = list) } }

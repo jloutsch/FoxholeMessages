@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.backup
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
@@ -38,8 +38,6 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.QkActivityResultContracts
 import dev.octoshrimpy.quik.common.util.extensions.getLabel
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
-import dev.octoshrimpy.quik.common.util.extensions.setNegativeButton
-import dev.octoshrimpy.quik.common.util.extensions.setPositiveButton
 import dev.octoshrimpy.quik.common.util.extensions.setShowing
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.common.widget.PreferenceView
@@ -48,7 +46,7 @@ import dev.octoshrimpy.quik.repository.BackupRepository
 import dev.octoshrimpy.quik.databinding.BackupControllerBinding
 import javax.inject.Inject
 
-class BackupController : QkFlowController<BackupControllerBinding, BackupView, BackupState, BackupPresenter>(), BackupView {
+class BackupController : QkController<BackupControllerBinding, BackupView, BackupState, BackupPresenter>(), BackupView {
 
     @Inject override lateinit var presenter: BackupPresenter
 

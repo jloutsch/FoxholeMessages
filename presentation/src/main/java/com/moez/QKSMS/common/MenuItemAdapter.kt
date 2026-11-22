@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.common
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.content.Context
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
@@ -30,18 +31,14 @@ import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
 import dev.octoshrimpy.quik.databinding.MenuListItemBinding
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 data class MenuItem(val title: String, val actionId: Int)
 
 class MenuItemAdapter @Inject constructor(private val context: Context, private val colors: Colors) : QkAdapter<MenuItem, QkBindingViewHolder<MenuListItemBinding>>() {
 
-    val menuItemClicks: Subject<Int> = PublishSubject.create()
+    val menuItemClicks = events<Int>()
 
-    private val disposables = CompositeDisposable()
 
     var selectedItem: Int? = null
         set(value) {
@@ -74,7 +71,7 @@ class MenuItemAdapter @Inject constructor(private val context: Context, private 
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
                 val menuItem = getItem(bindingAdapterPosition)
-                menuItemClicks.onNext(menuItem.actionId)
+                menuItemClicks.tryEmit(menuItem.actionId)
             }
         }
     }
@@ -89,7 +86,6 @@ class MenuItemAdapter @Inject constructor(private val context: Context, private 
 
     override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
         super.onDetachedFromRecyclerView(recyclerView)
-        disposables.clear()
     }
 
 }

@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.settings.messagesorting.notifications
 import kotlinx.coroutines.flow.map
 import androidx.lifecycle.viewModelScope
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import android.content.Context
 import android.media.RingtoneManager
 import android.net.Uri
@@ -35,7 +35,7 @@ class CategoryNotificationViewModel @Inject constructor(
     @Named("category") private val category: String,
     private val context: Context,
     private val prefs: Preferences
-) : QkFlowViewModel<CategoryNotificationView, CategoryNotificationState>(
+) : QkViewModel<CategoryNotificationView, CategoryNotificationState>(
     CategoryNotificationState(category = category, categoryTitle = categoryTitle(context, category))
 ) {
 

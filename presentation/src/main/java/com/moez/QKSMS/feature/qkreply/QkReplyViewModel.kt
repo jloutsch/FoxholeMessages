@@ -19,7 +19,6 @@
 package dev.octoshrimpy.quik.feature.qkreply
 
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
@@ -37,7 +36,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -52,7 +51,7 @@ import dev.octoshrimpy.quik.interactor.SendNewMessage
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import dev.octoshrimpy.quik.util.ActiveSubscriptionObservable
+import dev.octoshrimpy.quik.util.activeSubscriptions
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -66,7 +65,7 @@ class QkReplyViewModel @Inject constructor(
     private val externalNavigator: ExternalNavigator,
     private val sendNewMessage: SendNewMessage,
     private val subscriptionManager: SubscriptionManagerCompat
-) : QkFlowViewModel<QkReplyView, QkReplyState>(QkReplyState(threadId = threadId)) {
+) : QkViewModel<QkReplyView, QkReplyState>(QkReplyState(threadId = threadId)) {
 
     // The latest conversation; null until it loads
     private val conversation: StateFlow<Conversation?> = conversationRepo.observeConversation(threadId)
@@ -104,7 +103,7 @@ class QkReplyViewModel @Inject constructor(
                 .distinctUntilChanged()
 
         // ActiveSubscriptionObservable is still RxJava (Compose reads it too): bridged until Task 29
-        val subscriptions = ActiveSubscriptionObservable(subscriptionManager).asFlow()
+        val subscriptions = activeSubscriptions(subscriptionManager)
         combine(latestSubId, subscriptions) { subId, subs ->
             if (subs.size > 1) subs.firstOrNull { it.subscriptionId == subId } ?: subs[0] else null
         }.collectIn(viewModelScope) { sub -> newState { copy(subscription = sub) } }

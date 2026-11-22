@@ -19,9 +19,9 @@
 package dev.octoshrimpy.quik.feature.blocking.messages
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 
-interface BlockedMessagesView : QkFlowView<BlockedMessagesState> {
+interface BlockedMessagesView : QkView<BlockedMessagesState> {
 
     val menuReadyIntent: Flow<Unit>
     val optionsItemIntent: Flow<Int>

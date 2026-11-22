@@ -18,11 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.conversationinfo
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -48,7 +47,7 @@ import javax.inject.Inject
 
 class ConversationInfoController(
     val threadId: Long = 0
-) : QkFlowController<ConversationInfoControllerBinding, ConversationInfoView, ConversationInfoState, ConversationInfoPresenter>(), ConversationInfoView {
+) : QkController<ConversationInfoControllerBinding, ConversationInfoView, ConversationInfoState, ConversationInfoPresenter>(), ConversationInfoView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): ConversationInfoControllerBinding =
         ConversationInfoControllerBinding.inflate(inflater, container, false)
@@ -101,7 +100,7 @@ class ConversationInfoController(
         super.onAttach(view)
         presenter.bindIntents(this)
         // Redraw the rows when a recipient's color changes (QkThemedActivity is still RxJava: bridged)
-        themedActivity?.theme?.asFlow()?.collectIn(bindScope) { binding.recyclerView.scrapViews() }
+        themedActivity?.theme?.collectIn(bindScope) { binding.recyclerView.scrapViews() }
         setTitle(R.string.info_title)
         showBackButton(true)
     }

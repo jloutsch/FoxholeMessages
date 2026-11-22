@@ -2,7 +2,7 @@ package dev.octoshrimpy.quik.feature.messageutils
 
 import android.content.Context
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -22,7 +22,7 @@ class MessageUtilsPresenter @Inject constructor(
     private val prefs: Preferences,
     private val deleteOldMessages: DeleteOldMessages,
     private val messageRepo: MessageRepository
-) : QkFlowPresenter<MessageUtilsView, MessageUtilsState>(MessageUtilsState()) {
+) : QkPresenter<MessageUtilsView, MessageUtilsState>(MessageUtilsState()) {
     init {
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
         messageRepo.deduplicationProgress

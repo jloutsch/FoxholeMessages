@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.common
 
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.MainScope
 import android.app.Activity
 import android.content.Context
 import androidx.annotation.StringRes
@@ -51,11 +54,13 @@ class QkDialog @Inject constructor(private val context: Context, val adapter: Me
                 .setView(recyclerView)
                 .create()
 
+        // Close the dialog when an item is picked; stop listening once it's closed
         val clicks = adapter.menuItemClicks
-                .subscribe { dialog.dismiss() }
+                .onEach { dialog.dismiss() }
+                .launchIn(MainScope())
 
         dialog.setOnDismissListener {
-            clicks.dispose()
+            clicks.cancel()
         }
 
         dialog.show()

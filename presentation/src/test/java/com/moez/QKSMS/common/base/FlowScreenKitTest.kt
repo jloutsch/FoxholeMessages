@@ -36,11 +36,11 @@ class FlowScreenKitTest {
 
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
 
-    private class CounterViewModel : QkFlowViewModel<CounterView, Int>(0) {
+    private class CounterViewModel : QkViewModel<CounterView, Int>(0) {
         fun change(reducer: Int.() -> Int) = newState(reducer)
     }
 
-    private class CounterView(override val bindScope: CoroutineScope) : QkFlowView<Int> {
+    private class CounterView(override val bindScope: CoroutineScope) : QkView<Int> {
         val rendered = mutableListOf<Int>()
         override fun render(state: Int) { rendered += state }
     }
@@ -74,7 +74,7 @@ class FlowScreenKitTest {
         immediate.cancel()
     }
 
-    private class CounterPresenter : QkFlowPresenter<CounterView, Int>(0)
+    private class CounterPresenter : QkPresenter<CounterView, Int>(0)
 
     @Test
     fun presenterFirstRenderWaitsUntilTheCallerFinishes() {

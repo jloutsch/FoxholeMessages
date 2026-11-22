@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.blocking.numbers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.interactor.MarkUnblocked
 import dev.octoshrimpy.quik.repository.BlockingRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
@@ -31,7 +31,7 @@ class BlockedNumbersPresenter @Inject constructor(
     private val blockingRepo: BlockingRepository,
     private val conversationRepo: ConversationRepository,
     private val markUnblocked: MarkUnblocked
-) : QkFlowPresenter<BlockedNumbersView, BlockedNumbersState>(BlockedNumbersState()) {
+) : QkPresenter<BlockedNumbersView, BlockedNumbersState>(BlockedNumbersState()) {
 
     init {
         blockingRepo.getBlockedNumbers().collectIn(presenterScope) { list -> newState { copy(numbers = list) } }

@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.model.SenderCategoryRule
 
-interface SenderRulesView : QkFlowView<SenderRulesState> {
+interface SenderRulesView : QkView<SenderRulesState> {
 
     fun editRule(): Flow<SenderCategoryRule>
     fun removeRule(): Flow<SenderCategoryRule>

@@ -52,10 +52,10 @@ class BlockingDialog @Inject constructor(
 
         if (block) {
             markBlocked.execute(MarkBlocked.Params(conversationIds, prefs.blockingManager.get(), null))
-            blockingManager.block(addresses).subscribe()
+            blockingManager.block(addresses)
         } else {
             markUnblocked.execute(conversationIds)
-            blockingManager.unblock(addresses).subscribe()
+            blockingManager.unblock(addresses)
         }
     }
 

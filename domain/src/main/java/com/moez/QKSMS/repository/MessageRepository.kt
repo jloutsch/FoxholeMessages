@@ -24,8 +24,6 @@ import android.net.Uri
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
-import io.reactivex.Flowable
-import io.reactivex.Observable
 
 interface MessageRepository {
     sealed class DeduplicationProgress {
@@ -149,7 +147,8 @@ interface MessageRepository {
 
     fun deleteOldOtps(maxAgeDays: Int)
 
-    fun deduplicateMessages(): Flowable<DeduplicationResult>
+    /** Blocking: call off the main thread */
+    fun deduplicateMessages(): DeduplicationResult
 
     fun markAsSendingNow(messageId: Long)
 

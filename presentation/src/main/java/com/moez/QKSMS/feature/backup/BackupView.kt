@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.backup
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import android.net.Uri
 
-interface BackupView : QkFlowView<BackupState> {
+interface BackupView : QkView<BackupState> {
     fun setBackupLocationClicks(): Flow<Unit>
     fun restoreClicks(): Flow<Unit>
 

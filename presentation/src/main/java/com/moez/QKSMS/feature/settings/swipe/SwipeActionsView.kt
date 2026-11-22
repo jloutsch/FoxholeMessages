@@ -18,10 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.settings.swipe
 
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import kotlinx.coroutines.flow.Flow
 
-interface SwipeActionsView : QkFlowView<SwipeActionsState> {
+interface SwipeActionsView : QkView<SwipeActionsState> {
 
     enum class Action { LEFT, RIGHT }
 

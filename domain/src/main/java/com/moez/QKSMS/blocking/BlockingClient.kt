@@ -18,8 +18,6 @@
  */
 package dev.octoshrimpy.quik.blocking
 
-import io.reactivex.Completable
-import io.reactivex.Single
 
 interface BlockingClient {
 
@@ -35,26 +33,28 @@ interface BlockingClient {
         }
     }
 
+    // Each call reads or writes the database: call them off the main thread
+
     /**
      * Returns the recommendation action to perform given a message from the [address]
      */
-    fun shouldBlock(address: String): Single<Action>
+    fun shouldBlock(address: String): Action
 
     /**
      * Returns whether or not the [address] is in the blocking manager's blacklist
      * In most cases this will return the same result as [shouldBlock], but it's possible for an app's blacklist
      * to be temporarily deactivated, in which case the results will differ
      */
-    fun isBlacklisted(address: String): Single<Action>
+    fun isBlacklisted(address: String): Action
 
     /**
      * Blocks the numbers or opens the manager
      */
-    fun block(addresses: List<String>): Completable
+    fun block(addresses: List<String>)
 
     /**
      * Unblocks the numbers or opens the manager
      */
-    fun unblock(addresses: List<String>): Completable
+    fun unblock(addresses: List<String>)
 
 }

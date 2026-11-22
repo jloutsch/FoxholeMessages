@@ -16,10 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
+@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class) // flatMapLatest: stable in practice
+
 package dev.octoshrimpy.quik.common.widget
 
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
@@ -27,17 +37,12 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.viewpager.widget.ViewPager
-import com.uber.autodispose.android.ViewScopeProvider
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.forEach
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.databinding.TabViewBinding
-import dev.octoshrimpy.quik.extensions.Optional
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class PagerTitleView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : LinearLayout(context, attrs) {
@@ -45,7 +50,7 @@ class PagerTitleView @JvmOverloads constructor(context: Context, attrs: Attribut
     @Inject lateinit var colors: Colors
     @Inject lateinit var conversationRepo: ConversationRepository
 
-    private val recipientId: Subject<Long> = BehaviorSubject.create()
+    private val recipientId = MutableStateFlow<Long?>(null)
 
     var pager: ViewPager? = null
         set(value) {
@@ -60,7 +65,7 @@ class PagerTitleView @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     fun setRecipientId(id: Long) {
-        recipientId.onNext(id)
+        recipientId.value = id
     }
 
     private fun recreate() {
@@ -94,22 +99,32 @@ class PagerTitleView @JvmOverloads constructor(context: Context, attrs: Attribut
                 intArrayOf(android.R.attr.state_activated),
                 intArrayOf(-android.R.attr.state_activated))
 
-        recipientId
-                .distinctUntilChanged()
-                .observeOn(Schedulers.io())
-                .map { recipientId -> Optional(conversationRepo.getRecipient(recipientId)) }
-                .observeOn(AndroidSchedulers.mainThread())
-                .switchMap { recipient -> colors.themeObservable(recipient.value) }
+        // Runs until the view leaves the window
+        attachedJob?.cancel()
+        attachedJob = recipientId
+                .filterNotNull()
+                .flatMapLatest { recipientId ->
+                    val recipient = withContext(Dispatchers.IO) { conversationRepo.getRecipient(recipientId) }
+                    colors.themeChanges(recipient)
+                }
                 .map { theme ->
                     val textSecondary = context.resolveThemeColor(android.R.attr.textColorSecondary)
                     ColorStateList(states, intArrayOf(theme.theme, textSecondary))
                 }
-                .autoDisposable(ViewScopeProvider.from(this))
-                .subscribe { colorStateList ->
+                .onEach { colorStateList ->
                     childCount.forEach { index ->
                         (getChildAt(index) as? TextView)?.setTextColor(colorStateList)
                     }
                 }
+                .launchIn(MainScope())
+    }
+
+    private var attachedJob: Job? = null
+
+    override fun onDetachedFromWindow() {
+        attachedJob?.cancel()
+        attachedJob = null
+        super.onDetachedFromWindow()
     }
 
 }

@@ -19,13 +19,12 @@
 package dev.octoshrimpy.quik.feature.backup
 
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import android.net.Uri
 import android.content.Context
 import dev.octoshrimpy.quik.R
@@ -41,18 +40,18 @@ class BackupPresenter @Inject constructor(
     private val context: Context,
     private val dateFormatter: DateFormatter,
     private val performBackup: PerformBackup
-) : QkFlowPresenter<BackupView, BackupState>(BackupState()) {
+) : QkPresenter<BackupView, BackupState>(BackupState()) {
 
     init {
         // The repository's progress is still RxJava (RestoreBackupService reads it too): bridged
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
-        backupRepo.getBackupProgress().asFlow()
+        backupRepo.getBackupProgress()
                 .sample(16)
                 .distinctUntilChanged()
                 .collectIn(presenterScope) { progress -> newState { copy(backupProgress = progress) } }
 
         @OptIn(FlowPreview::class)
-        backupRepo.getRestoreProgress().asFlow()
+        backupRepo.getRestoreProgress()
                 .sample(16)
                 .distinctUntilChanged()
                 .collectIn(presenterScope) { progress -> newState { copy(restoreProgress = progress) } }

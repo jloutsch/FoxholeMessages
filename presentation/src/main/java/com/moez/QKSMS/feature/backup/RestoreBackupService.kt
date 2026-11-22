@@ -18,6 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.backup
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
@@ -30,10 +39,7 @@ import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.common.util.extensions.getLabel
 import dev.octoshrimpy.quik.manager.NotificationManager
 import dev.octoshrimpy.quik.repository.BackupRepository
-import io.reactivex.Observable
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import androidx.core.app.ServiceCompat
 
@@ -75,16 +81,15 @@ class RestoreBackupService : Service() {
         return START_STICKY
     }
 
-    @SuppressLint("CheckResult")
     private fun start(intent: Intent) {
         val notificationManager = NotificationManagerCompat.from(this)
 
         startForeground(NOTIFICATION_ID, notification.build())
 
+        @OptIn(FlowPreview::class) // sample is stable in practice; still marked preview
         backupRepo.getRestoreProgress()
-            .sample(200, TimeUnit.MILLISECONDS, true)
-            .subscribeOn(Schedulers.io())
-            .subscribe { progress ->
+            .sample(200)
+            .onEach { progress ->
                 when (progress) {
                     is BackupRepository.Progress.Idle -> stop()
 
@@ -99,13 +104,24 @@ class RestoreBackupService : Service() {
                         .let { notificationManager.notify(NOTIFICATION_ID, it.build()) }
                 }
             }
+            .launchIn(scope)
 
         // Start the restore
-        Observable.just(intent)
-            .map { Uri.parse(it.getStringExtra("${baseContext.packageName}.$EXTRA_FILE_URI")) }
-            .map(backupRepo::performRestore)
-            .subscribeOn(Schedulers.io())
-            .subscribe({}, Timber::w)
+        scope.launch(Dispatchers.IO) {
+            try {
+                backupRepo.performRestore(Uri.parse(intent.getStringExtra("${baseContext.packageName}.$EXTRA_FILE_URI")))
+            } catch (e: Exception) {
+                Timber.w(e)
+            }
+        }
+    }
+
+    // Ends with the service
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
     }
 
     private fun stop() {

@@ -24,8 +24,6 @@ import androidx.emoji2.text.EmojiCompat
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
-import com.uber.rxdogtag.RxDogTag
-import com.uber.rxdogtag.autodispose.AutoDisposeConfigurer
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
@@ -110,11 +108,6 @@ class QKApplication : Application(), HasAndroidInjector {
                 }
             })
         )
-
-        // rxdogtag provides 'look-back' for exceptions in rxjava2 'chains'
-        RxDogTag.builder()
-                .configureWith(AutoDisposeConfigurer::configure)
-                .install()
 
         // init work manager with custom factory supporting dagger/injection capability
         WorkManager.initialize(

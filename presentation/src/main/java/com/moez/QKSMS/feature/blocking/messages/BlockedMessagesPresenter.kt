@@ -19,7 +19,7 @@
 package dev.octoshrimpy.quik.feature.blocking.messages
 
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.common.Navigator
@@ -32,7 +32,7 @@ class BlockedMessagesPresenter @Inject constructor(
     private val blockingClient: BlockingClient,
     private val deleteConversations: DeleteConversations,
     private val navigator: Navigator
-) : QkFlowPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState()) {
+) : QkPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState()) {
 
     init {
         conversationRepo.observeBlockedConversations()

@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.notificationprefs
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
@@ -62,9 +61,9 @@ class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
             .map { preference -> preference.clicks().map { preference } }
             .merge()
     // QkDialog is shared with screens still on RxJava: bridged until its last user converts
-    override val previewModeSelectedIntent by lazy { previewModeDialog.adapter.menuItemClicks.asFlow() }
+    override val previewModeSelectedIntent by lazy { previewModeDialog.adapter.menuItemClicks }
     override val ringtoneSelectedIntent = events<String>()
-    override val actionsSelectedIntent by lazy { actionsDialog.adapter.menuItemClicks.asFlow() }
+    override val actionsSelectedIntent by lazy { actionsDialog.adapter.menuItemClicks }
 
     private val viewModel by lazy {
         ViewModelProvider(this, viewModelFactory)[NotificationPrefsViewModel::class.java]

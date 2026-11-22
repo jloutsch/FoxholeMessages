@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import android.content.Context
 import android.net.Uri
 import android.provider.BaseColumns
@@ -29,10 +30,7 @@ import dev.octoshrimpy.quik.db.Tables
 import dev.octoshrimpy.quik.db.observe
 import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.ContactGroup
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.rx2.asObservable
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,7 +50,7 @@ class ContactRepositoryImpl @Inject constructor(
 
     override fun getUnmanagedAllContacts(): List<Contact> = getContacts()
 
-    override fun getUnmanagedContacts(starred: Boolean): Observable<List<Contact>> =
+    override fun getUnmanagedContacts(starred: Boolean): Flow<List<Contact>> =
         database.observe(Tables.CONTACTS) { relations.contacts(if (starred) contactDao.starred() else contactDao.all()) }
                 .map { contacts ->
                     contacts.sortedWith { c1, c2 ->
@@ -67,14 +65,10 @@ class ContactRepositoryImpl @Inject constructor(
                         }
                     }
                 }
-                .asObservable()
-                .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
 
     // Only groups with at least one saved contact in them
-    override fun getUnmanagedContactGroups(): Observable<List<ContactGroup>> =
+    override fun getUnmanagedContactGroups(): Flow<List<ContactGroup>> =
         database.observe(Tables.GROUPS) { relations.contactGroups(contactDao.groups()).filter { it.contacts.isNotEmpty() } }
-                .asObservable()
-                .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
 
     override fun setDefaultPhoneNumber(lookupKey: String, phoneNumberId: Long) =
         contactDao.setDefaultNumber(lookupKey, phoneNumberId)

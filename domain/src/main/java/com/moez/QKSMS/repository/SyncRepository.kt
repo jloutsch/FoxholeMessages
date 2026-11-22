@@ -18,9 +18,9 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.StateFlow
 import android.net.Uri
 import dev.octoshrimpy.quik.model.Message
-import io.reactivex.Observable
 
 interface SyncRepository {
 
@@ -30,7 +30,7 @@ interface SyncRepository {
         data class ParsingEmojis(val max: Int, val progress: Int, val indeterminate: Boolean) : SyncProgress()
     }
 
-    val syncProgress: Observable<SyncProgress>
+    val syncProgress: StateFlow<SyncProgress>
 
     fun syncMessages()
 

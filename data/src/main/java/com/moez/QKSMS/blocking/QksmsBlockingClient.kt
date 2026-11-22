@@ -19,28 +19,25 @@
 package dev.octoshrimpy.quik.blocking
 
 import dev.octoshrimpy.quik.repository.BlockingRepository
-import io.reactivex.Completable
-import io.reactivex.Single
 import javax.inject.Inject
 
 class QksmsBlockingClient @Inject constructor(
     private val blockingRepo: BlockingRepository
 ) : BlockingClient {
 
-    override fun shouldBlock(address: String): Single<BlockingClient.Action> = isBlacklisted(address)
+    override fun shouldBlock(address: String): BlockingClient.Action = isBlacklisted(address)
 
-    override fun isBlacklisted(address: String): Single<BlockingClient.Action> = Single.fromCallable {
+    override fun isBlacklisted(address: String): BlockingClient.Action =
         when (blockingRepo.isBlocked(address)) {
             true -> BlockingClient.Action.Block()
             false -> BlockingClient.Action.Unblock
         }
-    }
 
-    override fun block(addresses: List<String>): Completable = Completable.fromCallable {
+    override fun block(addresses: List<String>) {
         blockingRepo.blockNumber(*addresses.toTypedArray())
     }
 
-    override fun unblock(addresses: List<String>): Completable = Completable.fromCallable {
+    override fun unblock(addresses: List<String>) {
         blockingRepo.unblockNumbers(*addresses.toTypedArray())
     }
 

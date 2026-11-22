@@ -18,7 +18,27 @@
  */
 package dev.octoshrimpy.quik.common.base
 
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.model.Recipient
+import androidx.lifecycle.lifecycleScope
 import dev.octoshrimpy.quik.model.Conversation
 import android.annotation.SuppressLint
 import android.app.ActivityManager
@@ -26,25 +46,13 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import androidx.core.view.iterator
-import androidx.lifecycle.Lifecycle
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeBoolean
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
-import dev.octoshrimpy.quik.extensions.Optional
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.Observables
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import androidx.core.view.WindowCompat
 
@@ -65,42 +73,37 @@ abstract class QkThemedActivity : QkActivity() {
      * In case the activity should be themed for a specific conversation, the selected conversation
      * can be changed by pushing the threadId to this subject
      */
-    val threadId: Subject<Long> = BehaviorSubject.createDefault(0)
+    val threadId = MutableStateFlow(0L)
 
     /**
      * Switch the theme if the threadId changes
      * Set it based on the latest message in the conversation
      */
-    val theme: Observable<Colors.Theme> = threadId
-            .distinctUntilChanged()
-            .switchMap { threadId ->
+    @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest is stable in practice; still marked experimental
+    val theme: Flow<Colors.Theme> = threadId
+            .flatMapLatest { threadId ->
                 // Looked up in the background (#71). 0 means no conversation, so there's nothing to read.
-                if (threadId == 0L) Observable.just(Optional<Conversation>(null))
-                else Observable.fromCallable { Optional(conversationRepo.getConversation(threadId)) }
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-            }
-            .switchMap { (conversation) ->
+                val conversation = if (threadId == 0L) null
+                    else withContext(Dispatchers.IO) { conversationRepo.getConversation(threadId) }
                 when {
-                    conversation == null -> Observable.just(Optional(null))
+                    conversation == null -> flowOf(null)
 
-                    conversation.recipients.size == 1 -> Observable.just(Optional(conversation.recipients.first()))
+                    conversation.recipients.size == 1 -> flowOf(conversation.recipients.first())
 
                     else -> messageRepo.getLastIncomingMessage(conversation.id)
-                            .asMainObservable()
                             .mapNotNull { messages -> messages.firstOrNull() }
-                            .distinctUntilChanged { message -> message.address }
+                            .distinctUntilChangedBy { message -> message.address }
                             .mapNotNull { message ->
                                 conversation.recipients.find { recipient ->
                                     phoneNumberUtils.compare(recipient.address, message.address)
                                 }
                             }
-                            .map { recipient -> Optional(recipient) }
-                            .startWith(Optional(conversation.recipients.firstOrNull()))
+                            .map<Recipient, Recipient?> { it }
+                            .onStart { emit(conversation.recipients.firstOrNull()) }
                             .distinctUntilChanged()
                 }
             }
-            .switchMap { colors.themeObservable(it.value) }
+            .flatMapLatest { recipient -> colors.themeChanges(recipient) }
 
     @SuppressLint("InlinedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,11 +112,11 @@ abstract class QkThemedActivity : QkActivity() {
 
         // When certain preferences change, we need to recreate the activity
         val triggers = listOf(prefs.nightMode, prefs.night, prefs.black, prefs.textSize, prefs.systemFont)
-        Observable.merge(triggers.map { it.asObservable().skip(1) })
-                .debounce(400, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .autoDisposable(scope())
-                .subscribe { recreate() }
+        @OptIn(FlowPreview::class) // debounce is stable in practice; still marked preview
+        triggers.map { it.asFlow().drop(1).map { } }.merge()
+                .debounce(400)
+                .onEach { recreate() }
+                .launchIn(lifecycleScope)
 
         // We can only set light nav bar on API 27 in attrs, but we can do it in API 26 here
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
@@ -152,7 +155,7 @@ abstract class QkThemedActivity : QkActivity() {
         toolbar?.overflowIcon = toolbar?.overflowIcon?.apply { setTint(textSecondary) }
 
         // Update the colours of the menu items
-        Observables.combineLatest(menu, theme) { menu, theme ->
+        combine(menu, theme) { menu, theme ->
             menu.iterator().forEach { menuItem ->
                 val tint = when (menuItem.itemId) {
                     in getColoredMenuItems() -> theme.theme
@@ -161,7 +164,7 @@ abstract class QkThemedActivity : QkActivity() {
 
                 menuItem.icon = menuItem.icon?.apply { setTint(tint) }
             }
-        }.autoDisposable(scope(Lifecycle.Event.ON_DESTROY)).subscribe()
+        }.launchIn(lifecycleScope)
     }
 
     open fun getColoredMenuItems(): List<Int> {

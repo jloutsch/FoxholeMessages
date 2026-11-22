@@ -21,13 +21,13 @@ package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.repository.TrustedSenderRepository
 import javax.inject.Inject
 
 class TrustedSendersPresenter @Inject constructor(
     private val trustedSenderRepo: TrustedSenderRepository
-) : QkFlowPresenter<TrustedSendersView, TrustedSendersState>(TrustedSendersState()) {
+) : QkPresenter<TrustedSendersView, TrustedSendersState>(TrustedSendersState()) {
 
     init {
         trustedSenderRepo.getTrustedSenders().collectIn(presenterScope) { list -> newState { copy(senders = list) } }

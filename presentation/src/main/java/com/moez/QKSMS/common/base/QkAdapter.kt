@@ -18,13 +18,13 @@
  */
 package dev.octoshrimpy.quik.common.base
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 
 /**
  * Base RecyclerView.Adapter that provides some convenience when creating a new Adapter, such as
@@ -54,7 +54,8 @@ abstract class QkAdapter<T, VHT : RecyclerView.ViewHolder> : RecyclerView.Adapte
             field?.isVisible = data.isEmpty()
         }
 
-    private val selectionChanges: Subject<List<Long>> = BehaviorSubject.create()
+    // The current selection (a BehaviorSubject under RxJava): replays the latest to new collectors
+    private val selectionChanges = MutableSharedFlow<List<Long>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val selection = mutableListOf<Long>()
 
@@ -72,7 +73,7 @@ abstract class QkAdapter<T, VHT : RecyclerView.ViewHolder> : RecyclerView.Adapte
             false -> selection.add(id)
         }
 
-        selectionChanges.onNext(selection)
+        selectionChanges.tryEmit(selection)
         return true
     }
 
@@ -82,7 +83,7 @@ abstract class QkAdapter<T, VHT : RecyclerView.ViewHolder> : RecyclerView.Adapte
 
     fun clearSelection() {
         selection.clear()
-        selectionChanges.onNext(selection)
+        selectionChanges.tryEmit(selection)
         notifyDataSetChanged()
     }
 

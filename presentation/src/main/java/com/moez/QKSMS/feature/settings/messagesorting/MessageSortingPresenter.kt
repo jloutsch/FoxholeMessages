@@ -19,7 +19,7 @@
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.manager.WidgetManager
 import dev.octoshrimpy.quik.feature.conversations.Tab
@@ -40,7 +40,7 @@ class MessageSortingPresenter @Inject constructor(
     private val prefs: Preferences,
     private val deleteOldOtps: DeleteOldOtps,
     private val widgetManager: WidgetManager
-) : QkFlowPresenter<MessageSortingView, MessageSortingState>(
+) : QkPresenter<MessageSortingView, MessageSortingState>(
     MessageSortingState(prefs.autoSortEnabled.get())
 ) {
 

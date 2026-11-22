@@ -1,21 +1,3 @@
-/*
- * Copyright (C) 2017 Moez Bhatti <moez.bhatti@gmail.com>
- *
- * This file is part of QKSMS.
- *
- * QKSMS is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * QKSMS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dev.octoshrimpy.quik.common.base
 
 import android.view.LayoutInflater
@@ -27,10 +9,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.viewbinding.ViewBinding
 import com.bluelinelabs.conductor.archlifecycle.LifecycleController
 import dev.octoshrimpy.quik.R
+import kotlinx.coroutines.CoroutineScope
 
-abstract class QkController<VB : ViewBinding, ViewContract : QkViewContract<State>, State : Any, Presenter : QkPresenter<ViewContract, State>> : LifecycleController() {
+/**
+ * Base Conductor screen with view-binding helpers. Collection happens in [bindScope], which
+ * lives from attach to detach (see [AttachScope]).
+ */
+abstract class QkController<VB : ViewBinding, V : QkView<S>, S : Any, P : QkPresenter<V, S>> :
+    LifecycleController(), QkView<S> {
 
-    abstract var presenter: Presenter
+    abstract var presenter: P
+
+    private val attachScope = AttachScope()
+
+    override val bindScope: CoroutineScope get() = attachScope.scope
 
     private val appCompatActivity: AppCompatActivity?
         get() = activity as? AppCompatActivity
@@ -51,6 +43,17 @@ abstract class QkController<VB : ViewBinding, ViewContract : QkViewContract<Stat
     }
 
     open fun onViewCreated() {
+    }
+
+    // Started before subclasses' onAttach code, which calls presenter.bindIntents(this)
+    override fun onAttach(view: View) {
+        attachScope.start()
+        super.onAttach(view)
+    }
+
+    override fun onDetach(view: View) {
+        attachScope.stop()
+        super.onDetach(view)
     }
 
     fun setTitle(@StringRes titleId: Int) {

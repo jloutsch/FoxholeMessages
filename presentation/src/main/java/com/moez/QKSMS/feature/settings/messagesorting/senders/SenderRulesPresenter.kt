@@ -22,13 +22,13 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.model.SenderCategoryRule
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.repository.SenderCategoryRuleRepository
 import javax.inject.Inject
 
 class SenderRulesPresenter @Inject constructor(
     private val senderRuleRepo: SenderCategoryRuleRepository
-) : QkFlowPresenter<SenderRulesView, SenderRulesState>(SenderRulesState()) {
+) : QkPresenter<SenderRulesView, SenderRulesState>(SenderRulesState()) {
 
     init {
         senderRuleRepo.getRules().collectIn(presenterScope) { list -> newState { copy(rules = list) } }

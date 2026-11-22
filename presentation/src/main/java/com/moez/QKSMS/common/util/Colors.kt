@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.common.util
 
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.Flow
 import android.content.Context
 import android.os.Build
 import android.graphics.Color
@@ -26,7 +30,6 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.extensions.getColorCompat
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.Observable
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.absoluteValue
@@ -89,13 +92,13 @@ class Colors @Inject constructor(
     }
 
     /** Emits again whenever any setting that decides [theme] changes. */
-    fun themeObservable(recipient: Recipient? = null): Observable<Theme> =
-        Observable.merge(listOfNotNull(
-            prefs.theme().asObservable(),
-            recipient?.let { prefs.theme(it.id).asObservable() },
-            prefs.autoColor.asObservable(),
-            prefs.systemColors.asObservable()
-        ))
+    fun themeChanges(recipient: Recipient? = null): Flow<Theme> =
+        listOfNotNull(
+            prefs.theme().asFlow().map { },
+            recipient?.let { prefs.theme(it.id).asFlow().map { } },
+            prefs.autoColor.asFlow().map { },
+            prefs.systemColors.asFlow().map { }
+        ).merge()
             .map { theme(recipient) }
             .distinctUntilChanged()
 

@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.receiver
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -30,8 +34,6 @@ import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.worker.ReceiveSmsWorker
 import dev.octoshrimpy.quik.worker.ReceiveSmsWorker.Companion.INPUT_DATA_KEY_MESSAGE_ID
-import io.reactivex.Single
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -44,30 +46,30 @@ class SmsReceivedReceiver : BroadcastReceiver() {
         Sms.Intents.getMessagesFromIntent(intent)?.let { messages ->
             val pendingResult = goAsync()
             // reduce list of messages to single message and save in db
-            Single.just(messages)
-                .observeOn(Schedulers.io())
-                .map {
-                    Timber.v("onReceive() new sms")  // here so runs on io thread
+            @OptIn(DelicateCoroutinesApi::class) // a receiver has no scope; goAsync() keeps it alive until finish()
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    Timber.v("onReceive() new sms")
 
-                    messageRepo.insertReceivedSms(
+                    val messageId = messageRepo.insertReceivedSms(
                         intent.extras?.getInt("subscription", -1) ?: -1,
                         messages[0].displayOriginatingAddress,
                         messages.mapNotNull { it.displayMessageBody }.reduce { body, new -> body + new },
                         messages[0].timestampMillis
                     ).id
-                }
-                .subscribe({ messageId ->
+
                     WorkManager.getInstance(context).enqueue(
                         OneTimeWorkRequestBuilder<ReceiveSmsWorker>()
                             .setInputData(workDataOf(INPUT_DATA_KEY_MESSAGE_ID to messageId))
                             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                             .build()
                     )
+                } catch (e: Exception) {
+                    Timber.e(e, "error receiving new sms")
+                } finally {
                     pendingResult.finish()
-                }, { error ->
-                    Timber.e(error, "error receiving new sms")
-                    pendingResult.finish()
-                })
+                }
+            }
         }
     }
 

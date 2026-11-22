@@ -18,11 +18,11 @@
  */
 package dev.octoshrimpy.quik.manager
 
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
 
 interface RatingManager {
 
-    val shouldShowRating: Observable<Boolean>
+    val shouldShowRating: Flow<Boolean>
 
     /**
      * Whether or not we should show the rating UI should depend on the number of sessions
