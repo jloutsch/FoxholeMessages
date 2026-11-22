@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.content.Context
 import android.content.DialogInterface
 import android.view.View
@@ -26,24 +29,20 @@ import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.classifier.Category
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.databinding.SenderRulesControllerBinding
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.model.SenderCategoryRule
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class SenderRulesController :
-    QkController<SenderRulesControllerBinding, SenderRulesView, SenderRulesState, SenderRulesPresenter>(),
+    QkFlowController<SenderRulesControllerBinding, SenderRulesView, SenderRulesState, SenderRulesPresenter>(),
     SenderRulesView {
 
     @Inject override lateinit var presenter: SenderRulesPresenter
     @Inject lateinit var context: Context
 
     private val adapter = SenderRulesAdapter()
-    private val categorySelectedSubject: Subject<String> = PublishSubject.create()
+    private val categorySelectedEvents = events<String>()
 
     private val categories = Category.values()
     private val categoryLabels = arrayOf(
@@ -78,9 +77,9 @@ class SenderRulesController :
         adapter.updateData(state.rules)
     }
 
-    override fun editRule(): Observable<SenderCategoryRule> = adapter.editRule
-    override fun removeRule(): Observable<SenderCategoryRule> = adapter.removeRule
-    override fun categorySelected(): Observable<String> = categorySelectedSubject
+    override fun editRule(): Flow<SenderCategoryRule> = adapter.editRule
+    override fun removeRule(): Flow<SenderCategoryRule> = adapter.removeRule
+    override fun categorySelected(): Flow<String> = categorySelectedEvents
 
     override fun showEditDialog(rule: SenderCategoryRule) {
         val checkedIndex = categories.indexOfFirst { it.name == rule.category }.coerceAtLeast(0)
@@ -89,7 +88,7 @@ class SenderRulesController :
         AlertDialog.Builder(activity!!)
             .setTitle(rule.address)
             .setSingleChoiceItems(labels, checkedIndex, DialogInterface.OnClickListener { dialog, which ->
-                categorySelectedSubject.onNext(categories[which].name)
+                categorySelectedEvents.tryEmit(categories[which].name)
                 dialog.dismiss()
             })
             .setNegativeButton(R.string.button_cancel) { _, _ -> }

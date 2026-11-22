@@ -18,30 +18,29 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
 import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.databinding.SenderRuleListItemBinding
 import dev.octoshrimpy.quik.model.SenderCategoryRule
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 
 class SenderRulesAdapter : QkListAdapter<SenderCategoryRule, QkBindingViewHolder<SenderRuleListItemBinding>>(itemId = { it.id }) {
 
-    val editRule: Subject<SenderCategoryRule> = PublishSubject.create()
-    val removeRule: Subject<SenderCategoryRule> = PublishSubject.create()
+    val editRule = events<SenderCategoryRule>()
+    val removeRule = events<SenderCategoryRule>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<SenderRuleListItemBinding> {
         val binding = SenderRuleListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
                 val rule = getItem(bindingAdapterPosition) ?: return@setOnClickListener
-                editRule.onNext(rule)
+                editRule.tryEmit(rule)
             }
             binding.remove.setOnClickListener {
                 val rule = getItem(bindingAdapterPosition) ?: return@setOnClickListener
-                removeRule.onNext(rule)
+                removeRule.tryEmit(rule)
             }
         }
     }

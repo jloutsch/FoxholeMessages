@@ -18,42 +18,40 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
-import io.reactivex.rxkotlin.plusAssign
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.model.SenderCategoryRule
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.repository.SenderCategoryRuleRepository
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class SenderRulesPresenter @Inject constructor(
     private val senderRuleRepo: SenderCategoryRuleRepository
-) : QkPresenter<SenderRulesView, SenderRulesState>(SenderRulesState()) {
+) : QkFlowPresenter<SenderRulesView, SenderRulesState>(SenderRulesState()) {
 
     init {
-        disposables += senderRuleRepo.getRules().asMainObservable()
-            .subscribe { list -> newState { copy(rules = list) } }
+        senderRuleRepo.getRules().collectIn(presenterScope) { list -> newState { copy(rules = list) } }
     }
 
     override fun bindIntents(view: SenderRulesView) {
         super.bindIntents(view)
 
-        view.removeRule()
-            .map { it.id }
-            .observeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe { id -> senderRuleRepo.removeRule(id) }
+        view.removeRule().collectIn(view.bindScope) { rule ->
+            withContext(Dispatchers.IO) { senderRuleRepo.removeRule(rule.id) }
+        }
 
-        view.editRule()
-            .autoDisposable(view.scope())
-            .subscribe { rule -> view.showEditDialog(rule) }
+        // The rule whose category is being changed: the last one tapped (what withLatestFrom read)
+        var editing: SenderCategoryRule? = null
+        view.editRule().collectIn(view.bindScope) { rule ->
+            editing = rule
+            view.showEditDialog(rule)
+        }
 
-        view.categorySelected()
-            .withLatestFrom(view.editRule()) { category, rule -> rule.address to category }
-            .observeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe { (address, category) -> senderRuleRepo.setRule(address, category) }
+        view.categorySelected().collectIn(view.bindScope) { category ->
+            val rule = editing ?: return@collectIn
+            withContext(Dispatchers.IO) { senderRuleRepo.setRule(rule.address, category) }
+        }
     }
 
 }
