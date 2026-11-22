@@ -18,6 +18,18 @@
  */
 package dev.octoshrimpy.quik.feature.settings
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.MainScope
+import dev.octoshrimpy.quik.common.util.extensions.longClicks
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.animation.ObjectAnimator
 import android.app.TimePickerDialog
 import android.content.Context
@@ -28,16 +40,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import com.bluelinelabs.conductor.RouterTransaction
-import com.jakewharton.rxbinding2.view.clicks
-import com.jakewharton.rxbinding2.view.longClicks
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.BuildConfig
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.MenuItem
 import dev.octoshrimpy.quik.common.QkChangeHandler
 import dev.octoshrimpy.quik.common.QkDialog
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.animateLayoutChanges
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
@@ -52,12 +59,9 @@ import dev.octoshrimpy.quik.feature.themepicker.ThemePickerController
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
-class SettingsController : QkController<SettingsControllerBinding, SettingsView, SettingsState, SettingsPresenter>(), SettingsView {
+class SettingsController : QkFlowController<SettingsControllerBinding, SettingsView, SettingsState, SettingsPresenter>(), SettingsView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): SettingsControllerBinding =
         SettingsControllerBinding.inflate(inflater, container, false)
@@ -73,12 +77,15 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
     @Inject override lateinit var presenter: SettingsPresenter
 
     private val signatureDialog: TextInputDialog by lazy {
-        TextInputDialog(activity!!, context.getString(R.string.settings_signature_title), signatureSubject::onNext)
+        TextInputDialog(activity!!, context.getString(R.string.settings_signature_title), { signatureEvents.tryEmit(it) })
     }
 
-    private val startTimeSelectedSubject: Subject<Pair<Int, Int>> = PublishSubject.create()
-    private val endTimeSelectedSubject: Subject<Pair<Int, Int>> = PublishSubject.create()
-    private val signatureSubject: Subject<String> = PublishSubject.create()
+    private val startTimeSelectedEvents = events<Pair<Int, Int>>()
+    private val endTimeSelectedEvents = events<Pair<Int, Int>>()
+    private val signatureEvents = events<String>()
+
+    // Lives as long as this controller (init to onDestroy), like the Rx subscription it replaces
+    private val controllerScope = MainScope()
 
     private val progressAnimator by lazy { ObjectAnimator.ofInt(binding.syncingProgress, "progress", 0, 0) }
 
@@ -86,9 +93,11 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
         appComponent.inject(this)
         retainViewMode = RetainViewMode.RETAIN_DETACH
 
-        colors.themeObservable()
-                .autoDisposable(scope())
-                .subscribe { activity?.recreate() }
+        // Redraw everything in the new colors when the theme changes. drop(1): the first value is
+        // the current theme (under RxJava it arrived during init, when activity was still null)
+        colors.themeObservable().asFlow()
+                .drop(1)
+                .collectIn(controllerScope) { activity?.recreate() }
     }
 
     override fun onViewCreated() {
@@ -115,30 +124,30 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
         showBackButton(true)
     }
 
-    override fun preferenceClicks(): Observable<PreferenceView> = (0 until binding.preferences.childCount)
+    override fun preferenceClicks(): Flow<PreferenceView> = (0 until binding.preferences.childCount)
             .map { index -> binding.preferences.getChildAt(index) }
             .mapNotNull { view -> view as? PreferenceView }
             .map { preference -> preference.clicks().map { preference } }
-            .let { preferences -> Observable.merge(preferences) }
+            .merge()
 
-    override fun aboutLongClicks(): Observable<*> = binding.about.longClicks()
+    override fun aboutLongClicks(): Flow<Unit> = binding.about.longClicks()
 
 
-    override fun nightModeSelected(): Observable<Int> = nightModeDialog.adapter.menuItemClicks
+    override fun nightModeSelected(): Flow<Int> = nightModeDialog.adapter.menuItemClicks.asFlow()
 
-    override fun nightStartSelected(): Observable<Pair<Int, Int>> = startTimeSelectedSubject
+    override fun nightStartSelected(): Flow<Pair<Int, Int>> = startTimeSelectedEvents
 
-    override fun nightEndSelected(): Observable<Pair<Int, Int>> = endTimeSelectedSubject
+    override fun nightEndSelected(): Flow<Pair<Int, Int>> = endTimeSelectedEvents
 
-    override fun textSizeSelected(): Observable<Int> = textSizeDialog.adapter.menuItemClicks
+    override fun textSizeSelected(): Flow<Int> = textSizeDialog.adapter.menuItemClicks.asFlow()
 
-    override fun sendDelaySelected(): Observable<Int> = sendDelayDialog.adapter.menuItemClicks
+    override fun sendDelaySelected(): Flow<Int> = sendDelayDialog.adapter.menuItemClicks.asFlow()
 
-    override fun signatureChanged(): Observable<String> = signatureSubject
+    override fun signatureChanged(): Flow<String> = signatureEvents
 
-    override fun mmsSizeSelected(): Observable<Int> = mmsSizeDialog.adapter.menuItemClicks
+    override fun mmsSizeSelected(): Flow<Int> = mmsSizeDialog.adapter.menuItemClicks.asFlow()
 
-    override fun messageLinkHandlingSelected(): Observable<Int> = messageLinkHandlingDialog.adapter.menuItemClicks
+    override fun messageLinkHandlingSelected(): Flow<Int> = messageLinkHandlingDialog.adapter.menuItemClicks.asFlow()
 
     override fun render(state: SettingsState) {
         binding.theme.findViewById<View>(R.id.themePreview)?.setBackgroundTint(state.theme)
@@ -205,18 +214,23 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
     }
 
 
+    override fun onDestroy() {
+        controllerScope.cancel()
+        super.onDestroy()
+    }
+
     // TODO change this to a PopupWindow
     override fun showNightModeDialog() = nightModeDialog.show(activity!!)
 
     override fun showStartTimePicker(hour: Int, minute: Int) {
         TimePickerDialog(activity, { _, newHour, newMinute ->
-            startTimeSelectedSubject.onNext(Pair(newHour, newMinute))
+            startTimeSelectedEvents.tryEmit(Pair(newHour, newMinute))
         }, hour, minute, DateFormat.is24HourFormat(activity)).show()
     }
 
     override fun showEndTimePicker(hour: Int, minute: Int) {
         TimePickerDialog(activity, { _, newHour, newMinute ->
-            endTimeSelectedSubject.onNext(Pair(newHour, newMinute))
+            endTimeSelectedEvents.tryEmit(Pair(newHour, newMinute))
         }, hour, minute, DateFormat.is24HourFormat(activity)).show()
     }
 
