@@ -210,8 +210,6 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
 
                             is BlockingClient.Action.Unblock ->
                                 conversationRepo.markUnblocked(message.threadId)
-
-                            else -> Unit
                         }
 
                         val messageFilterAction = filterRepo.isBlocked(message.getText(), message.address, contactsRepo)

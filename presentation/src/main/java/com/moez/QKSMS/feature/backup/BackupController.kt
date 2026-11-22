@@ -121,7 +121,8 @@ class BackupController : QkController<BackupControllerBinding, BackupView, Backu
 
         openDocument = themedActivity!!
             .registerForActivityResult(QkActivityResultContracts.OpenDocument()) { uri ->
-                uri?.let { documentSelectedEvents.tryEmit(it) }
+                // The contract returns Uri.EMPTY when the picker is cancelled (#132)
+                uri?.takeIf { it != Uri.EMPTY }?.let { documentSelectedEvents.tryEmit(it) }
             }
     }
 

@@ -18,6 +18,12 @@
  */
 package dev.octoshrimpy.quik.common.util
 
+import dev.octoshrimpy.quik.util.tryOrNull
+import java.io.File
+import android.provider.MediaStore
+import android.os.Environment
+import android.os.Build
+import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -87,16 +93,23 @@ class FileLoggingTree @Inject constructor(
                         ).format(System.currentTimeMillis())
                     }.log"
 
-                    val (uri, e) = FileUtils.create(
-                        FileUtils.Location.Downloads,
-                        context,
-                        filename,
-                        "text/plain"
-                    )
-                    if (e is Exception)
-                        Log.e(TAG, "Error opening log file", e)
-                    else
-                        logFileUri = uri
+                    // Every app start used to create a new file of the same name; Downloads
+                    // numbered the copies until it refused another ("Failed to build unique file")
+                    // and logging stopped. Today's file is reused instead.
+                    // Not logged on failure: that would log from inside the logger
+                    logFileUri = tryOrNull(false) { existingLogFile(filename) }
+                    if (logFileUri == null) {
+                        val (uri, e) = FileUtils.create(
+                            FileUtils.Location.Downloads,
+                            context,
+                            filename,
+                            "text/plain"
+                        )
+                        if (e is Exception)
+                            Log.e(TAG, "Error opening log file", e)
+                        else
+                            logFileUri = uri
+                    }
                 }
 
                 logFileUri?.let {
@@ -108,4 +121,23 @@ class FileLoggingTree @Inject constructor(
                 }
         }
     }
+
+    /** This app's log file of that name in Downloads, if it already made one. */
+    private fun existingLogFile(filename: String): Uri? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Without storage permissions an app only sees its own files here
+            context.contentResolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf(filename),
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cursor.getLong(0))
+                else null
+            }
+        } else {
+            @Suppress("DEPRECATION") // Android 7-9 only; the same folder FileUtils writes to there
+            File(Environment.getExternalStorageDirectory(), filename).takeIf { it.exists() }?.let(Uri::fromFile)
+        }
 }

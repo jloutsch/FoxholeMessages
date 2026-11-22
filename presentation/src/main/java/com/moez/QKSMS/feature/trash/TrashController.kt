@@ -43,7 +43,6 @@ class TrashController : QkController<TrashControllerBinding, TrashView, TrashSta
     override val confirmDeleteForeverIntent = events<Long>()
     override val emptyTrashIntent = events<Unit>()
     override val confirmEmptyTrashIntent = events<Unit>()
-    override val backClicked = events<Unit>()
 
     @Inject lateinit var trashAdapter: TrashAdapter
     @Inject override lateinit var presenter: TrashPresenter
@@ -79,11 +78,6 @@ class TrashController : QkController<TrashControllerBinding, TrashView, TrashSta
         return true
     }
 
-    override fun handleBack(): Boolean {
-        backClicked.tryEmit(Unit)
-        return true
-    }
-
     override fun render(state: TrashState) {
         trashAdapter.updateData(state.data)
     }
@@ -104,10 +98,6 @@ class TrashController : QkController<TrashControllerBinding, TrashView, TrashSta
                 .setPositiveButton(R.string.button_delete) { _, _ -> confirmEmptyTrashIntent.tryEmit(Unit) }
                 .setNegativeButton(R.string.button_cancel, null)
                 .show()
-    }
-
-    override fun goBack() {
-        router.popCurrentController()
     }
 
 }
