@@ -18,22 +18,22 @@
  */
 package dev.octoshrimpy.quik.feature.contacts
 
-import dev.octoshrimpy.quik.common.base.QkView
-import dev.octoshrimpy.quik.extensions.Optional
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.feature.compose.editing.ComposeItem
 import dev.octoshrimpy.quik.feature.compose.editing.PhoneNumberAction
-import io.reactivex.Observable
-import io.reactivex.subjects.Subject
 
-interface ContactsContract : QkView<ContactsState> {
+interface ContactsContract : QkFlowView<ContactsState> {
 
-    val queryChangedIntent: Observable<CharSequence>
-    val queryClearedIntent: Observable<*>
-    val queryEditorActionIntent: Observable<Int>
-    val composeItemPressedIntent: Subject<ComposeItem>
-    val composeItemLongPressedIntent: Subject<ComposeItem>
-    val phoneNumberSelectedIntent: Subject<Optional<Long>>
-    val phoneNumberActionIntent: Subject<PhoneNumberAction>
+    val queryChangedIntent: Flow<CharSequence>
+    val queryClearedIntent: Flow<Unit>
+    val queryEditorActionIntent: Flow<Int>
+    val composeItemPressedIntent: Flow<ComposeItem>
+    val composeItemLongPressedIntent: Flow<ComposeItem>
+    /** The number picked in the number picker dialog, null while none is picked */
+    val phoneNumberSelectedIntent: StateFlow<Long?>
+    val phoneNumberActionIntent: Flow<PhoneNumberAction>
 
     fun clearQuery()
     fun openKeyboard()

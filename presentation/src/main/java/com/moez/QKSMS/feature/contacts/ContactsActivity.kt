@@ -18,15 +18,19 @@
  */
 package dev.octoshrimpy.quik.feature.contacts
 
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.textChanges
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.editorActions
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import androidx.lifecycle.lifecycleScope
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
-import com.jakewharton.rxbinding2.view.clicks
-import com.jakewharton.rxbinding2.widget.editorActions
-import com.jakewharton.rxbinding2.widget.textChanges
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.Navigator
@@ -36,14 +40,10 @@ import dev.octoshrimpy.quik.common.util.extensions.hideKeyboard
 import dev.octoshrimpy.quik.common.util.extensions.showKeyboard
 import dev.octoshrimpy.quik.common.widget.QkDialog
 import dev.octoshrimpy.quik.databinding.ContactsActivityBinding
-import dev.octoshrimpy.quik.extensions.Optional
 import dev.octoshrimpy.quik.feature.compose.editing.ComposeItem
 import dev.octoshrimpy.quik.feature.compose.editing.ComposeItemAdapter
 import dev.octoshrimpy.quik.feature.compose.editing.PhoneNumberAction
 import dev.octoshrimpy.quik.feature.compose.editing.PhoneNumberPickerAdapter
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class ContactsActivity : QkThemedActivity(), ContactsContract {
@@ -60,13 +60,15 @@ class ContactsActivity : QkThemedActivity(), ContactsContract {
     @Inject lateinit var viewModelFactory: ViewModelFactory
     @Inject lateinit var navigator: Navigator
 
-    override val queryChangedIntent: Observable<CharSequence> by lazy { binding.search.textChanges() }
-    override val queryClearedIntent: Observable<*> by lazy { binding.cancel.clicks() }
-    override val queryEditorActionIntent: Observable<Int> by lazy { binding.search.editorActions() }
-    override val composeItemPressedIntent: Subject<ComposeItem> by lazy { contactsAdapter.clicks }
-    override val composeItemLongPressedIntent: Subject<ComposeItem> by lazy { contactsAdapter.longClicks }
-    override val phoneNumberSelectedIntent: Subject<Optional<Long>> by lazy { phoneNumberAdapter.selectedItemChanges }
-    override val phoneNumberActionIntent: Subject<PhoneNumberAction> = PublishSubject.create()
+    override val bindScope get() = lifecycleScope
+
+    override val queryChangedIntent: Flow<CharSequence> by lazy { binding.search.textChanges() }
+    override val queryClearedIntent: Flow<Unit> by lazy { binding.cancel.clicks() }
+    override val queryEditorActionIntent: Flow<Int> by lazy { binding.search.editorActions() }
+    override val composeItemPressedIntent: Flow<ComposeItem> by lazy { contactsAdapter.clicks }
+    override val composeItemLongPressedIntent: Flow<ComposeItem> by lazy { contactsAdapter.longClicks }
+    override val phoneNumberSelectedIntent: StateFlow<Long?> by lazy { phoneNumberAdapter.selectedItemChanges }
+    override val phoneNumberActionIntent = events<PhoneNumberAction>()
 
     private val viewModel by lazy { ViewModelProvider(this, viewModelFactory)[ContactsViewModel::class.java] }
 
@@ -75,10 +77,10 @@ class ContactsActivity : QkThemedActivity(), ContactsContract {
             titleRes = R.string.compose_number_picker_title
             adapter = phoneNumberAdapter
             positiveButton = R.string.compose_number_picker_always
-            positiveButtonListener = { phoneNumberActionIntent.onNext(PhoneNumberAction.ALWAYS) }
+            positiveButtonListener = { phoneNumberActionIntent.tryEmit(PhoneNumberAction.ALWAYS) }
             negativeButton = R.string.compose_number_picker_once
-            negativeButtonListener = { phoneNumberActionIntent.onNext(PhoneNumberAction.JUST_ONCE) }
-            cancelListener = { phoneNumberActionIntent.onNext(PhoneNumberAction.CANCEL) }
+            negativeButtonListener = { phoneNumberActionIntent.tryEmit(PhoneNumberAction.JUST_ONCE) }
+            cancelListener = { phoneNumberActionIntent.tryEmit(PhoneNumberAction.CANCEL) }
         }
     }
 

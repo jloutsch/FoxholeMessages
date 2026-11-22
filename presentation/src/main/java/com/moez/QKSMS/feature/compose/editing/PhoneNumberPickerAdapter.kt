@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose.editing
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -26,24 +27,21 @@ import dev.octoshrimpy.quik.common.base.QkAdapter
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
 import dev.octoshrimpy.quik.common.util.extensions.forwardTouches
 import dev.octoshrimpy.quik.databinding.PhoneNumberListItemBinding
-import dev.octoshrimpy.quik.extensions.Optional
 import dev.octoshrimpy.quik.model.PhoneNumber
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class PhoneNumberPickerAdapter @Inject constructor(
     private val context: Context
 ) : QkAdapter<PhoneNumber, QkBindingViewHolder<PhoneNumberListItemBinding>>() {
 
-    val selectedItemChanges: Subject<Optional<Long>> = BehaviorSubject.create()
+    val selectedItemChanges = MutableStateFlow<Long?>(null)
 
     private var selectedItem: Long? = null
         set(value) {
             data.indexOfFirst { number -> number.id == field }.takeIf { it != -1 }?.run(::notifyItemChanged)
             field = value
             data.indexOfFirst { number -> number.id == field }.takeIf { it != -1 }?.run(::notifyItemChanged)
-            selectedItemChanges.onNext(Optional(value))
+            selectedItemChanges.value = value
         }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<PhoneNumberListItemBinding> {
