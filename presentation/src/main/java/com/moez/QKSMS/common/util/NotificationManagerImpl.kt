@@ -229,7 +229,8 @@ class NotificationManagerImpl @Inject constructor(
             messagingStyle.conversationTitle = conversation.getTitle()
         }
 
-        // Add the messages to the notification
+        // Add the messages to the notification. A reaction leads with its emoji, as in the inbox.
+        val reactionEmoji = messageRepo.getReactionEmoji(messages.filter { it.isEmojiReaction }.map { it.id })
         messages.forEach { message ->
             val person = Person.Builder()
 
@@ -242,7 +243,7 @@ class NotificationManagerImpl @Inject constructor(
                     person.fromRecipient(recipient, context, colors)
             }
 
-            NotificationCompat.MessagingStyle.Message(message.getSummary(), message.date, person.build()).apply {
+            NotificationCompat.MessagingStyle.Message(message.summaryWithReaction(reactionEmoji[message.id]), message.date, person.build()).apply {
                 message.parts.firstOrNull { it.isImage() }?.let { part ->
                     setData(part.type, ContentUris.withAppendedId(CursorToPartImpl.CONTENT_URI, part.id))
                 }

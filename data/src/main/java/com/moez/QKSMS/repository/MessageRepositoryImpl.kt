@@ -118,6 +118,10 @@ open class MessageRepositoryImpl @Inject constructor(
 
     override fun getMessage(messageId: Long) = relations.message(messageDao.get(messageId))
 
+    override fun getReactionEmoji(messageIds: List<Long>): Map<Long, String> =
+        messageIds.chunked(900).flatMap(database.emojiReactionDao()::forReactionMessages)
+            .associate { it.reactionMessageId to it.emoji }
+
     override fun getUnmanagedMessage(messageId: Long) = getMessage(messageId)
 
     override fun getMessages(messageIds: Collection<Long>): List<Message> =

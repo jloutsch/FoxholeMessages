@@ -66,14 +66,7 @@ open class Conversation(
     var unreadCount: Long = 0
 
     val date: Long get() = lastMessage?.date ?: if (draft.isNotEmpty()) draftDate else 0
-    val snippet: String? get() = lastMessage?.let { message ->
-        val summary = message.getSummary()
-        // A reaction's text is what the sender's phone wrote ("Loved “On my way!”"). Inside the
-        // conversation it's shown as an emoji on the message instead, so lead with the emoji here
-        // too, so the preview reads as a reaction rather than as something they typed. Skipped if
-        // the text already contains it ("Reacted 🎉 to …").
-        lastReactionEmoji?.takeUnless { it in summary }?.let { "$it $summary" } ?: summary
-    }
+    val snippet: String? get() = lastMessage?.summaryWithReaction(lastReactionEmoji)
 
 
     val unread: Boolean get() = lastMessage?.read == false
