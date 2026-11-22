@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.settings.swipe
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
+import dev.octoshrimpy.quik.common.base.QkFlowView
+import kotlinx.coroutines.flow.Flow
 
-interface SwipeActionsView : QkViewContract<SwipeActionsState> {
+interface SwipeActionsView : QkFlowView<SwipeActionsState> {
 
     enum class Action { LEFT, RIGHT }
 
-    fun actionClicks(): Observable<Action>
-    fun actionSelected(): Observable<Int>
+    fun actionClicks(): Flow<Action>
+    fun actionSelected(): Flow<Int>
 
     fun showSwipeActions(selected: Int)
 
