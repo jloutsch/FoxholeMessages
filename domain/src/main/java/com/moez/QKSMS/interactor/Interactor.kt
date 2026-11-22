@@ -19,39 +19,70 @@
 package dev.octoshrimpy.quik.interactor
 
 import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx2.awaitSingleOrNull
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * A background action. Subclasses implement [perform] (#34); [execute] runs it for callers that
+ * want callbacks rather than a coroutine.
+ */
 abstract class Interactor<in Params> : Disposable {
 
-    private val disposables: CompositeDisposable = CompositeDisposable()
+    /** Where [execute] runs [perform]; replaced in tests. */
+    internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 
-    abstract fun buildObservable(params: Params): Flowable<*>
+    private val scope = CoroutineScope(SupervisorJob())
+
+    /**
+     * Does the work and returns its result, if callers use one. Until an interactor is converted,
+     * this runs its [buildObservable] to the end and returns the last item.
+     */
+    @Suppress("DEPRECATION")
+    open suspend fun perform(params: Params): Any? = buildObservable(params).lastElement().awaitSingleOrNull()
+
+    @Deprecated("Rx bridge until every interactor overrides perform(); removed in #34 Task 4")
+    open fun buildObservable(params: Params): Flowable<*> =
+        throw UnsupportedOperationException("${javaClass.simpleName} overrides neither perform() nor buildObservable()")
 
     /**
      * [onComplete] runs only on success. [onTerminate] runs once the work ends either way, so a
      * receiver's finish() or a job's jobFinished() belongs there: if it were in [onComplete], a
-     * failure would leave the broadcast or job open until Android times it out.
+     * failure would leave the broadcast or job open until Android times it out. Both run on the
+     * main thread; errors are logged, never thrown to the caller.
      */
     fun execute(params: Params, onComplete: () -> Unit = {}, onTerminate: () -> Unit = {}) {
-        disposables += buildObservable(params)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnComplete(onComplete)
-                .doFinally(onTerminate)
-                .subscribe({}, Timber::w)
+        // ATOMIC: even when already disposed, the body starts, so onTerminate still runs
+        scope.launch(ioDispatcher, start = CoroutineStart.ATOMIC) {
+            try {
+                ensureActive()
+                perform(params)
+                withContext(Dispatchers.Main) { onComplete() }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Timber.w(e)
+            } finally {
+                withContext(NonCancellable + Dispatchers.Main) { onTerminate() }
+            }
+        }
     }
 
-    override fun dispose() {
-        return disposables.dispose()
-    }
+    /** Cancels running work; [execute] calls made afterwards only call their onTerminate. */
+    override fun dispose() = scope.cancel()
 
-    override fun isDisposed(): Boolean {
-        return disposables.isDisposed
-    }
+    override fun isDisposed(): Boolean = !scope.isActive
 
 }

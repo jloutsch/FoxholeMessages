@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.feature.messageutils
 
+import kotlinx.coroutines.rx2.rxMaybe
 import android.content.Context
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
@@ -47,7 +48,7 @@ class MessageUtilsPresenter @Inject constructor(
             .observeOn(Schedulers.io())
             .autoDisposable(view.scope())
             .subscribe {
-                deduplicateMessages.buildObservable(Unit)
+                rxMaybe { deduplicateMessages.perform(Unit) }
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe { result ->
                         when (result) {

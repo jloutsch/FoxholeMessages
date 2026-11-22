@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.worker
 
+import kotlinx.coroutines.runBlocking
 import androidx.work.workDataOf
 import androidx.work.WorkInfo
 import io.reactivex.Observable
@@ -125,10 +126,11 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         // re-sort appears to do nothing at all for up to a day. Run synchronously rather than via
         // execute(), which subscribes asynchronously and would be cut off when doWork() returns.
         Timber.v("applying otp retention (retention set to ${prefs.otpRetentionDays.get()} days)")
-        deleteOldOtps.buildObservable(Unit).blockingSubscribe(
-            {},
-            { error -> Timber.e(error, "otp retention failed") }
-        )
+        try {
+            runBlocking { deleteOldOtps.perform(Unit) }
+        } catch (error: Exception) {
+            Timber.e(error, "otp retention failed")
+        }
 
         Timber.v("finished")
         Result.success(workDataOf(RESULT_SORTED to sorted))

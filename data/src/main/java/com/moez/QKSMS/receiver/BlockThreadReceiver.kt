@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.receiver
 
+import kotlinx.coroutines.rx2.rxCompletable
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -57,11 +58,9 @@ class BlockThreadReceiver : BroadcastReceiver() {
                     ?: listOf()
             )
             .subscribeOn(Schedulers.io())
-            .andThen(
-                markBlocked.buildObservable(
-                    MarkBlocked.Params(listOf(threadId), prefs.blockingManager.get(), null)
-                )
-            )
+            .andThen(rxCompletable {
+                markBlocked.perform(MarkBlocked.Params(listOf(threadId), prefs.blockingManager.get(), null))
+            })
             .doFinally { pendingResult.finish() }
             .subscribe({}, { error -> Timber.e(error, "blocking failed") })
     }
