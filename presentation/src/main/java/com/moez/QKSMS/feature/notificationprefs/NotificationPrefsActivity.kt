@@ -18,6 +18,13 @@
  */
 package dev.octoshrimpy.quik.feature.notificationprefs
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import androidx.lifecycle.lifecycleScope
 import android.app.Activity
 import android.content.Intent
 import android.media.RingtoneManager
@@ -26,9 +33,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
-import com.jakewharton.rxbinding2.view.clicks
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.QkDialog
@@ -37,9 +41,6 @@ import dev.octoshrimpy.quik.common.util.extensions.animateLayoutChanges
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 import dev.octoshrimpy.quik.databinding.NotificationPrefsActivityBinding
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import androidx.core.content.IntentCompat
 
@@ -51,10 +52,19 @@ class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
     @Inject lateinit var actionsDialog: QkDialog
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
-    override val preferenceClickIntent: Subject<PreferenceView> = PublishSubject.create()
-    override val previewModeSelectedIntent by lazy { previewModeDialog.adapter.menuItemClicks }
-    override val ringtoneSelectedIntent: Subject<String> = PublishSubject.create()
-    override val actionsSelectedIntent by lazy { actionsDialog.adapter.menuItemClicks }
+    override val bindScope get() = lifecycleScope
+
+    // Built from this activity's own views; a rotation makes a new activity, so it never goes stale
+    override val preferenceClickIntent: Flow<PreferenceView>
+        get() = (0 until binding.preferences.childCount)
+            .map { index -> binding.preferences.getChildAt(index) }
+            .mapNotNull { view -> view as? PreferenceView }
+            .map { preference -> preference.clicks().map { preference } }
+            .merge()
+    // QkDialog is shared with screens still on RxJava: bridged until its last user converts
+    override val previewModeSelectedIntent by lazy { previewModeDialog.adapter.menuItemClicks.asFlow() }
+    override val ringtoneSelectedIntent = events<String>()
+    override val actionsSelectedIntent by lazy { actionsDialog.adapter.menuItemClicks.asFlow() }
 
     private val viewModel by lazy {
         ViewModelProvider(this, viewModelFactory)[NotificationPrefsViewModel::class.java]
@@ -62,7 +72,7 @@ class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
 
     private val ringtoneLauncher = launcherForResult { data ->
         val uri = data?.let { IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java) }
-        ringtoneSelectedIntent.onNext(uri?.toString() ?: "")
+        ringtoneSelectedIntent.tryEmit(uri?.toString() ?: "")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,15 +96,6 @@ class NotificationPrefsActivity : QkThemedActivity(), NotificationPrefsView {
         previewModeDialog.setTitle(R.string.settings_notification_previews_title)
         previewModeDialog.adapter.setData(R.array.notification_preview_options)
         actionsDialog.adapter.setData(R.array.notification_actions)
-
-        // Listen to clicks for all of the preferences
-        (0 until binding.preferences.childCount)
-                .map { index -> binding.preferences.getChildAt(index) }
-                .mapNotNull { view -> view as? PreferenceView }
-                .map { preference -> preference.clicks().map { preference } }
-                .let { Observable.merge(it) }
-                .autoDisposable(scope())
-                .subscribe(preferenceClickIntent)
     }
 
     override fun render(state: NotificationPrefsState) {
