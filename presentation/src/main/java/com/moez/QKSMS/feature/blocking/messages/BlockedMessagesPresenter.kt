@@ -18,14 +18,11 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.messages
 
-import io.reactivex.rxkotlin.plusAssign
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.common.Navigator
-import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.interactor.DeleteConversations
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import javax.inject.Inject
@@ -35,60 +32,50 @@ class BlockedMessagesPresenter @Inject constructor(
     private val blockingClient: BlockingClient,
     private val deleteConversations: DeleteConversations,
     private val navigator: Navigator
-) : QkPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState()) {
+) : QkFlowPresenter<BlockedMessagesView, BlockedMessagesState>(BlockedMessagesState()) {
 
     init {
-        disposables += conversationRepo.observeBlockedConversations().asMainObservable()
-            .subscribe { conversations -> newState { copy(data = conversations) } }
+        conversationRepo.observeBlockedConversations()
+            .collectIn(presenterScope) { conversations -> newState { copy(data = conversations) } }
     }
 
     override fun bindIntents(view: BlockedMessagesView) {
         super.bindIntents(view)
 
-        view.menuReadyIntent
-                .autoDisposable(view.scope())
-                .subscribe { newState { copy() } }
+        // Re-render so the menu's buttons match the selection once the menu exists. (An unchanged
+        // copy() pushed through newState no longer re-renders: StateFlow skips equal states.)
+        view.menuReadyIntent.collectIn(view.bindScope) { view.render(state.value) }
 
-        view.optionsItemIntent
-                .withLatestFrom(view.selectionChanges) { itemId, conversations ->
-                    when (itemId) {
-                        R.id.block -> {
-                            view.showBlockingDialog(conversations, false)
-                            view.clearSelection()
-                        }
-                        R.id.delete -> {
-                            view.showDeleteDialog(conversations)
-                        }
-                    }
+        // The current selection, for the menu actions (what withLatestFrom read)
+        var selection = emptyList<Long>()
+        view.selectionChanges.collectIn(view.bindScope) { newSelection ->
+            selection = newSelection
+            newState { copy(selected = newSelection.size) }
+        }
 
-                }
-                .autoDisposable(view.scope())
-                .subscribe()
-
-        view.confirmDeleteIntent
-                .autoDisposable(view.scope())
-                .subscribe { conversations ->
-                    deleteConversations.execute(conversations)
+        view.optionsItemIntent.collectIn(view.bindScope) { itemId ->
+            when (itemId) {
+                R.id.block -> {
+                    view.showBlockingDialog(selection, false)
                     view.clearSelection()
                 }
+                R.id.delete -> view.showDeleteDialog(selection)
+            }
+        }
 
-        view.conversationClicks
-                .autoDisposable(view.scope())
-                .subscribe { threadId -> navigator.showConversation(threadId) }
+        view.confirmDeleteIntent.collectIn(view.bindScope) { conversations ->
+            deleteConversations.execute(conversations)
+            view.clearSelection()
+        }
 
-        view.selectionChanges
-                .autoDisposable(view.scope())
-                .subscribe { selection -> newState { copy(selected = selection.size) } }
+        view.conversationClicks.collectIn(view.bindScope) { threadId -> navigator.showConversation(threadId) }
 
-        view.backClicked
-                .withLatestFrom(state) { _, state ->
-                    when (state.selected) {
-                        0 -> view.goBack()
-                        else -> view.clearSelection()
-                    }
-                }
-                .autoDisposable(view.scope())
-                .subscribe()
+        view.backClicked.collectIn(view.bindScope) {
+            when (state.value.selected) {
+                0 -> view.goBack()
+                else -> view.clearSelection()
+            }
+        }
     }
 
 }

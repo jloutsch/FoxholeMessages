@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.messages
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.content.Context
 import android.graphics.Typeface
 import android.view.LayoutInflater
@@ -31,7 +32,6 @@ import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.databinding.BlockedListItemBinding
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 class BlockedMessagesAdapter @Inject constructor(
@@ -39,7 +39,7 @@ class BlockedMessagesAdapter @Inject constructor(
     private val dateFormatter: DateFormatter
 ) : QkListAdapter<Conversation, QkBindingViewHolder<BlockedListItemBinding>>(itemId = { it.id }) {
 
-    val clicks: PublishSubject<Long> = PublishSubject.create()
+    val clicks = events<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<BlockedListItemBinding> {
         val binding = BlockedListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -55,7 +55,7 @@ class BlockedMessagesAdapter @Inject constructor(
                 val conversation = getItem(bindingAdapterPosition) ?: return@setOnClickListener
                 when (toggleSelection(conversation.id, false)) {
                     true -> binding.root.isActivated = isSelected(conversation.id)
-                    false -> clicks.onNext(conversation.id)
+                    false -> clicks.tryEmit(conversation.id)
                 }
             }
             binding.root.setOnLongClickListener {
