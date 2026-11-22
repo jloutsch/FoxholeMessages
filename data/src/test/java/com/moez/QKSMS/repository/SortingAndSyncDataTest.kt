@@ -142,7 +142,7 @@ class SortingAndSyncDataTest {
     @Test
     fun everyConversationFieldIsAccountedForAcrossSyncs() {
         val rebuiltFromAndroid = setOf("id", "recipients")
-        val recomputedAfterSync = setOf("lastMessageId", "lastMessage", "lastReactionEmoji")
+        val recomputedAfterSync = setOf("lastMessageId", "lastMessage", "lastReactionEmoji", "unreadCount")
         val keptByAppOnlyConversationFields = setOf(
             "archived", "blocked", "pinned", "name", "blockingClient", "blockReason", "categoryOverride",
             "sendAsGroup", "draft", "draftDate"

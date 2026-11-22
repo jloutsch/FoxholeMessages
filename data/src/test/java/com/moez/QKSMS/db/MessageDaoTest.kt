@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.db
 
+import dev.octoshrimpy.quik.db.dao.ThreadCount
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -26,7 +27,7 @@ class MessageDaoTest {
     @Test
     fun unreadCountIgnoresTrash() {
         dao.upsert(listOf(message(1, read = false), message(2, read = false, deletedAt = 5)))
-        assertEquals(1L, dao.unreadCount(1))
+        assertEquals(listOf(ThreadCount(1, 1)), dao.unreadCounts(listOf(1)))
     }
 
     @Test

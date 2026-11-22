@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import io.reactivex.Single
 import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import android.content.Context
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -157,10 +158,11 @@ class MainViewModel @Inject constructor(
 
         // If we have all permissions and we've never run a sync, run a sync. This will be the case
         // when upgrading from 2.7.3, or if the app's data was cleared
-        val lastSync = syncRepository.getLastSyncDate()
-        if (lastSync == 0L && permissionManager.isDefaultSms() && permissionManager.hasReadSms() && permissionManager.hasContacts()) {
-            syncMessages.execute(Unit)
-        }
+        // (read in the background, #71)
+        disposables += Single.fromCallable { syncRepository.getLastSyncDate() }
+            .subscribeOn(Schedulers.io())
+            .filter { lastSync -> lastSync == 0L && permissionManager.isDefaultSms() && permissionManager.hasReadSms() && permissionManager.hasContacts() }
+            .subscribe({ syncMessages.execute(Unit) }, Timber::w)
 
         // This is only used when we update to a version that newly supports emoji reactions
         reactions.reparseIfFlagged()

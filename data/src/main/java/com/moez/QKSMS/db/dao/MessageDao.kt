@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.Flow
  * Messages. An MMS message's parts are the MmsPart rows whose messageId is its contentId.
  * Box ids 0 and 1 are "all" and "inbox" for both SMS and MMS (Telephony constants).
  */
+/** A count per conversation, from a GROUP BY threadId query. */
+data class ThreadCount(val threadId: Long, val count: Long)
+
 @Dao
 interface MessageDao {
 
@@ -58,8 +61,9 @@ interface MessageDao {
     @Query("SELECT COUNT(*) FROM Conversation c JOIN Message m ON m.id = c.lastMessageId " +
             "WHERE c.archived = 0 AND c.blocked = 0 AND m.read = 0")
     fun unreadConversationCount(): Long
-    @Query("SELECT COUNT(*) FROM Message WHERE threadId = :threadId AND read = 0 AND deletedAt IS NULL")
-    fun unreadCount(threadId: Long): Long
+    @Query("SELECT threadId, COUNT(*) AS count FROM Message WHERE threadId IN (:threadIds) AND read = 0 " +
+            "AND deletedAt IS NULL GROUP BY threadId")
+    fun unreadCounts(threadIds: List<Long>): List<ThreadCount>
     @Query("SELECT * FROM Message WHERE threadId = :threadId AND read = 0 AND deletedAt IS NULL ORDER BY date, id")
     fun unread(threadId: Long): List<Message>
     @Query("SELECT * FROM Message WHERE threadId = :threadId AND seen = 0 AND read = 0 AND deletedAt IS NULL ORDER BY date, id")

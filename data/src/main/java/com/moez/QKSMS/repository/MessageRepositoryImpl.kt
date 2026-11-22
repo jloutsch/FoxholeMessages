@@ -135,7 +135,6 @@ open class MessageRepositoryImpl @Inject constructor(
     // Same filter as getUnreadMessages(threadId) but a count, since this is called once per visible
     // conversation row (to show a number instead of just a dot). An unread message moved to Trash
     // doesn't keep the badge up.
-    override fun getUnreadCountForConversation(threadId: Long) = messageDao.unreadCount(threadId)
 
     override fun getPart(id: Long) = partDao.get(id)
 
