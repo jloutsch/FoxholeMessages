@@ -1,5 +1,9 @@
 package dev.octoshrimpy.quik.feature.messageutils
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.animation.ObjectAnimator
 import android.app.AlertDialog
 import android.content.Context
@@ -7,25 +11,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import com.jakewharton.rxbinding2.view.clicks
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.extensions.animateLayoutChanges
 import dev.octoshrimpy.quik.databinding.MessageUtilsControllerBinding
 import dev.octoshrimpy.quik.feature.settings.autodelete.AutoDeleteDialog
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Observable
-import io.reactivex.Single
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
-class MessageUtilsController : QkController<MessageUtilsControllerBinding, MessageUtilsView, MessageUtilsState, MessageUtilsPresenter>(), MessageUtilsView {
+class MessageUtilsController : QkFlowController<MessageUtilsControllerBinding, MessageUtilsView, MessageUtilsState, MessageUtilsPresenter>(), MessageUtilsView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): MessageUtilsControllerBinding =
         MessageUtilsControllerBinding.inflate(inflater, container, false)
@@ -33,12 +31,14 @@ class MessageUtilsController : QkController<MessageUtilsControllerBinding, Messa
     @Inject lateinit var context: Context
     @Inject override lateinit var presenter: MessageUtilsPresenter
     private val autoDeleteDialog: AutoDeleteDialog by lazy {
-        AutoDeleteDialog(activity!!, autoDeleteSubject::onNext)
+        AutoDeleteDialog(activity!!) { days -> autoDeleteChoices.tryEmit(days) }
     }
-    private val autoDeleteSubject: Subject<Int> = PublishSubject.create()
-    override val autoDeduplicateClickIntent by lazy { binding.autoDeduplicate.clicks() }
-    override val deduplicateClickIntent by lazy { binding.deduplicateMessages.clicks() }
-    override val autoDeleteClickIntent by lazy { binding.autoDelete.clicks() }
+    private val autoDeleteChoices = events<Int>()
+    // Built from the current view each time the presenter binds: a rotation makes a new view, and
+    // streams created once (by lazy) kept listening to the old one's buttons, so taps did nothing
+    override val autoDeduplicateClickIntent get() = binding.autoDeduplicate.clicks()
+    override val deduplicateClickIntent get() = binding.deduplicateMessages.clicks()
+    override val autoDeleteClickIntent get() = binding.autoDelete.clicks()
 
     init {
         appComponent.inject(this)
@@ -93,12 +93,12 @@ class MessageUtilsController : QkController<MessageUtilsControllerBinding, Messa
         }
     }
 
-    override fun showDeduplicationConfirmationDialog(): Single<Boolean> = Single.create { emitter ->
+    override suspend fun showDeduplicationConfirmationDialog(): Boolean = suspendCancellableCoroutine { cont ->
         AlertDialog.Builder(activity)
             .setTitle(R.string.deduplicate_messages_title)
             .setMessage(R.string.deduplicate_message_confirmation_dialog_message)
-            .setPositiveButton(R.string.button_continue) { _, _ -> emitter.onSuccess(true) }
-            .setNegativeButton(R.string.button_cancel) { _, _ -> emitter.onSuccess(false) }
+            .setPositiveButton(R.string.button_continue) { _, _ -> cont.resume(true) }
+            .setNegativeButton(R.string.button_cancel) { _, _ -> cont.resume(false) }
             .setCancelable(false)
             .show()
     }
@@ -108,7 +108,7 @@ class MessageUtilsController : QkController<MessageUtilsControllerBinding, Messa
         binding.deduplicationProgressText.setText(resIdString)
     }
 
-    override fun autoDeleteChanged(): Observable<Int> = autoDeleteSubject
+    override fun autoDeleteChanged(): Flow<Int> = autoDeleteChoices
 
     override fun showAutoDeleteDialog(days: Int) = autoDeleteDialog.setExpiry(days).show()
 

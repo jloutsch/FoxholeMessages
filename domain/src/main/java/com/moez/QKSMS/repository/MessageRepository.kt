@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.Flow
 import android.net.Uri
 import dev.octoshrimpy.quik.model.Attachment
@@ -39,7 +40,7 @@ interface MessageRepository {
         data class Failure(val error: Throwable) : DeduplicationResult()
     }
 
-    val deduplicationProgress: Observable<DeduplicationProgress>
+    val deduplicationProgress: StateFlow<DeduplicationProgress>
 
     fun getMessages(threadId: Long, query: String = ""): Flow<List<Message>>
 
