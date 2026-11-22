@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.model.SenderCategoryRule
-import io.reactivex.Observable
 
-interface SenderRulesView : QkViewContract<SenderRulesState> {
+interface SenderRulesView : QkFlowView<SenderRulesState> {
 
-    fun editRule(): Observable<SenderCategoryRule>
-    fun removeRule(): Observable<SenderCategoryRule>
-    fun categorySelected(): Observable<String>
+    fun editRule(): Flow<SenderCategoryRule>
+    fun removeRule(): Flow<SenderCategoryRule>
+    fun categorySelected(): Flow<String>
 
     fun showEditDialog(rule: SenderCategoryRule)
 
