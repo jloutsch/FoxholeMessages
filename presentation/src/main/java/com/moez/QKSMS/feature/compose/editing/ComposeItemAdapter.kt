@@ -18,6 +18,12 @@
  */
 package dev.octoshrimpy.quik.feature.compose.editing
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Job
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
@@ -34,11 +40,7 @@ import dev.octoshrimpy.quik.model.ContactGroup
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.plusAssign
 import dev.octoshrimpy.quik.databinding.ContactListItemBinding
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class ComposeItemAdapter @Inject constructor(
@@ -46,11 +48,11 @@ class ComposeItemAdapter @Inject constructor(
     private val conversationRepo: ConversationRepository
 ) : QkAdapter<ComposeItem, QkBindingViewHolder<ContactListItemBinding>>() {
 
-    val clicks: Subject<ComposeItem> = PublishSubject.create()
-    val longClicks: Subject<ComposeItem> = PublishSubject.create()
+    val clicks = events<ComposeItem>()
+    val longClicks = events<ComposeItem>()
 
     private val numbersViewPool = RecyclerView.RecycledViewPool()
-    private val disposables = CompositeDisposable()
+    private var recipientsJob: Job? = null
 
     var recipients: Map<String, Recipient> = mapOf()
         set(value) {
@@ -71,11 +73,11 @@ class ComposeItemAdapter @Inject constructor(
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {
                 val item = getItem(bindingAdapterPosition)
-                clicks.onNext(item)
+                clicks.tryEmit(item)
             }
             binding.root.setOnLongClickListener {
                 val item = getItem(bindingAdapterPosition)
-                longClicks.onNext(item)
+                longClicks.tryEmit(item)
                 true
             }
         }
@@ -187,13 +189,16 @@ class ComposeItemAdapter @Inject constructor(
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
-        disposables += conversationRepo.getUnmanagedRecipients()
-                .map { recipients -> recipients.associateByNotNull { recipient -> recipient.contact?.lookupKey } }
-                .subscribe { recipients -> this@ComposeItemAdapter.recipients = recipients }
+        // The repository is still RxJava (main-thread updates): bridged until Task 29
+        recipientsJob = MainScope().launch {
+            conversationRepo.getUnmanagedRecipients().asFlow()
+                    .map { recipients -> recipients.associateByNotNull { recipient -> recipient.contact?.lookupKey } }
+                    .collect { recipients -> this@ComposeItemAdapter.recipients = recipients }
+        }
     }
 
     override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
-        disposables.clear()
+        recipientsJob?.cancel()
     }
 
     override fun areItemsTheSame(old: ComposeItem, new: ComposeItem): Boolean {

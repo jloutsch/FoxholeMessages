@@ -18,11 +18,21 @@
  */
 package dev.octoshrimpy.quik.feature.contacts
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowViewModel
 import android.view.inputmethod.EditorInfo
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkViewModel
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.extensions.removeAccents
 import dev.octoshrimpy.quik.feature.compose.editing.ComposeItem
 import dev.octoshrimpy.quik.feature.compose.editing.PhoneNumberAction
@@ -37,12 +47,6 @@ import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.Observables
-import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.rx2.awaitFirst
 import javax.inject.Inject
 
 class ContactsViewModel @Inject constructor(
@@ -54,24 +58,32 @@ class ContactsViewModel @Inject constructor(
     private val conversationRepo: ConversationRepository,
     private val phoneNumberUtils: PhoneNumberUtils,
     private val setDefaultPhoneNumber: SetDefaultPhoneNumber
-) : QkViewModel<ContactsContract, ContactsState>(ContactsState()) {
+) : QkFlowViewModel<ContactsContract, ContactsState>(ContactsState()) {
 
-    private val contactGroups: Observable<List<ContactGroup>> by lazy { contactsRepo.getUnmanagedContactGroups() }
-    private val contacts: Observable<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts() }
-    private val recents: Observable<List<Conversation>> by lazy {
-        if (sharing) conversationRepo.getUnmanagedConversations() else Observable.just(listOf())
+    // The repositories are still RxJava (other screens read them): bridged until Task 29
+    private val contactGroups: Flow<List<ContactGroup>> by lazy { contactsRepo.getUnmanagedContactGroups().asFlow() }
+    private val contacts: Flow<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts().asFlow() }
+    private val recents: Flow<List<Conversation>> by lazy {
+        if (sharing) conversationRepo.getUnmanagedConversations().asFlow() else flowOf(listOf())
     }
-    private val starredContacts: Observable<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts(true) }
+    private val starredContacts: Flow<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts(true).asFlow() }
 
-    private val selectedChips = Observable.just(serializedChips)
-            .observeOn(Schedulers.io())
-            .map { hashmap ->
-                hashmap.map { (address, lookupKey) ->
-                    Recipient(address = address).apply { contact = lookupKey?.let(contactsRepo::getUnmanagedContact) }
-                }
-            }
+    private val selectedChips: Flow<List<Recipient>> = flow {
+        emit(serializedChips.map { (address, lookupKey) ->
+            Recipient(address = address).apply { contact = lookupKey?.let(contactsRepo::getUnmanagedContact) }
+        })
+    }.flowOn(Dispatchers.IO)
 
     private var shouldOpenKeyboard: Boolean = true
+
+    /** Everything the suggestions are built from, apart from the selected chips */
+    private class Sources(
+        val query: CharSequence,
+        val recents: List<Conversation>,
+        val starredContacts: List<Contact>,
+        val contactGroups: List<ContactGroup>,
+        val contacts: List<Contact>
+    )
 
     override fun bindView(view: ContactsContract) {
         super.bindView(view)
@@ -82,133 +94,132 @@ class ContactsViewModel @Inject constructor(
         }
 
         // Update the state's query, so we know if we should show the cancel button
-        view.queryChangedIntent
-                .autoDisposable(view.scope())
-                .subscribe { query -> newState { copy(query = query.toString()) } }
+        view.queryChangedIntent.collectIn(view.bindScope) { query -> newState { copy(query = query.toString()) } }
 
         // Clear the query
-        view.queryClearedIntent
-                .autoDisposable(view.scope())
-                .subscribe { view.clearQuery() }
+        view.queryClearedIntent.collectIn(view.bindScope) { view.clearQuery() }
 
         // Update the list of contact suggestions based on the query input, while also filtering out any contacts
         // that have already been selected
-        Observables
-                .combineLatest(
-                        view.queryChangedIntent, recents, starredContacts, contactGroups, contacts, selectedChips
-                ) { query, recents, starredContacts, contactGroups, contacts, selectedChips ->
-                    val composeItems = mutableListOf<ComposeItem>()
-                    if (query.isBlank()) {
-                        composeItems += recents
-                                .filter { conversation ->
-                                    conversation.recipients.any { recipient ->
-                                        selectedChips.none { chip ->
-                                            if (recipient.contact == null) {
-                                                chip.address == recipient.address
-                                            } else {
-                                                chip.contact?.lookupKey == recipient.contact?.lookupKey
-                                            }
-                                        }
-                                    }
-                                }
-                                .map(ComposeItem::Recent)
-
-                        composeItems += starredContacts
-                                .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
-                                .map(ComposeItem::Starred)
-
-                        composeItems += contactGroups
-                                .filter { group ->
-                                    group.contacts.any { contact ->
-                                        selectedChips.none { chip -> chip.contact?.lookupKey == contact.lookupKey }
-                                    }
-                                }
-                                .map(ComposeItem::Group)
-
-                        composeItems += contacts
-                                .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
-                                .map(ComposeItem::Person)
-                    } else {
-                        // If the entry is a valid destination, allow it as a recipient
-                        if (phoneNumberUtils.isPossibleNumber(query.toString())) {
-                            val newAddress = phoneNumberUtils.formatNumber(query)
-                            val newContact = Contact().apply { numbers = listOf(PhoneNumber(address = newAddress)) }
-                            composeItems += ComposeItem.New(newContact)
-                        }
-
-                        // Strip the accents from the query. This can be an expensive operation, so
-                        // cache the result instead of doing it for each contact
-                        val normalizedQuery = query.removeAccents()
-                        composeItems += starredContacts
-                                .asSequence()
-                                .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
-                                .filter { contact -> contactFilter.filter(contact, normalizedQuery) }
-                                .map(ComposeItem::Starred)
-
-                        composeItems += contactGroups
-                                .asSequence()
-                                .filter { group ->
-                                    group.contacts.any { contact ->
-                                        selectedChips.none { chip -> chip.contact?.lookupKey == contact.lookupKey }
-                                    }
-                                }
-                                .filter { group -> contactGroupFilter.filter(group, normalizedQuery) }
-                                .map(ComposeItem::Group)
-
-                        composeItems += contacts
-                                .asSequence()
-                                .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
-                                .filter { contact -> contactFilter.filter(contact, normalizedQuery) }
-                                .map(ComposeItem::Person)
-                    }
-
-                    composeItems
-                }
-                .subscribeOn(Schedulers.computation())
-                .autoDisposable(view.scope())
-                .subscribe { items -> newState { copy(composeItems = items) } }
+        combine(view.queryChangedIntent, recents, starredContacts, contactGroups, contacts, ::Sources)
+                .combine(selectedChips) { sources, selectedChips -> composeItems(sources, selectedChips) }
+                .flowOn(Dispatchers.Default)
+                .collectIn(view.bindScope) { items -> newState { copy(composeItems = items) } }
 
         // Listen for ComposeItems being selected, and then send them off to the number picker dialog in case
         // the user needs to select a phone number
-        view.queryEditorActionIntent
-                .filter { actionId -> actionId == EditorInfo.IME_ACTION_DONE }
-                .withLatestFrom(state) { _, state -> state }
-                .mapNotNull { state -> state.composeItems.firstOrNull() }
-                .mergeWith(view.composeItemPressedIntent)
-                .map { composeItem -> composeItem to false }
-                .mergeWith(view.composeItemLongPressedIntent.map { composeItem -> composeItem to true })
-                .observeOn(Schedulers.io())
-                .map { (composeItem, force) ->
-                    HashMap(composeItem.getContacts().associate { contact ->
-                        if (contact.numbers.size == 1 || contact.getDefaultNumber() != null && !force) {
-                            val address = contact.getDefaultNumber()?.address ?: contact.numbers[0]!!.address
-                            address to contact.lookupKey
-                        } else {
-                            runBlocking {
-                                newState { copy(selectedContact = contact) }
-                                val action = view.phoneNumberActionIntent.awaitFirst()
-                                newState { copy(selectedContact = null) }
-                                val numberId = view.phoneNumberSelectedIntent.awaitFirst().value
-                                val number = contact.numbers.find { number -> number.id == numberId }
-
-                                if (action == PhoneNumberAction.CANCEL || number == null) {
-                                    return@runBlocking null
-                                }
-
-                                if (action == PhoneNumberAction.ALWAYS) {
-                                    val params = SetDefaultPhoneNumber.Params(contact.lookupKey, number.id)
-                                    setDefaultPhoneNumber.execute(params)
-                                }
-
-                                number.address to contact.lookupKey
-                            } ?: return@map hashMapOf<String, String?>()
-                        }
-                    })
+        merge(
+                view.queryEditorActionIntent
+                        .filter { actionId -> actionId == EditorInfo.IME_ACTION_DONE }
+                        .mapNotNull { state.value.composeItems.firstOrNull() }
+                        .map { composeItem -> composeItem to false },
+                view.composeItemPressedIntent.map { composeItem -> composeItem to false },
+                view.composeItemLongPressedIntent.map { composeItem -> composeItem to true }
+        ).collectIn(view.bindScope) { (composeItem, force) ->
+            val result = HashMap<String, String?>()
+            for (contact in composeItem.getContacts()) {
+                if (contact.numbers.size == 1 || contact.getDefaultNumber() != null && !force) {
+                    val address = contact.getDefaultNumber()?.address ?: contact.numbers[0]!!.address
+                    result[address] = contact.lookupKey
+                    continue
                 }
-                .filter { result -> result.isNotEmpty() }
-                .observeOn(AndroidSchedulers.mainThread())
-                .autoDisposable(view.scope())
-                .subscribe { result -> view.finish(result) }
+
+                // Ask which number to use. The dialog closes however this ends, including when the
+                // screen goes away mid-question (otherwise it would reopen with nobody listening)
+                val action = try {
+                    newState { copy(selectedContact = contact) }
+                    view.phoneNumberActionIntent.first()
+                } finally {
+                    newState { copy(selectedContact = null) }
+                }
+                // The picker pre-selects the default (or first) number, so this is set by now
+                val numberId = view.phoneNumberSelectedIntent.value
+                val number = contact.numbers.find { number -> number.id == numberId }
+
+                if (action == PhoneNumberAction.CANCEL || number == null) {
+                    return@collectIn
+                }
+
+                if (action == PhoneNumberAction.ALWAYS) {
+                    val params = SetDefaultPhoneNumber.Params(contact.lookupKey, number.id)
+                    setDefaultPhoneNumber.execute(params)
+                }
+
+                result[number.address] = contact.lookupKey
+            }
+
+            if (result.isNotEmpty()) view.finish(result)
+        }
+    }
+
+    private fun composeItems(sources: Sources, selectedChips: List<Recipient>): List<ComposeItem> {
+        val query = sources.query
+        val composeItems = mutableListOf<ComposeItem>()
+        if (query.isBlank()) {
+            composeItems += sources.recents
+                    .filter { conversation ->
+                        conversation.recipients.any { recipient ->
+                            selectedChips.none { chip ->
+                                if (recipient.contact == null) {
+                                    chip.address == recipient.address
+                                } else {
+                                    chip.contact?.lookupKey == recipient.contact?.lookupKey
+                                }
+                            }
+                        }
+                    }
+                    .map(ComposeItem::Recent)
+
+            composeItems += sources.starredContacts
+                    .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
+                    .map(ComposeItem::Starred)
+
+            composeItems += sources.contactGroups
+                    .filter { group ->
+                        group.contacts.any { contact ->
+                            selectedChips.none { chip -> chip.contact?.lookupKey == contact.lookupKey }
+                        }
+                    }
+                    .map(ComposeItem::Group)
+
+            composeItems += sources.contacts
+                    .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
+                    .map(ComposeItem::Person)
+        } else {
+            // If the entry is a valid destination, allow it as a recipient
+            if (phoneNumberUtils.isPossibleNumber(query.toString())) {
+                val newAddress = phoneNumberUtils.formatNumber(query)
+                val newContact = Contact().apply { numbers = listOf(PhoneNumber(address = newAddress)) }
+                composeItems += ComposeItem.New(newContact)
+            }
+
+            // Strip the accents from the query. This can be an expensive operation, so
+            // cache the result instead of doing it for each contact
+            val normalizedQuery = query.removeAccents()
+            composeItems += sources.starredContacts
+                    .asSequence()
+                    .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
+                    .filter { contact -> contactFilter.filter(contact, normalizedQuery) }
+                    .map(ComposeItem::Starred)
+
+            composeItems += sources.contactGroups
+                    .asSequence()
+                    .filter { group ->
+                        group.contacts.any { contact ->
+                            selectedChips.none { chip -> chip.contact?.lookupKey == contact.lookupKey }
+                        }
+                    }
+                    .filter { group -> contactGroupFilter.filter(group, normalizedQuery) }
+                    .map(ComposeItem::Group)
+
+            composeItems += sources.contacts
+                    .asSequence()
+                    .filter { contact -> selectedChips.none { it.contact?.lookupKey == contact.lookupKey } }
+                    .filter { contact -> contactFilter.filter(contact, normalizedQuery) }
+                    .map(ComposeItem::Person)
+        }
+
+        return composeItems
     }
 
 }
