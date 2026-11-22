@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.qkreply
 
-import dev.octoshrimpy.quik.common.base.QkView
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 
-interface QkReplyView : QkView<QkReplyState> {
+interface QkReplyView : QkFlowView<QkReplyState> {
 
-    val menuItemIntent: Observable<Int>
-    val textChangedIntent: Observable<CharSequence>
-    val changeSimIntent: Observable<*>
-    val sendIntent: Observable<Unit>
+    val menuItemIntent: Flow<Int>
+    val textChangedIntent: Flow<CharSequence>
+    val changeSimIntent: Flow<Unit>
+    val sendIntent: Flow<Unit>
 
     fun setDraft(draft: String)
     fun finish()
