@@ -17,7 +17,6 @@
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
@@ -29,7 +28,6 @@ android {
         targetSdkVersion 36
         versionCode 2279
         versionName '2.9.10'
-        setProperty("archivesBaseName", "FoxholeMessages-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -61,7 +59,7 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
         debug {
@@ -74,7 +72,7 @@ android {
         fdroid {
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
             matchingFallbacks = ['release']
             applicationIdSuffix ".fdroid"
@@ -97,12 +95,19 @@ android {
     buildFeatures {
         buildConfig true
         viewBinding true
+        resValues true // the debug build's app name; AGP 9 turns this off by default
     }
     if (System.getenv("CI") == "true") {
         signingConfigs.release.storePassword = System.getenv("keystore_password")
         signingConfigs.release.keyAlias = System.getenv("key_alias")
         signingConfigs.release.keyPassword = System.getenv("key_password")
     }
+}
+
+// APKs are named FoxholeMessages-v<version>-<build type>.apk (the release workflows expect it).
+// AGP 9 no longer takes archivesBaseName in defaultConfig.
+base {
+    archivesName = "FoxholeMessages-v${android.defaultConfig.versionName}"
 }
 
 configurations {

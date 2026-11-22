@@ -1720,6 +1720,17 @@ across all modules, XML and tests first. Link-preview code was deliberately kept
   work unchanged. Checked on a release-style build (R8, 93% renamed) on the Note 10: app loads,
   reactions render, a backup's field names match `backup-format-v1.json`. The old-Kotlin pins (okio,
   unfurl, `androidx.core`) are #29.
+- **AGP 9.5.0 / Gradle 9.8.2** since #36 (KSP 2.3.13, which is versioned on its own now). AGP 9 builds
+  Kotlin itself: no module applies `kotlin-android` (applying it fails the build). Under AGP 9:
+  - the APK name comes from `base.archivesName` (it was `archivesBaseName` in `defaultConfig`);
+  - `proguard-android.txt` is refused, so release uses `proguard-android-optimize.txt` with
+    `-dontoptimize` at the top of `proguard-rules.pro`, keeping R8 as before. Turning optimization on
+    is a separate change that needs a release build checked on a phone;
+  - `resValues` must be switched on for the debug build's app name;
+  - `android.nonFinalResIds=false` was removed: AGP 9's resource shrinking requires non-final ids.
+  `android.enableJetifier` stays (some JitPack libraries still use the old support library) but AGP 10
+  removes it. Gradle warns that module build files read root `ext` versions implicitly, which fails in
+  Gradle 10. Checked on the Note 10: debug build, and an R8 release build that starts and loads.
 - **Java 11 everywhere** since #31 (every module's `compileOptions` and Kotlin's `jvmTarget`): current
   AndroidX (WorkManager 2.12) ships Java 11 inline code. (Under Realm this meant no `val` fields Realm
   wrote; that no longer applies.)
