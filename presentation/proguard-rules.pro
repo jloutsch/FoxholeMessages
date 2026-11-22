@@ -1,3 +1,8 @@
+# AGP 9 dropped proguard-android.txt, whose -dontoptimize this build always ran with; the build now
+# uses proguard-android-optimize.txt and keeps optimization off here, so release builds behave as
+# before. Turning it on is a separate change: it needs a release build checked on a phone.
+-dontoptimize
+
 
 # ez-vcard
 -dontwarn ezvcard.**
