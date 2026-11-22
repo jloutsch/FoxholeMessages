@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.gallery
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import com.bumptech.glide.Glide
 import android.content.Context
 import android.view.LayoutInflater
@@ -32,8 +33,6 @@ import dev.octoshrimpy.quik.databinding.GalleryVideoPageBinding
 import dev.octoshrimpy.quik.extensions.isImage
 import dev.octoshrimpy.quik.extensions.isVideo
 import dev.octoshrimpy.quik.model.MmsPart
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import timber.log.Timber
 import java.util.*
 import javax.inject.Inject
@@ -50,7 +49,7 @@ class GalleryPagerAdapter @Inject constructor(private val context: Context) : Qk
         private const val VIEW_TYPE_VIDEO = 2
     }
 
-    val clicks: Subject<View> = PublishSubject.create()
+    val clicks = events<Unit>()
 
     private val contentResolver = context.contentResolver
     private val exoPlayers = mutableSetOf<ExoPlayer>()
@@ -84,7 +83,7 @@ class GalleryPagerAdapter @Inject constructor(private val context: Context) : Qk
 
             else -> inflater.inflate(R.layout.gallery_invalid_page, parent, false)
 
-        }.apply { setOnClickListener(clicks::onNext) })
+        }.apply { setOnClickListener { clicks.tryEmit(Unit) } })
     }
 
     override fun onBindViewHolder(holder: QkViewHolder, position: Int) {

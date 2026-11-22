@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.feature.gallery
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import androidx.lifecycle.lifecycleScope
 import android.Manifest
 import android.os.Bundle
 import android.view.Menu
@@ -35,9 +38,6 @@ import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
 import dev.octoshrimpy.quik.databinding.GalleryActivityBinding
 import dev.octoshrimpy.quik.model.MmsPart
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class GalleryActivity : QkActivity(), GalleryView {
@@ -55,8 +55,10 @@ class GalleryActivity : QkActivity(), GalleryView {
 
     val partId by lazy { intent.getLongExtra("partId", 0L) }
 
-    private val optionsItemSubject: Subject<Int> = PublishSubject.create()
-    private val pageChangedSubject: Subject<MmsPart> = PublishSubject.create()
+    override val bindScope get() = lifecycleScope
+
+    private val optionsItemEvents = events<Int>()
+    private val pageChangedEvents = events<MmsPart>()
     private val viewModel by lazy { ViewModelProvider(this, viewModelFactory)[GalleryViewModel::class.java] }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,7 +108,7 @@ class GalleryActivity : QkActivity(), GalleryView {
         currentPart = pagerAdapter.getItem(position)
         invalidateOptionsMenu()
 
-        pagerAdapter.getItem(position)?.run(pageChangedSubject::onNext)
+        pagerAdapter.getItem(position)?.let { pageChangedEvents.tryEmit(it) }
     }
 
     override fun render(state: GalleryState) {
@@ -117,11 +119,11 @@ class GalleryActivity : QkActivity(), GalleryView {
         pagerAdapter.updateData(state.parts)
     }
 
-    override fun optionsItemSelected(): Observable<Int> = optionsItemSubject
+    override fun optionsItemSelected(): Flow<Int> = optionsItemEvents
 
-    override fun screenTouched(): Observable<*> = pagerAdapter.clicks
+    override fun screenTouched(): Flow<Unit> = pagerAdapter.clicks
 
-    override fun pageChanged(): Observable<MmsPart> = pageChangedSubject
+    override fun pageChanged(): Flow<MmsPart> = pageChangedEvents
 
     override fun requestStoragePermission() {
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 0)
@@ -144,7 +146,7 @@ class GalleryActivity : QkActivity(), GalleryView {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> onBackPressedDispatcher.onBackPressed()
-            else -> optionsItemSubject.onNext(item.itemId)
+            else -> optionsItemEvents.tryEmit(item.itemId)
         }
         return true
     }

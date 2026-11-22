@@ -18,22 +18,21 @@
  */
 package dev.octoshrimpy.quik.feature.gallery
 
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.model.MmsPart
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import androidx.lifecycle.viewModelScope
 import android.content.Context
 import com.moez.QKSMS.contentproviders.MmsPartProvider
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.Navigator
-import dev.octoshrimpy.quik.common.base.QkViewModel
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.interactor.SaveImage
 import dev.octoshrimpy.quik.manager.PermissionManager
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
-import io.reactivex.rxkotlin.plusAssign
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Named
@@ -46,51 +45,46 @@ class GalleryViewModel @Inject constructor(
     private val navigator: Navigator,
     private val saveImage: SaveImage,
     private val permissions: PermissionManager
-) : QkViewModel<GalleryView, GalleryState>(GalleryState()) {
+) : QkFlowViewModel<GalleryView, GalleryState>(GalleryState()) {
     init {
         // Paged over the tapped message's own attachments, not the whole thread's - swiping should
         // run to the end of this message and stop, rather than continuing into unrelated messages.
         // Read in the background (#71); newState's block runs on the main thread, so nothing is read inside it
-        disposables += Flowable.just(partId)
-                .subscribeOn(Schedulers.io())
-                .mapNotNull(messageRepo::getMessageForPart)
-                .subscribe { message ->
-                    // An empty result here shows as a black screen with no counter and no crash,
-                    // so log the join keys - otherwise there's nothing to diagnose it from
-                    Timber.v("opening part $partId of message id=${message.id} contentId=${message.contentId}")
-                    val parts = messageRepo.getMediaPartsForMessage(message.id, message.contentId)
-                    val title = conversationRepo.getConversation(message.threadId)?.getTitle()
-                    newState { copy(parts = parts, title = title, date = message.date) }
-                }
+        viewModelScope.launch(Dispatchers.IO) {
+            val message = messageRepo.getMessageForPart(partId) ?: return@launch
+            // An empty result here shows as a black screen with no counter and no crash,
+            // so log the join keys - otherwise there's nothing to diagnose it from
+            Timber.v("opening part $partId of message id=${message.id} contentId=${message.contentId}")
+            val parts = messageRepo.getMediaPartsForMessage(message.id, message.contentId)
+            val title = conversationRepo.getConversation(message.threadId)?.getTitle()
+            newState { copy(parts = parts, title = title, date = message.date) }
+        }
     }
 
     override fun bindView(view: GalleryView) {
         super.bindView(view)
 
+        // The page on screen, which every menu action applies to; null until the first page shows
+        var currentPart: MmsPart? = null
+        view.pageChanged().collectIn(view.bindScope) { part -> currentPart = part }
+
         // When the screen is touched, toggle the visibility of the navigation UI
-        view.screenTouched()
-                .withLatestFrom(state) { _, state -> state.navigationVisible }
-                .map { navigationVisible -> !navigationVisible }
-                .autoDisposable(view.scope())
-                .subscribe { navigationVisible -> newState { copy(navigationVisible = navigationVisible) } }
+        view.screenTouched().collectIn(view.bindScope) {
+            newState { copy(navigationVisible = !navigationVisible) }
+        }
 
-        // Save image to device
-        view.optionsItemSelected()
-                .filter { it == R.id.save }
-                .filter { permissions.hasStorage().also { if (!it) view.requestStoragePermission() } }
-                .withLatestFrom(view.pageChanged()) { _, part -> part.id }
-                .autoDisposable(view.scope())
-                .subscribe { partId -> saveImage.execute(partId) { context.makeToast(R.string.gallery_toast_saved) } }
+        view.optionsItemSelected().collectIn(view.bindScope) { itemId ->
+            val part = currentPart ?: return@collectIn
+            when (itemId) {
+                // Save image to device
+                R.id.save -> if (hasStorage(view)) {
+                    saveImage.execute(part.id) { context.makeToast(R.string.gallery_toast_saved) }
+                }
 
-        // Save every picture/video belonging to the current message in one go, instead of
-        // paging through them and saving one at a time
-        view.optionsItemSelected()
-                .filter { it == R.id.save_all }
-                .filter { permissions.hasStorage().also { if (!it) view.requestStoragePermission() } }
-                .withLatestFrom(view.pageChanged(), state) { _, part, state -> part to state.parts }
-                .autoDisposable(view.scope())
-                .subscribe { (part, parts) ->
-                    val siblingIds = parts
+                // Save every picture/video belonging to the current message in one go, instead of
+                // paging through them and saving one at a time
+                R.id.save_all -> if (hasStorage(view)) {
+                    val siblingIds = state.value.parts
                             ?.filter { it.messageId == part.messageId }
                             ?.map { it.id }
                             ?.takeIf { it.isNotEmpty() }
@@ -108,36 +102,25 @@ class GalleryViewModel @Inject constructor(
                     }
                 }
 
-        // Share image externally
-        view.optionsItemSelected()
-                .filter { it == R.id.share }
-                .withLatestFrom(view.pageChanged()) { _, part -> part }
-                .autoDisposable(view.scope())
-                .subscribe {
-                    navigator.shareFile(
-                        MmsPartProvider().getUriForMmsPartId(context, it.id, it.getBestFilename()),
-                        it.type
-                    )
-                }
+                // Share image externally
+                R.id.share -> navigator.shareFile(
+                        MmsPartProvider().getUriForMmsPartId(context, part.id, part.getBestFilename()),
+                        part.type
+                )
 
-        // message part context menu item selected - forward
-        view.optionsItemSelected()
-            .filter { it == R.id.forward }
-            .withLatestFrom(view.pageChanged()) { _, part -> part }
-            .autoDisposable(view.scope())
-            .subscribe { navigator.showCompose("", listOf(it.getUri())) }
+                // message part context menu item selected - forward
+                R.id.forward -> navigator.showCompose("", listOf(part.getUri()))
 
-        // message part context menu item selected - open externally
-        view.optionsItemSelected()
-            .filter { it == R.id.openExternally }
-            .withLatestFrom(view.pageChanged()) { _, part -> part }
-            .autoDisposable(view.scope())
-            .subscribe {
-                navigator.viewFile(
-                    MmsPartProvider().getUriForMmsPartId(context, it.id, it.getBestFilename()),
-                    it.type
+                // message part context menu item selected - open externally
+                R.id.openExternally -> navigator.viewFile(
+                        MmsPartProvider().getUriForMmsPartId(context, part.id, part.getBestFilename()),
+                        part.type
                 )
             }
+        }
     }
+
+    private fun hasStorage(view: GalleryView): Boolean =
+            permissions.hasStorage().also { if (!it) view.requestStoragePermission() }
 
 }

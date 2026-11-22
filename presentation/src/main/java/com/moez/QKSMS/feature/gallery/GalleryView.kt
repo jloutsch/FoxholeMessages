@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.gallery
 
-import dev.octoshrimpy.quik.common.base.QkView
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.model.MmsPart
-import io.reactivex.Observable
 
-interface GalleryView : QkView<GalleryState> {
+interface GalleryView : QkFlowView<GalleryState> {
 
-    fun optionsItemSelected(): Observable<Int>
-    fun screenTouched(): Observable<*>
-    fun pageChanged(): Observable<MmsPart>
+    fun optionsItemSelected(): Flow<Int>
+    fun screenTouched(): Flow<Unit>
+    fun pageChanged(): Flow<MmsPart>
 
     fun requestStoragePermission()
 
