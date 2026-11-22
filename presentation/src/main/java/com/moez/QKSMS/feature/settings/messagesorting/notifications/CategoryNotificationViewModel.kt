@@ -18,16 +18,16 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.notifications
 
+import kotlinx.coroutines.flow.map
+import androidx.lifecycle.viewModelScope
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowViewModel
 import android.content.Context
 import android.media.RingtoneManager
 import android.net.Uri
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.classifier.Category
-import dev.octoshrimpy.quik.common.base.QkViewModel
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.rxkotlin.plusAssign
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -35,7 +35,7 @@ class CategoryNotificationViewModel @Inject constructor(
     @Named("category") private val category: String,
     private val context: Context,
     private val prefs: Preferences
-) : QkViewModel<CategoryNotificationView, CategoryNotificationState>(
+) : QkFlowViewModel<CategoryNotificationView, CategoryNotificationState>(
     CategoryNotificationState(category = category, categoryTitle = categoryTitle(context, category))
 ) {
 
@@ -45,31 +45,26 @@ class CategoryNotificationViewModel @Inject constructor(
     private val ringtone = prefs.categoryRingtone(category)
 
     init {
-        disposables += notifications.asObservable()
-            .subscribe { enabled -> newState { copy(notificationsEnabled = enabled) } }
+        notifications.asFlow().collectIn(viewModelScope) { enabled -> newState { copy(notificationsEnabled = enabled) } }
 
-        disposables += previews.asObservable()
-            .subscribe { enabled -> newState { copy(previewEnabled = enabled) } }
+        previews.asFlow().collectIn(viewModelScope) { enabled -> newState { copy(previewEnabled = enabled) } }
 
-        disposables += vibration.asObservable()
-            .subscribe { enabled -> newState { copy(vibrationEnabled = enabled) } }
+        vibration.asFlow().collectIn(viewModelScope) { enabled -> newState { copy(vibrationEnabled = enabled) } }
 
-        disposables += ringtone.asObservable()
+        ringtone.asFlow()
             .map { uriString ->
                 uriString.takeIf { it.isNotEmpty() }
                     ?.let(Uri::parse)
                     ?.let { uri -> RingtoneManager.getRingtone(context, uri) }?.getTitle(context)
                     ?: context.getString(R.string.settings_ringtone_none)
             }
-            .subscribe { title -> newState { copy(ringtoneName = title) } }
+            .collectIn(viewModelScope) { title -> newState { copy(ringtoneName = title) } }
     }
 
     override fun bindView(view: CategoryNotificationView) {
         super.bindView(view)
 
-        view.preferenceClickIntent
-            .autoDisposable(view.scope())
-            .subscribe { preferenceView ->
+        view.preferenceClickIntent.collectIn(view.bindScope) { preferenceView ->
                 when (preferenceView.id) {
                     R.id.notifications -> notifications.set(!notifications.get())
                     R.id.previews -> previews.set(!previews.get())
@@ -80,9 +75,7 @@ class CategoryNotificationViewModel @Inject constructor(
                 }
             }
 
-        view.ringtoneSelectedIntent
-            .autoDisposable(view.scope())
-            .subscribe { uri -> ringtone.set(uri) }
+        view.ringtoneSelectedIntent.collectIn(view.bindScope) { uri -> ringtone.set(uri) }
     }
 
     companion object {
