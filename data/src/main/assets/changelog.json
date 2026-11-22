@@ -1,5 +1,19 @@
 [
   {
+    "versionCode": 2278,
+    "versionName": "2.9.9",
+    "improved": [
+      "One-time code notifications follow your preview settings and the lock screen's rules, like any other message",
+      "Updated the video player"
+    ],
+    "fixed": [
+      "Other apps can no longer attach pictures from your conversations to a new message",
+      "A picture message's attachment name can no longer make Open or Share hand over a different attachment",
+      "Other apps can no longer open the compose screen in scheduling mode",
+      "A malformed picture message or a long text can no longer break message filtering or receiving"
+    ]
+  },
+  {
     "versionCode": 2277,
     "versionName": "2.9.8",
     "improved": [
