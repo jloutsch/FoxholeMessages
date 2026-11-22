@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.common.widget
 
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
@@ -94,7 +96,9 @@ class PagerTitleView @JvmOverloads constructor(context: Context, attrs: Attribut
 
         recipientId
                 .distinctUntilChanged()
+                .observeOn(Schedulers.io())
                 .map { recipientId -> Optional(conversationRepo.getRecipient(recipientId)) }
+                .observeOn(AndroidSchedulers.mainThread())
                 .switchMap { recipient -> colors.themeObservable(recipient.value) }
                 .map { theme ->
                     val textSecondary = context.resolveThemeColor(android.R.attr.textColorSecondary)

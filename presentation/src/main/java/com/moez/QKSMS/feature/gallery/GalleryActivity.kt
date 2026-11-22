@@ -35,7 +35,6 @@ import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
 import dev.octoshrimpy.quik.databinding.GalleryActivityBinding
 import dev.octoshrimpy.quik.model.MmsPart
-import dev.octoshrimpy.quik.repository.MessageRepository
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
@@ -53,7 +52,6 @@ class GalleryActivity : QkActivity(), GalleryView {
     @Inject lateinit var dateFormatter: DateFormatter
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
     @Inject lateinit var pagerAdapter: GalleryPagerAdapter
-    @Inject lateinit var messageRepo: MessageRepository
 
     val partId by lazy { intent.getLongExtra("partId", 0L) }
 
@@ -95,8 +93,6 @@ class GalleryActivity : QkActivity(), GalleryView {
     private var currentPart: MmsPart? = null
 
     fun onPageSelected(position: Int) {
-        binding.toolbarSubtitle.text = pagerAdapter.getItem(position)?.let { part -> messageRepo.getMessageForPart(part.id) }?.date
-                ?.let(dateFormatter::getDetailedTimestamp)
         binding.toolbarSubtitle.isVisible = binding.toolbarTitle.text.isNotBlank()
 
         // Only worth showing when the message actually holds more than one attachment - "1/1"
@@ -117,6 +113,7 @@ class GalleryActivity : QkActivity(), GalleryView {
         toolbar?.setVisible(state.navigationVisible)
 
         title = state.title
+        binding.toolbarSubtitle.text = state.date?.let(dateFormatter::getDetailedTimestamp)
         pagerAdapter.updateData(state.parts)
     }
 

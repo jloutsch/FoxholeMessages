@@ -23,5 +23,6 @@ import dev.octoshrimpy.quik.model.MmsPart
 data class GalleryState(
     val navigationVisible: Boolean = true,
     val title: String? = "",
-    val parts: List<MmsPart>? = null
+    val parts: List<MmsPart>? = null,
+    val date: Long? = null // the message's; every page is one of its attachments
 )

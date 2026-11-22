@@ -53,24 +53,23 @@ class ScheduledViewModel @Inject constructor(
             .filter { it == R.id.delete }
             .withLatestFrom(view.messagesSelectedIntent) { _, selectedMessages ->
                 selectedMessages }
+            .observeOn(Schedulers.io())
+            .map { selected -> selected.mapNotNull(scheduledMessageRepo::getScheduledMessage).map { it.id } }
+            .observeOn(AndroidSchedulers.mainThread())
             .autoDisposable(view.scope())
-            .subscribe { it ->
-                val ids = it.mapNotNull(scheduledMessageRepo::getScheduledMessage)
-                    .map { it.id }
-                view.showDeleteDialog(ids)
-            }
+            .subscribe { ids -> view.showDeleteDialog(ids) }
 
 
         // copy the selected message text to the clipboard
         view.optionsItemIntent
             .filter { it == R.id.copy }
-            .withLatestFrom(view.messagesSelectedIntent) { _, selectedMessageIds ->
+            .withLatestFrom(view.messagesSelectedIntent) { _, selectedMessageIds -> selectedMessageIds }
+            .observeOn(Schedulers.io())
+            .map { selectedMessageIds ->
                 selectedMessageIds  // same order as messages on screen
                     .mapNotNull(scheduledMessageRepo::getScheduledMessage)
                     .sortedBy { it.date }
                     .let { scheduledMessages ->
-                        ClipboardUtils.copy(
-                            context,
                             when (scheduledMessages.size) {
                                 1 -> scheduledMessages.first().body
                                 else -> scheduledMessages.fold(StringBuilder()) { acc, message ->
@@ -79,11 +78,11 @@ class ScheduledViewModel @Inject constructor(
                                     acc.append(message.body)
                                 }
                             }.toString()
-                        )
                     }
             }
+            .observeOn(AndroidSchedulers.mainThread())
             .autoDisposable(view.scope())
-            .subscribe()
+            .subscribe { text -> ClipboardUtils.copy(context, text) }
 
         // send the messages now menu item selected
         view.optionsItemIntent

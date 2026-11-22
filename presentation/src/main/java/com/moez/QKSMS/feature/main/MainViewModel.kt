@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import io.reactivex.Maybe
 import io.reactivex.Single
 import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
 import android.content.Context
@@ -446,9 +447,11 @@ class MainViewModel @Inject constructor(
                 .doOnNext { view.clearSelection() }
                 .filter { conversations -> conversations.size == 1 }
                 .map { conversations -> conversations.first() }
+                .observeOn(Schedulers.io())
                 .mapNotNull(conversationRepo::getConversation)
                 .map { conversation -> conversation.recipients }
                 .mapNotNull { recipients -> recipients[0]?.address?.takeIf { recipients.size == 1 } }
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(externalNavigator::addContact)
                 .autoDisposable(view.scope())
                 .subscribe()
@@ -511,7 +514,9 @@ class MainViewModel @Inject constructor(
         view.optionsItemIntent
             .filter { itemId -> itemId == R.id.rename }
             .withLatestFrom(view.conversationsSelectedIntent) { _, conversationIds -> conversationIds.first() }
+            .observeOn(Schedulers.io())
             .mapNotNull { conversationId -> conversationRepo.getConversation(conversationId) }
+            .observeOn(AndroidSchedulers.mainThread())
             .autoDisposable(view.scope())
             .subscribe { conversation -> view.showRenameDialog(conversation.name) }
 
@@ -526,8 +531,10 @@ class MainViewModel @Inject constructor(
                 .autoDisposable(view.scope())
                 .subscribe { ratingManager.dismiss() }
 
+        // The selected conversations are read in the background (#71), then applied to the latest state
         view.conversationsSelectedIntent
-                .withLatestFrom(state) { selection, state ->
+                .observeOn(Schedulers.io())
+                .map { selection ->
                     val conversations = selection.mapNotNull(conversationRepo::getConversation)
                     val add = conversations.firstOrNull()
                             ?.takeIf { conversations.size == 1 }
@@ -541,7 +548,10 @@ class MainViewModel @Inject constructor(
                         else -> true
                     }
                     val selected = selection.size
-
+                    SelectionFlags(add, pin, read, selected)
+                }
+                .observeOn(AndroidSchedulers.mainThread())
+                .withLatestFrom(state) { (add, pin, read, selected), state ->
                     when (state.page) {
                         is Inbox -> {
                             val page = state.page.copy(addContact = add, markPinned = pin, markRead = read, selected = selected)
@@ -633,12 +643,17 @@ class MainViewModel @Inject constructor(
                         Preferences.SWIPE_ACTION_BLOCK ->
                             view.showBlockingDialog(listOf(threadId), true)
                         Preferences.SWIPE_ACTION_CALL -> {
-                            (
+                            // Read in the background (#71), then dial on the main thread
+                            Maybe.fromCallable<String> {
                                 messageRepo.getMessagesSync(threadId).lastOrNull { !it.isMe() }
                                     ?.address // most recent non-me msg address
                                 ?: conversationRepo.getConversation(threadId)
                                     ?.recipients?.firstOrNull()?.address  // first recipient in convo
-                            )?.let(externalNavigator::makePhoneCall)
+                            }
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .autoDisposable(view.scope())
+                                .subscribe(externalNavigator::makePhoneCall, Timber::w)
                         }
                         Preferences.SWIPE_ACTION_READ -> markRead.execute(listOf(threadId))
                         Preferences.SWIPE_ACTION_UNREAD -> markUnread.execute(listOf(threadId))
@@ -729,3 +744,5 @@ private fun buildTabUnreadCounts(
         if (tab == Tab.STARRED) messageRepo.getStarredCount()
         else conversationRepo.getUnreadCountByCategory(requireNotNull(tab.category))
     }
+
+private data class SelectionFlags(val add: Boolean, val pin: Boolean, val read: Boolean, val selected: Int)
