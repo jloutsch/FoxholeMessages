@@ -18,21 +18,21 @@
  */
 package dev.octoshrimpy.quik.feature.settings
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.common.widget.PreferenceView
-import io.reactivex.Observable
 
-interface SettingsView : QkViewContract<SettingsState> {
-    fun preferenceClicks(): Observable<PreferenceView>
-    fun aboutLongClicks(): Observable<*>
-    fun nightModeSelected(): Observable<Int>
-    fun nightStartSelected(): Observable<Pair<Int, Int>>
-    fun nightEndSelected(): Observable<Pair<Int, Int>>
-    fun textSizeSelected(): Observable<Int>
-    fun sendDelaySelected(): Observable<Int>
-    fun signatureChanged(): Observable<String>
-    fun mmsSizeSelected(): Observable<Int>
-    fun messageLinkHandlingSelected(): Observable<Int>
+interface SettingsView : QkFlowView<SettingsState> {
+    fun preferenceClicks(): Flow<PreferenceView>
+    fun aboutLongClicks(): Flow<Unit>
+    fun nightModeSelected(): Flow<Int>
+    fun nightStartSelected(): Flow<Pair<Int, Int>>
+    fun nightEndSelected(): Flow<Pair<Int, Int>>
+    fun textSizeSelected(): Flow<Int>
+    fun sendDelaySelected(): Flow<Int>
+    fun signatureChanged(): Flow<String>
+    fun mmsSizeSelected(): Flow<Int>
+    fun messageLinkHandlingSelected(): Flow<Int>
 
     fun showNightModeDialog()
     fun showStartTimePicker(hour: Int, minute: Int)

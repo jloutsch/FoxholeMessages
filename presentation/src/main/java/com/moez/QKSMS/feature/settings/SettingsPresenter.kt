@@ -18,12 +18,16 @@
  */
 package dev.octoshrimpy.quik.feature.settings
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.FlowPreview
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import android.content.Context
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
-import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
@@ -31,10 +35,8 @@ import dev.octoshrimpy.quik.interactor.SyncMessages
 import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.NightModeManager
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.rxkotlin.plusAssign
 import timber.log.Timber
 import java.util.Calendar
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class SettingsPresenter @Inject constructor(
@@ -46,93 +48,76 @@ class SettingsPresenter @Inject constructor(
     private val nightModeManager: NightModeManager,
     private val prefs: Preferences,
     private val syncMessages: SyncMessages
-) : QkPresenter<SettingsView, SettingsState>(SettingsState(
+) : QkFlowPresenter<SettingsView, SettingsState>(SettingsState(
         nightModeId = prefs.nightMode.get()
 )) {
 
     init {
-        disposables += colors.themeObservable()
-                .subscribe { theme -> newState { copy(theme = theme.theme) } }
+        // Colors is still RxJava (other screens read it): bridged until Task 29
+        colors.themeObservable().asFlow()
+                .collectIn(presenterScope) { theme -> newState { copy(theme = theme.theme) } }
 
         val nightModeLabels = context.resources.getStringArray(R.array.night_modes)
-        disposables += prefs.nightMode.asObservable()
-                .subscribe { nightMode ->
+        prefs.nightMode.asFlow().collectIn(presenterScope) { nightMode ->
                     newState { copy(nightModeSummary = nightModeLabels[nightMode], nightModeId = nightMode) }
                 }
 
-        disposables += prefs.nightStart.asObservable()
+        prefs.nightStart.asFlow()
                 .map { time -> nightModeManager.parseTime(time) }
                 .map { calendar -> calendar.timeInMillis }
                 .map { millis -> dateFormatter.getTimestamp(millis) }
-                .subscribe { nightStart -> newState { copy(nightStart = nightStart) } }
+                .collectIn(presenterScope) { nightStart -> newState { copy(nightStart = nightStart) } }
 
-        disposables += prefs.nightEnd.asObservable()
+        prefs.nightEnd.asFlow()
                 .map { time -> nightModeManager.parseTime(time) }
                 .map { calendar -> calendar.timeInMillis }
                 .map { millis -> dateFormatter.getTimestamp(millis) }
-                .subscribe { nightEnd -> newState { copy(nightEnd = nightEnd) } }
+                .collectIn(presenterScope) { nightEnd -> newState { copy(nightEnd = nightEnd) } }
 
-        disposables += prefs.black.asObservable()
-                .subscribe { black -> newState { copy(black = black) } }
+        prefs.black.asFlow().collectIn(presenterScope) { black -> newState { copy(black = black) } }
 
-        disposables += prefs.notifications().asObservable()
-                .subscribe { enabled -> newState { copy(notificationsEnabled = enabled) } }
+        prefs.notifications().asFlow().collectIn(presenterScope) { enabled -> newState { copy(notificationsEnabled = enabled) } }
 
-        disposables += prefs.autoEmoji.asObservable()
-                .subscribe { enabled -> newState { copy(autoEmojiEnabled = enabled) } }
+        prefs.autoEmoji.asFlow().collectIn(presenterScope) { enabled -> newState { copy(autoEmojiEnabled = enabled) } }
 
         val delayedSendingLabels = context.resources.getStringArray(R.array.delayed_sending_labels)
-        disposables += prefs.sendDelay.asObservable()
-                .subscribe { id -> newState { copy(sendDelaySummary = delayedSendingLabels[id], sendDelayId = id) } }
+        prefs.sendDelay.asFlow().collectIn(presenterScope) { id -> newState { copy(sendDelaySummary = delayedSendingLabels[id], sendDelayId = id) } }
 
-        disposables += prefs.delivery.asObservable()
-            .subscribe { enabled -> newState { copy(deliveryEnabled = enabled) } }
+        prefs.delivery.asFlow().collectIn(presenterScope) { enabled -> newState { copy(deliveryEnabled = enabled) } }
 
-        disposables += prefs.unreadAtTop.asObservable()
-            .subscribe { enabled -> newState { copy(unreadAtTopEnabled = enabled) } }
+        prefs.unreadAtTop.asFlow().collectIn(presenterScope) { enabled -> newState { copy(unreadAtTopEnabled = enabled) } }
 
-        disposables += prefs.signature.asObservable()
-                .subscribe { signature -> newState { copy(signature = signature) } }
+        prefs.signature.asFlow().collectIn(presenterScope) { signature -> newState { copy(signature = signature) } }
 
         val textSizeLabels = context.resources.getStringArray(R.array.text_sizes)
-        disposables += prefs.textSize.asObservable()
-                .subscribe { textSize ->
+        prefs.textSize.asFlow().collectIn(presenterScope) { textSize ->
                     newState { copy(textSizeSummary = textSizeLabels[textSize], textSizeId = textSize) }
                 }
 
-        disposables += prefs.autoColor.asObservable()
-                .subscribe { autoColor -> newState { copy(autoColor = autoColor) } }
+        prefs.autoColor.asFlow().collectIn(presenterScope) { autoColor -> newState { copy(autoColor = autoColor) } }
 
-        disposables += prefs.systemColors.asObservable()
-                .subscribe { systemColors -> newState { copy(systemColors = systemColors) } }
+        prefs.systemColors.asFlow().collectIn(presenterScope) { systemColors -> newState { copy(systemColors = systemColors) } }
 
-        disposables += prefs.pinchToZoom.asObservable()
-                .subscribe { enabled -> newState { copy(pinchToZoomEnabled = enabled) } }
+        prefs.pinchToZoom.asFlow().collectIn(presenterScope) { enabled -> newState { copy(pinchToZoomEnabled = enabled) } }
 
-        disposables += prefs.confirmArchive.asObservable()
-                .subscribe { enabled -> newState { copy(confirmArchiveEnabled = enabled) } }
+        prefs.confirmArchive.asFlow().collectIn(presenterScope) { enabled -> newState { copy(confirmArchiveEnabled = enabled) } }
 
-        disposables += prefs.systemFont.asObservable()
-            .subscribe { enabled -> newState { copy(systemFontEnabled = enabled) } }
+        prefs.systemFont.asFlow().collectIn(presenterScope) { enabled -> newState { copy(systemFontEnabled = enabled) } }
 
-        disposables += prefs.showStt.asObservable()
-            .subscribe { enabled -> newState { copy(showStt = enabled) } }
+        prefs.showStt.asFlow().collectIn(presenterScope) { enabled -> newState { copy(showStt = enabled) } }
 
-        disposables += prefs.longAsMms.asObservable()
-                .subscribe { enabled -> newState { copy(longAsMms = enabled) } }
+        prefs.longAsMms.asFlow().collectIn(presenterScope) { enabled -> newState { copy(longAsMms = enabled) } }
 
         val mmsSizeLabels = context.resources.getStringArray(R.array.mms_sizes)
         val mmsSizeIds = context.resources.getIntArray(R.array.mms_sizes_ids)
-        disposables += prefs.mmsSize.asObservable()
-                .subscribe { maxMmsSize ->
+        prefs.mmsSize.asFlow().collectIn(presenterScope) { maxMmsSize ->
                     val index = mmsSizeIds.indexOf(maxMmsSize)
                     newState { copy(maxMmsSizeSummary = mmsSizeLabels[index], maxMmsSizeId = maxMmsSize) }
                 }
 
         val messageLinkHandlingLabels = context.resources.getStringArray(R.array.messageLinkHandlings)
         val messageLinkHandlingIds = context.resources.getIntArray(R.array.messageLinkHandling_ids)
-        disposables += prefs.messageLinkHandling.asObservable()
-            .subscribe { messageLinkHandlingId ->
+        prefs.messageLinkHandling.asFlow().collectIn(presenterScope) { messageLinkHandlingId ->
                 val index = messageLinkHandlingIds.indexOf(messageLinkHandlingId)
                 newState {
                     copy(
@@ -142,20 +127,23 @@ class SettingsPresenter @Inject constructor(
                 }
             }
 
-        disposables += syncRepo.syncProgress
-                .sample(16, TimeUnit.MILLISECONDS)
+        // The repository is still RxJava (the sync worker and Main read it too): bridged
+        @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
+        syncRepo.syncProgress.asFlow()
+                .sample(16)
                 .distinctUntilChanged()
-                .subscribe { syncProgress -> newState { copy(syncProgress = syncProgress) } }
+                .collectIn(presenterScope) { syncProgress -> newState { copy(syncProgress = syncProgress) } }
+    }
 
-        disposables += syncMessages
+    override fun onCleared() {
+        syncMessages.dispose() // as under RxJava: leaving Settings cancels a sync it started
+        super.onCleared()
     }
 
     override fun bindIntents(view: SettingsView) {
         super.bindIntents(view)
 
-        view.preferenceClicks()
-                .autoDisposable(view.scope())
-                .subscribe {
+        view.preferenceClicks().collectIn(view.bindScope) {
                     Timber.v("Preference click: ${context.resources.getResourceName(it.id)}")
 
                     when (it.id) {
@@ -223,51 +211,32 @@ class SettingsPresenter @Inject constructor(
 
                         R.id.support -> externalNavigator.showVenmoDonation()
                     }
-                }
+        }
 
-        view.aboutLongClicks()
-                .map { !prefs.logging.get() }
-                .doOnNext { enabled -> prefs.logging.set(enabled) }
-                .autoDisposable(view.scope())
-                .subscribe { enabled ->
-                    context.makeToast(when (enabled) {
-                        true -> R.string.settings_logging_enabled
-                        false -> R.string.settings_logging_disabled
-                    })
-                }
+        view.aboutLongClicks().collectIn(view.bindScope) {
+            val enabled = !prefs.logging.get()
+            prefs.logging.set(enabled)
+            context.makeToast(when (enabled) {
+                true -> R.string.settings_logging_enabled
+                false -> R.string.settings_logging_disabled
+            })
+        }
 
-        view.nightModeSelected()
-                .autoDisposable(view.scope())
-                .subscribe(nightModeManager::updateNightMode)
+        view.nightModeSelected().collectIn(view.bindScope, nightModeManager::updateNightMode)
 
-        view.nightStartSelected()
-                .autoDisposable(view.scope())
-                .subscribe { nightModeManager.setNightStart(it.first, it.second) }
+        view.nightStartSelected().collectIn(view.bindScope) { nightModeManager.setNightStart(it.first, it.second) }
 
-        view.nightEndSelected()
-                .autoDisposable(view.scope())
-                .subscribe { nightModeManager.setNightEnd(it.first, it.second) }
+        view.nightEndSelected().collectIn(view.bindScope) { nightModeManager.setNightEnd(it.first, it.second) }
 
-        view.textSizeSelected()
-                .autoDisposable(view.scope())
-                .subscribe(prefs.textSize::set)
+        view.textSizeSelected().collectIn(view.bindScope, prefs.textSize::set)
 
-        view.sendDelaySelected()
-                .autoDisposable(view.scope())
-                .subscribe(prefs.sendDelay::set)
+        view.sendDelaySelected().collectIn(view.bindScope, prefs.sendDelay::set)
 
-        view.signatureChanged()
-                .doOnNext(prefs.signature::set)
-                .autoDisposable(view.scope())
-                .subscribe()
+        view.signatureChanged().collectIn(view.bindScope, prefs.signature::set)
 
-        view.mmsSizeSelected()
-                .autoDisposable(view.scope())
-                .subscribe(prefs.mmsSize::set)
+        view.mmsSizeSelected().collectIn(view.bindScope, prefs.mmsSize::set)
 
-        view.messageLinkHandlingSelected()
-            .autoDisposable(view.scope())
-            .subscribe(prefs.messageLinkHandling::set)
+        view.messageLinkHandlingSelected().collectIn(view.bindScope, prefs.messageLinkHandling::set)
     }
 
 }
