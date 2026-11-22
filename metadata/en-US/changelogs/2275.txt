@@ -1,0 +1,2 @@
+What's new in 2.9.6:
+- Improved: the inbox, the Starred and Scheduled lists, and actions like copy and forward read from storage in the background instead of while drawing the screen.
