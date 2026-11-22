@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.qkreply
 
+import dev.octoshrimpy.quik.common.util.extensions.textChanges
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import androidx.lifecycle.lifecycleScope
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -35,8 +39,6 @@ import android.view.WindowManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
-import com.jakewharton.rxbinding2.view.clicks
-import com.jakewharton.rxbinding2.widget.textChanges
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkThemedActivity
@@ -46,8 +48,6 @@ import dev.octoshrimpy.quik.common.util.extensions.showKeyboard
 import dev.octoshrimpy.quik.common.widget.QkEditText
 import dev.octoshrimpy.quik.databinding.QkreplyActivityBinding
 import dev.octoshrimpy.quik.feature.compose.MessagesAdapter
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class QkReplyActivity : QkThemedActivity(), QkReplyView {
@@ -57,7 +57,9 @@ class QkReplyActivity : QkThemedActivity(), QkReplyView {
     @Inject lateinit var adapter: MessagesAdapter
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
-    override val menuItemIntent: Subject<Int> = PublishSubject.create()
+    override val bindScope get() = lifecycleScope
+
+    override val menuItemIntent = events<Int>()
     override val textChangedIntent by lazy { binding.message.textChanges() }
     override val changeSimIntent by lazy { binding.sim.clicks() }
     override val sendIntent by lazy { binding.send.clicks() }
@@ -170,7 +172,7 @@ class QkReplyActivity : QkThemedActivity(), QkReplyView {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        menuItemIntent.onNext(item.itemId)
+        menuItemIntent.tryEmit(item.itemId)
         return true
     }
 

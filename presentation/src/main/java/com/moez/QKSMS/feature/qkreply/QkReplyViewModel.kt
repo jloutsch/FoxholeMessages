@@ -18,18 +18,34 @@
  */
 package dev.octoshrimpy.quik.feature.qkreply
 
-import io.reactivex.Observable
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.model.Conversation
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import android.telephony.SmsMessage
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
 import dev.octoshrimpy.quik.common.Navigator
-import dev.octoshrimpy.quik.common.base.QkViewModel
 import dev.octoshrimpy.quik.compat.SubscriptionManagerCompat
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.interactor.DeleteMessages
 import dev.octoshrimpy.quik.interactor.MarkRead
 import dev.octoshrimpy.quik.interactor.SendNewMessage
@@ -37,15 +53,8 @@ import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.ActiveSubscriptionObservable
-import io.reactivex.rxkotlin.Observables
-import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Named
-import io.reactivex.rxkotlin.withLatestFrom as withLatestFromBoth
 
 class QkReplyViewModel @Inject constructor(
     @Named("threadId") private val threadId: Long,
@@ -57,128 +66,116 @@ class QkReplyViewModel @Inject constructor(
     private val externalNavigator: ExternalNavigator,
     private val sendNewMessage: SendNewMessage,
     private val subscriptionManager: SubscriptionManagerCompat
-) : QkViewModel<QkReplyView, QkReplyState>(QkReplyState(threadId = threadId)) {
+) : QkFlowViewModel<QkReplyView, QkReplyState>(QkReplyState(threadId = threadId)) {
 
-    private val conversation by lazy {
-        conversationRepo.observeConversation(threadId)
-                .filterNotNull()
-                .asMainObservable()
-                .distinctUntilChanged()
-    }
+    // The latest conversation; null until it loads
+    private val conversation: StateFlow<Conversation?> = conversationRepo.observeConversation(threadId)
+            .filterNotNull()
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Unread messages only, until "expand" asks for every message in the thread
-    private val showAll: Subject<Boolean> = BehaviorSubject.createDefault(false)
+    private val showAll = MutableStateFlow(false)
 
-    private val messages: Observable<List<Message>> by lazy {
-        showAll.distinctUntilChanged()
-                .switchMap { all ->
-                    val source = if (all) messageRepo.getMessages(threadId) else messageRepo.observeUnreadMessages(threadId)
-                    source.asMainObservable()
-                }
-                .replay(1)
-                .refCount()
-    }
+    @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest is stable in practice; still marked experimental
+    private val messages: StateFlow<List<Message>?> = showAll
+            .flatMapLatest { all ->
+                if (all) messageRepo.getMessages(threadId) else messageRepo.observeUnreadMessages(threadId)
+            }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
-        disposables += markRead
-        disposables += sendNewMessage
-
         // When the set of messages changes, update the state
         // If we're ever showing an empty set of messages, then it's time to shut down to activity
-        disposables += Observables
-                .combineLatest(messages, conversation) { messages, conversation ->
-                    newState { copy(data = Pair(conversation, messages)) }
-                    messages
-                }
+        combine(messages.filterNotNull(), conversation.filterNotNull()) { messages, conversation ->
+            newState { copy(data = Pair(conversation, messages)) }
+            messages
+        }
                 .filter { it.isEmpty() }
-                .subscribe { newState { copy(hasError = true) } }
+                .collectIn(viewModelScope) { newState { copy(hasError = true) } }
 
-        disposables += conversation
+        conversation.filterNotNull()
                 .map { conversation -> conversation.getTitle() }
                 .distinctUntilChanged()
-                .subscribe { title -> newState { copy(title = title) } }
+                .collectIn(viewModelScope) { title -> newState { copy(title = title) } }
 
-        val latestSubId = messages
+        val latestSubId = messages.filterNotNull()
                 .map { messages -> messages.lastOrNull()?.subId ?: -1 }
                 .distinctUntilChanged()
 
-        val subscriptions = ActiveSubscriptionObservable(subscriptionManager)
-        disposables += Observables.combineLatest(latestSubId, subscriptions) { subId, subs ->
-            val sub = if (subs.size > 1) subs.firstOrNull { it.subscriptionId == subId } ?: subs[0] else null
-            newState { copy(subscription = sub) }
-        }.subscribe()
+        // ActiveSubscriptionObservable is still RxJava (Compose reads it too): bridged until Task 29
+        val subscriptions = ActiveSubscriptionObservable(subscriptionManager).asFlow()
+        combine(latestSubId, subscriptions) { subId, subs ->
+            if (subs.size > 1) subs.firstOrNull { it.subscriptionId == subId } ?: subs[0] else null
+        }.collectIn(viewModelScope) { sub -> newState { copy(subscription = sub) } }
+    }
+
+    override fun onCleared() {
+        // Released when the popup closes, as under RxJava
+        markRead.dispose()
+        sendNewMessage.dispose()
+        super.onCleared()
     }
 
     override fun bindView(view: QkReplyView) {
         super.bindView(view)
 
-        conversation
-            .take(1)  // only update saved draft to ui once
-            .map { conversation -> conversation.draft }
-            .distinctUntilChanged()
-            .autoDisposable(view.scope())
-            .subscribe { draft -> view.setDraft(draft) }
+        // only update saved draft to ui once
+        view.bindScope.launch { view.setDraft(conversation.filterNotNull().first().draft) }
 
-        // Mark read
-        view.menuItemIntent
-                .filter { id -> id == R.id.read }
-                .autoDisposable(view.scope())
-                .subscribe {
-                    markRead.execute(listOf(threadId)) { newState { copy(hasError = true) } }
+        // The text in the box, for sending (what withLatestFrom read)
+        var text: CharSequence = ""
+
+        view.menuItemIntent.collectIn(view.bindScope) { id ->
+            when (id) {
+                // Mark read
+                R.id.read -> markRead.execute(listOf(threadId)) { newState { copy(hasError = true) } }
+
+                // Call
+                R.id.call -> {
+                    val address = state.value.data?.second?.lastOrNull { !it.isMe() }?.address // most recent non-me msg address
+                            ?: conversation.value?.recipients?.firstOrNull()?.address // first recipient in convo
+                    if (address != null) {
+                        externalNavigator.makePhoneCall(address)
+                        newState { copy(hasError = true) }
+                    }
                 }
 
-        // Call
-        view.menuItemIntent
-            .filter { id -> id == R.id.call }
-            .withLatestFromBoth(state, conversation)
-            .mapNotNull { (_, state, conversation) ->
-                state.data?.second?.lastOrNull { !it.isMe() }?.address // most recent non-me msg address
-                    ?: conversation.recipients.firstOrNull()?.address  // first recipient in convo
+                // Show all messages
+                R.id.expand -> {
+                    showAll.value = true
+                    newState { copy(expanded = true) }
+                }
+
+                // Show unread messages only
+                R.id.collapse -> {
+                    showAll.value = false
+                    newState { copy(expanded = false) }
+                }
+
+                // Delete new messages
+                R.id.delete -> {
+                    val messages = withContext(Dispatchers.IO) { messageRepo.getUnreadMessages(threadId).map { it.id } }
+                    deleteMessages.execute(DeleteMessages.Params(messages, threadId)) { newState { copy(hasError = true) } }
+                }
+
+                // View conversation
+                R.id.view -> {
+                    navigator.showConversation(threadId)
+                    newState { copy(hasError = true) }
+                }
             }
-            .doOnNext { externalNavigator.makePhoneCall(it) }
-            .autoDisposable(view.scope())
-            .subscribe { newState { copy(hasError = true) } }
-
-        // Show all messages
-        view.menuItemIntent
-                .filter { id -> id == R.id.expand }
-                .doOnNext { showAll.onNext(true) }
-                .autoDisposable(view.scope())
-                .subscribe { newState { copy(expanded = true) } }
-
-        // Show unread messages only
-        view.menuItemIntent
-                .filter { id -> id == R.id.collapse }
-                .doOnNext { showAll.onNext(false) }
-                .autoDisposable(view.scope())
-                .subscribe { newState { copy(expanded = false) } }
-
-        // Delete new messages
-        view.menuItemIntent
-                .filter { id -> id == R.id.delete }
-                .observeOn(Schedulers.io())
-                .map { messageRepo.getUnreadMessages(threadId).map { it.id } }
-                .map { messages -> DeleteMessages.Params(messages, threadId) }
-                .autoDisposable(view.scope())
-                .subscribe { deleteMessages.execute(it) { newState { copy(hasError = true) } } }
-
-        // View conversation
-        view.menuItemIntent
-                .filter { id -> id == R.id.view }
-                .doOnNext { navigator.showConversation(threadId) }
-                .autoDisposable(view.scope())
-                .subscribe { newState { copy(hasError = true) } }
+        }
 
         // Enable the send button when there is text input into the new message body or there's
         // an attachment, disable otherwise
-        view.textChangedIntent
-                .map { text -> text.isNotBlank() }
-                .autoDisposable(view.scope())
-                .subscribe { canSend -> newState { copy(canSend = canSend) } }
+        view.textChangedIntent.collectIn(view.bindScope) { newText ->
+            text = newText
+            newState { copy(canSend = newText.isNotBlank()) }
+        }
 
         // Show the remaining character counter when necessary
         view.textChangedIntent
-                .observeOn(Schedulers.computation())
                 .map { draft -> SmsMessage.calculateLength(draft, false) }
                 .map { array ->
                     val messages = array[0]
@@ -190,49 +187,41 @@ class QkReplyViewModel @Inject constructor(
                         else -> "$remaining / $messages"
                     }
                 }
+                .flowOn(Dispatchers.Default)
                 .distinctUntilChanged()
-                .autoDisposable(view.scope())
-                .subscribe { remaining -> newState { copy(remaining = remaining) } }
+                .collectIn(view.bindScope) { remaining -> newState { copy(remaining = remaining) } }
 
         // Update the draft whenever the text is changed
+        @OptIn(FlowPreview::class) // debounce is stable in practice; still marked preview
         view.textChangedIntent
-                .debounce(100, TimeUnit.MILLISECONDS)
+                .debounce(100)
                 .map { draft -> draft.toString() }
-                .observeOn(Schedulers.io())
-                .autoDisposable(view.scope())
-                .subscribe { draft -> conversationRepo.saveDraft(threadId, draft) }
+                .collectIn(view.bindScope) { draft ->
+                    withContext(Dispatchers.IO) { conversationRepo.saveDraft(threadId, draft) }
+                }
 
         // Toggle to the next sim slot
-        view.changeSimIntent
-                .withLatestFrom(state) { _, state ->
-                    val subs = subscriptionManager.activeSubscriptionInfoList
-                    val subIndex = subs.indexOfFirst { it.subscriptionId == state.subscription?.subscriptionId }
-                    val subscription = when {
-                        subIndex == -1 -> null
-                        subIndex < subs.size - 1 -> subs[subIndex + 1]
-                        else -> subs[0]
-                    }
-                    newState { copy(subscription = subscription) }
-                }
-                .autoDisposable(view.scope())
-                .subscribe()
+        view.changeSimIntent.collectIn(view.bindScope) {
+            val subs = subscriptionManager.activeSubscriptionInfoList
+            val subIndex = subs.indexOfFirst { it.subscriptionId == state.value.subscription?.subscriptionId }
+            val subscription = when {
+                subIndex == -1 -> null
+                subIndex < subs.size - 1 -> subs[subIndex + 1]
+                else -> subs[0]
+            }
+            newState { copy(subscription = subscription) }
+        }
 
         // Send a message when the send button is clicked, and disable editing mode if it's enabled
-        view.sendIntent
-                .withLatestFrom(view.textChangedIntent) { _, body -> body }
-                .map { body -> body.toString() }
-                .withLatestFrom(state, conversation) { body, state, conversation ->
-                    sendNewMessage.execute(SendNewMessage.Params(
-                        state.subscription?.subscriptionId ?: -1, 0,
-                        conversation.recipients.map { it.address }, body, conversation.sendAsGroup
-                    ))
-                    view.setDraft("")
-                }
-                .doOnNext {
-                    markRead.execute(listOf(threadId)) { newState { copy(hasError = true) } }
-                }
-                .autoDisposable(view.scope())
-                .subscribe()
+        view.sendIntent.collectIn(view.bindScope) {
+            val conversation = conversation.value ?: return@collectIn
+            sendNewMessage.execute(SendNewMessage.Params(
+                state.value.subscription?.subscriptionId ?: -1, 0,
+                conversation.recipients.map { it.address }, text.toString(), conversation.sendAsGroup
+            ))
+            view.setDraft("")
+            markRead.execute(listOf(threadId)) { newState { copy(hasError = true) } }
+        }
     }
 
 }
