@@ -123,8 +123,8 @@ class AppModule(private var application: Application) {
     @Provides
     @Singleton
     fun provideDatabase(context: Context): FoxholeDatabase =
-        // Release builds still allow main-thread reads while #71 finishes. Debug builds don't, so
-        // Room throws at any read left on the main thread and testing finds it.
+        // Debug builds don't allow main-thread reads, so Room throws at any during testing. Release
+        // builds allow them on purpose (#71): a read missed there costs about 1 ms instead of a crash.
         Room.databaseBuilder(context, FoxholeDatabase::class.java, "foxhole.db")
             .apply { if (!BuildConfig.DEBUG) allowMainThreadQueries() }
             .build()
