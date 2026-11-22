@@ -18,6 +18,13 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import androidx.core.view.isVisible
 import java.text.NumberFormat
 import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker.SortStatus
@@ -26,31 +33,26 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import com.bluelinelabs.conductor.RouterTransaction
-import com.jakewharton.rxbinding2.view.clicks
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.QkChangeHandler
 import dev.octoshrimpy.quik.common.QkDialog
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 import dev.octoshrimpy.quik.databinding.MessageSortingControllerBinding
 import dev.octoshrimpy.quik.feature.settings.messagesorting.senders.SenderRulesController
 import dev.octoshrimpy.quik.feature.settings.messagesorting.senders.TrustedSendersController
 import dev.octoshrimpy.quik.injection.appComponent
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class MessageSortingController :
-    QkController<MessageSortingControllerBinding, MessageSortingView, MessageSortingState, MessageSortingPresenter>(),
+    QkFlowController<MessageSortingControllerBinding, MessageSortingView, MessageSortingState, MessageSortingPresenter>(),
     MessageSortingView {
 
     @Inject override lateinit var presenter: MessageSortingPresenter
     @Inject lateinit var otpRetentionDialog: QkDialog
     @Inject lateinit var otpNotificationSizeDialog: QkDialog
 
-    private val confirmSortExistingSubject: Subject<Unit> = PublishSubject.create()
-    private val widgetTabsSubject: Subject<Set<String>> = PublishSubject.create()
+    private val confirmSortExistingEvents = events<Unit>()
+    private val widgetTabsEvents = events<Set<String>>()
 
     init {
         appComponent.inject(this)
@@ -100,24 +102,25 @@ class MessageSortingController :
         }
     }
 
-    override fun preferenceClicks(): Observable<PreferenceView> =
+    override fun preferenceClicks(): Flow<PreferenceView> =
         (0 until binding.preferences.childCount)
             .map { index -> binding.preferences.getChildAt(index) }
             .mapNotNull { child -> child as? PreferenceView }
             .map { preference -> preference.clicks().map { preference } }
-            .let { Observable.merge(it) }
+            .merge()
 
-    override fun confirmSortExistingIntent(): Observable<*> = confirmSortExistingSubject
+    override fun confirmSortExistingIntent(): Flow<Unit> = confirmSortExistingEvents
 
-    override fun otpRetentionSelected(): Observable<Int> = otpRetentionDialog.adapter.menuItemClicks
+    // QkDialog is shared with screens still on RxJava: bridged until its last user converts
+    override fun otpRetentionSelected(): Flow<Int> = otpRetentionDialog.adapter.menuItemClicks.asFlow()
 
     override fun showOtpRetentionPicker() = otpRetentionDialog.show(activity!!)
 
-    override fun otpNotificationSizeSelected(): Observable<Int> = otpNotificationSizeDialog.adapter.menuItemClicks
+    override fun otpNotificationSizeSelected(): Flow<Int> = otpNotificationSizeDialog.adapter.menuItemClicks.asFlow()
 
     override fun showOtpNotificationSizePicker() = otpNotificationSizeDialog.show(activity!!)
 
-    override fun widgetTabsSelected(): Observable<Set<String>> = widgetTabsSubject
+    override fun widgetTabsSelected(): Flow<Set<String>> = widgetTabsEvents
 
     override fun showWidgetTabsPicker(categories: List<String>, labels: List<String>, selected: Set<String>) {
         val checked = BooleanArray(categories.size) { categories[it] in selected }
@@ -125,7 +128,7 @@ class MessageSortingController :
             .setTitle(R.string.message_sorting_widget_tabs_title)
             .setMultiChoiceItems(labels.toTypedArray(), checked) { _, which, isChecked -> checked[which] = isChecked }
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                widgetTabsSubject.onNext(categories.filterIndexed { index, _ -> checked[index] }.toSet())
+                widgetTabsEvents.tryEmit(categories.filterIndexed { index, _ -> checked[index] }.toSet())
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -147,7 +150,7 @@ class MessageSortingController :
         AlertDialog.Builder(activity!!)
             .setTitle(R.string.message_sorting_sort_existing_title)
             .setMessage(R.string.message_sorting_sort_existing_confirm_message)
-            .setPositiveButton(R.string.button_continue) { _, _ -> confirmSortExistingSubject.onNext(Unit) }
+            .setPositiveButton(R.string.button_continue) { _, _ -> confirmSortExistingEvents.tryEmit(Unit) }
             .setNegativeButton(R.string.button_cancel) { _, _ -> }
             .show()
     }

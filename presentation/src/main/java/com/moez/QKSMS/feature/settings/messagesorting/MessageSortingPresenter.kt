@@ -18,23 +18,20 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.manager.WidgetManager
 import dev.octoshrimpy.quik.feature.conversations.Tab
 import dev.octoshrimpy.quik.classifier.InboxTab
 import android.content.Context
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.classifier.Category
 import dev.octoshrimpy.quik.common.Navigator
-import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.interactor.DeleteOldOtps
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker
 import dev.octoshrimpy.quik.worker.RetentionWorker
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.plusAssign
 import javax.inject.Inject
 
 class MessageSortingPresenter @Inject constructor(
@@ -43,39 +40,34 @@ class MessageSortingPresenter @Inject constructor(
     private val prefs: Preferences,
     private val deleteOldOtps: DeleteOldOtps,
     private val widgetManager: WidgetManager
-) : QkPresenter<MessageSortingView, MessageSortingState>(
+) : QkFlowPresenter<MessageSortingView, MessageSortingState>(
     MessageSortingState(prefs.autoSortEnabled.get())
 ) {
 
     init {
-        disposables += prefs.autoSortEnabled.asObservable()
-            .subscribe { enabled -> newState { copy(autoSortEnabled = enabled) } }
+        prefs.autoSortEnabled.asFlow().collectIn(presenterScope) { enabled -> newState { copy(autoSortEnabled = enabled) } }
 
         val otpRetentionLabels = context.resources.getStringArray(R.array.otp_retention_labels)
         val otpRetentionIds = context.resources.getIntArray(R.array.otp_retention_ids)
-        disposables += prefs.otpRetentionDays.asObservable()
-            .subscribe { days ->
+        prefs.otpRetentionDays.asFlow().collectIn(presenterScope) { days ->
                 val index = otpRetentionIds.indexOf(days)
                 newState { copy(otpRetentionSummary = otpRetentionLabels[index], otpRetentionId = days) }
-            }
+        }
 
         val otpSizeLabels = context.resources.getStringArray(R.array.otp_notification_size_labels)
         val otpSizeIds = context.resources.getIntArray(R.array.otp_notification_size_ids)
-        disposables += prefs.otpNotificationSize.asObservable()
-            .subscribe { size ->
+        prefs.otpNotificationSize.asFlow().collectIn(presenterScope) { size ->
                 val label = otpSizeLabels.getOrNull(otpSizeIds.indexOf(size)) ?: ""
                 newState { copy(otpNotificationSizeSummary = label, otpNotificationSizeId = size) }
-            }
+        }
 
-        disposables += ClassifyExistingMessagesWorker.observeStatus(context)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { status -> newState { copy(sortStatus = status) } }
+        ClassifyExistingMessagesWorker.observeStatus(context)
+            .collectIn(presenterScope) { status -> newState { copy(sortStatus = status) } }
 
-        disposables += prefs.widgetTabs.asObservable()
-            .subscribe { tabs ->
+        prefs.widgetTabs.asFlow().collectIn(presenterScope) { tabs ->
                 val summary = InboxTab.ALL.filter { it in tabs }.joinToString(", ", transform = ::tabLabel)
                 newState { copy(widgetTabsSummary = summary) }
-            }
+        }
     }
 
     /** The tab's name as shown in the inbox, including any name the user gave it. */
@@ -87,9 +79,7 @@ class MessageSortingPresenter @Inject constructor(
     override fun bindIntents(view: MessageSortingView) {
         super.bindIntents(view)
 
-        view.preferenceClicks()
-            .autoDisposable(view.scope())
-            .subscribe { preference ->
+        view.preferenceClicks().collectIn(view.bindScope) { preference ->
                 when (preference.id) {
                     R.id.autoSort -> {
                         val enabled = !prefs.autoSortEnabled.get()
@@ -112,13 +102,11 @@ class MessageSortingPresenter @Inject constructor(
                 }
             }
 
-        view.confirmSortExistingIntent()
-            .autoDisposable(view.scope())
-            .subscribe { ClassifyExistingMessagesWorker.trigger(context, fullResort = true) }
+        view.confirmSortExistingIntent().collectIn(view.bindScope) {
+            ClassifyExistingMessagesWorker.trigger(context, fullResort = true)
+        }
 
-        view.widgetTabsSelected()
-            .autoDisposable(view.scope())
-            .subscribe { tabs ->
+        view.widgetTabsSelected().collectIn(view.bindScope) { tabs ->
                 if (tabs.isEmpty()) {
                     context.makeToast(R.string.message_sorting_widget_tabs_pick_one)
                 } else {
@@ -127,13 +115,9 @@ class MessageSortingPresenter @Inject constructor(
                 }
             }
 
-        view.otpNotificationSizeSelected()
-            .autoDisposable(view.scope())
-            .subscribe(prefs.otpNotificationSize::set)
+        view.otpNotificationSizeSelected().collectIn(view.bindScope) { size -> prefs.otpNotificationSize.set(size) }
 
-        view.otpRetentionSelected()
-            .autoDisposable(view.scope())
-            .subscribe { days ->
+        view.otpRetentionSelected().collectIn(view.bindScope) { days ->
                 prefs.otpRetentionDays.set(days)
                 when (days) {
                     0 -> RetentionWorker.cancel(context, RetentionWorker.OTP_RETENTION)
