@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.changelog
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import dev.octoshrimpy.quik.BuildConfig
@@ -25,12 +26,10 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.databinding.ChangelogDialogBinding
 import dev.octoshrimpy.quik.feature.main.MainActivity
 import dev.octoshrimpy.quik.manager.ChangelogManager
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 
 class ChangelogDialog(activity: MainActivity) {
 
-    val moreClicks: Subject<Unit> = PublishSubject.create()
+    val moreClicks = events<Unit>()
 
     private val dialog: AlertDialog
     private val adapter = ChangelogAdapter(activity)
@@ -45,7 +44,7 @@ class ChangelogDialog(activity: MainActivity) {
 
         layout.version.text = activity.getString(R.string.changelog_version, BuildConfig.VERSION_NAME)
         layout.changelog.adapter = adapter
-        layout.more.setOnClickListener { dialog.dismiss(); moreClicks.onNext(Unit) }
+        layout.more.setOnClickListener { dialog.dismiss(); moreClicks.tryEmit(Unit) }
         layout.dismiss.setOnClickListener { dialog.dismiss() }
     }
 

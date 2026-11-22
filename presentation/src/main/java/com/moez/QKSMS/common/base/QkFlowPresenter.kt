@@ -21,7 +21,9 @@ abstract class QkFlowPresenter<in V : QkFlowView<S>, S : Any>(initialState: S) {
 
     @CallSuper
     open fun bindIntents(view: V) {
-        view.bindScope.launch { state.collect(view::render) }
+        // Dispatched, not immediate: renders run after the caller (onCreate/onAttach) returns, as
+        // RxJava's observeOn(mainThread) did, so render never sees half-built views
+        view.bindScope.launch(Dispatchers.Main) { state.collect(view::render) }
     }
 
     open fun onCleared() = presenterScope.cancel()

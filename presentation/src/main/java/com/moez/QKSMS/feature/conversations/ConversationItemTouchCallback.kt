@@ -18,6 +18,14 @@
  */
 package dev.octoshrimpy.quik.feature.conversations
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -30,12 +38,6 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.dpToPx
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.Observables
-import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
@@ -43,12 +45,12 @@ import androidx.core.content.ContextCompat
 
 class ConversationItemTouchCallback @Inject constructor(
     colors: Colors,
-    disposables: CompositeDisposable,
+    scope: CoroutineScope,
     private val prefs: Preferences,
     private val context: Context
 ) : ItemTouchHelper.SimpleCallback(0, 0) {
 
-    val swipes: Subject<Pair<Long, Int>> = PublishSubject.create()
+    val swipes = events<Pair<Long, Int>>()
 
     /**
      * Setting the adapter allows us to animate back to the original position
@@ -64,13 +66,14 @@ class ConversationItemTouchCallback @Inject constructor(
     private val iconLength = 24.dpToPx(context)
 
     init {
-        disposables += colors.themeObservable()
-                .doOnNext { theme -> backgroundPaint.color = theme.theme }
-                .subscribeOn(Schedulers.io())
-                .subscribe()
+        // Colors is still RxJava (other screens read it): bridged until Task 29. Both run until the
+        // activity's scope ends, as the activity's CompositeDisposable did
+        colors.themeObservable().asFlow()
+                .onEach { theme -> backgroundPaint.color = theme.theme }
+                .flowOn(Dispatchers.IO)
+                .launchIn(scope)
 
-        disposables += Observables
-                .combineLatest(prefs.swipeRight.asObservable(), prefs.swipeLeft.asObservable(), colors.themeObservable()
+        combine(prefs.swipeRight.asFlow(), prefs.swipeLeft.asFlow(), colors.themeObservable().asFlow()
                 ) { right, left, theme ->
                     rightAction = right
                     swipeRightIcon = iconForAction(right, theme.textPrimary)
@@ -79,8 +82,8 @@ class ConversationItemTouchCallback @Inject constructor(
                     setDefaultSwipeDirs((if (right == Preferences.SWIPE_ACTION_NONE) 0 else ItemTouchHelper.RIGHT)
                             or (if (left == Preferences.SWIPE_ACTION_NONE) 0 else ItemTouchHelper.LEFT))
                 }
-                .subscribeOn(Schedulers.io())
-                .subscribe()
+                .flowOn(Dispatchers.IO)
+                .launchIn(scope)
     }
 
     override fun onMove(
@@ -137,7 +140,7 @@ class ConversationItemTouchCallback @Inject constructor(
     }
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-        swipes.onNext(Pair(viewHolder.itemId, direction))
+        swipes.tryEmit(Pair(viewHolder.itemId, direction))
 
         // This will trigger the animation back to neutral state. Archive is normally exempt
         // since the swiped-away conversation disappears from the list on its own once actually
