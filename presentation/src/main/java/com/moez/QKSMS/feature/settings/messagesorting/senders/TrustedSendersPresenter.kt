@@ -18,56 +18,41 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
-import io.reactivex.rxkotlin.plusAssign
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.repository.TrustedSenderRepository
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class TrustedSendersPresenter @Inject constructor(
     private val trustedSenderRepo: TrustedSenderRepository
-) : QkPresenter<TrustedSendersView, TrustedSendersState>(TrustedSendersState()) {
+) : QkFlowPresenter<TrustedSendersView, TrustedSendersState>(TrustedSendersState()) {
 
     init {
-        disposables += trustedSenderRepo.getTrustedSenders().asMainObservable()
-            .subscribe { list -> newState { copy(senders = list) } }
+        trustedSenderRepo.getTrustedSenders().collectIn(presenterScope) { list -> newState { copy(senders = list) } }
     }
 
     override fun bindIntents(view: TrustedSendersView) {
         super.bindIntents(view)
 
-        val removeSenderShared = view.removeSender().share()
+        // A locked sender (added by Message Sorting) asks first; others are removed straight away
+        view.removeSender().collectIn(view.bindScope) { sender ->
+            when (sender.locked) {
+                true -> view.showRemoveLockedConfirmDialog(sender)
+                false -> withContext(Dispatchers.IO) { trustedSenderRepo.removeTrustedSender(sender.id, false) }
+            }
+        }
 
-        removeSenderShared
-            .filter { it.locked }
-            .autoDisposable(view.scope())
-            .subscribe { sender -> view.showRemoveLockedConfirmDialog(sender) }
+        view.confirmRemoveLocked().collectIn(view.bindScope) { sender ->
+            withContext(Dispatchers.IO) { trustedSenderRepo.removeTrustedSender(sender.id, true) }
+        }
 
-        removeSenderShared
-            .filter { !it.locked }
-            .map { it.id }
-            .observeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe { id -> trustedSenderRepo.removeTrustedSender(id, false) }
+        view.addAddress().collectIn(view.bindScope) { view.showAddDialog() }
 
-        view.confirmRemoveLocked()
-            .map { it.id }
-            .observeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe { id -> trustedSenderRepo.removeTrustedSender(id, true) }
-
-        view.addAddress()
-            .autoDisposable(view.scope())
-            .subscribe { view.showAddDialog() }
-
-        view.saveAddress()
-            .filter { it.isNotBlank() }
-            .observeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe { address -> trustedSenderRepo.addTrustedSender(address, false) }
+        view.saveAddress().collectIn(view.bindScope) { address ->
+            if (address.isNotBlank()) withContext(Dispatchers.IO) { trustedSenderRepo.addTrustedSender(address, false) }
+        }
     }
 
 }

@@ -18,13 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import com.jakewharton.rxbinding2.view.clicks
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
@@ -32,21 +34,18 @@ import dev.octoshrimpy.quik.databinding.TrustedSendersAddDialogBinding
 import dev.octoshrimpy.quik.databinding.TrustedSendersControllerBinding
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.model.TrustedSender
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class TrustedSendersController :
-    QkController<TrustedSendersControllerBinding, TrustedSendersView, TrustedSendersState, TrustedSendersPresenter>(),
+    QkFlowController<TrustedSendersControllerBinding, TrustedSendersView, TrustedSendersState, TrustedSendersPresenter>(),
     TrustedSendersView {
 
     @Inject override lateinit var presenter: TrustedSendersPresenter
     @Inject lateinit var colors: Colors
 
     private val adapter = TrustedSendersAdapter()
-    private val saveAddressSubject: Subject<String> = PublishSubject.create()
-    private val confirmRemoveLockedSubject: Subject<TrustedSender> = PublishSubject.create()
+    private val saveAddressEvents = events<String>()
+    private val confirmRemoveLockedEvents = events<TrustedSender>()
 
     init {
         appComponent.inject(this)
@@ -75,17 +74,17 @@ class TrustedSendersController :
         adapter.updateData(state.senders)
     }
 
-    override fun removeSender(): Observable<TrustedSender> = adapter.removeSender
-    override fun confirmRemoveLocked(): Observable<TrustedSender> = confirmRemoveLockedSubject
-    override fun addAddress(): Observable<*> = binding.add.clicks()
-    override fun saveAddress(): Observable<String> = saveAddressSubject
+    override fun removeSender(): Flow<TrustedSender> = adapter.removeSender
+    override fun confirmRemoveLocked(): Flow<TrustedSender> = confirmRemoveLockedEvents
+    override fun addAddress(): Flow<Unit> = binding.add.clicks()
+    override fun saveAddress(): Flow<String> = saveAddressEvents
 
     override fun showAddDialog() {
         val layout = TrustedSendersAddDialogBinding.inflate(LayoutInflater.from(activity))
         AlertDialog.Builder(activity!!)
             .setView(layout.root)
             .setPositiveButton(R.string.message_sorting_trusted_senders_dialog_add) { _, _ ->
-                saveAddressSubject.onNext(layout.input.text.toString())
+                saveAddressEvents.tryEmit(layout.input.text.toString())
             }
             .setNegativeButton(R.string.button_cancel) { _, _ -> }
             .show()
@@ -95,7 +94,7 @@ class TrustedSendersController :
         AlertDialog.Builder(activity!!)
             .setTitle(R.string.message_sorting_trusted_senders_remove_locked_title)
             .setMessage(R.string.message_sorting_trusted_senders_remove_locked_message)
-            .setPositiveButton(R.string.button_delete) { _, _ -> confirmRemoveLockedSubject.onNext(sender) }
+            .setPositiveButton(R.string.button_delete) { _, _ -> confirmRemoveLockedEvents.tryEmit(sender) }
             .setNegativeButton(R.string.button_cancel) { _, _ -> }
             .show()
     }

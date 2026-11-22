@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.R
@@ -25,19 +26,17 @@ import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
 import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.databinding.TrustedSenderListItemBinding
 import dev.octoshrimpy.quik.model.TrustedSender
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 
 class TrustedSendersAdapter : QkListAdapter<TrustedSender, QkBindingViewHolder<TrustedSenderListItemBinding>>(itemId = { it.id }) {
 
-    val removeSender: Subject<TrustedSender> = PublishSubject.create()
+    val removeSender = events<TrustedSender>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<TrustedSenderListItemBinding> {
         val binding = TrustedSenderListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.remove.setOnClickListener {
                 val sender = getItem(bindingAdapterPosition) ?: return@setOnClickListener
-                removeSender.onNext(sender)
+                removeSender.tryEmit(sender)
             }
         }
     }
