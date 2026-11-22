@@ -1,5 +1,12 @@
 [
   {
+    "versionCode": 2275,
+    "versionName": "2.9.6",
+    "improved": [
+      "The inbox, the Starred and Scheduled lists, and actions like copy and forward read from storage in the background instead of while drawing the screen"
+    ]
+  },
+  {
     "versionCode": 2274,
     "versionName": "2.9.5",
     "fixed": [
