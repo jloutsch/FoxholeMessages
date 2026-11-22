@@ -18,28 +18,28 @@
  */
 package dev.octoshrimpy.quik.feature.conversationinfo
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import android.net.Uri
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
 
-interface ConversationInfoView : QkViewContract<ConversationInfoState> {
+interface ConversationInfoView : QkFlowView<ConversationInfoState> {
 
-    fun recipientClicks(): Observable<Long>
-    fun recipientLongClicks(): Observable<Long>
-    fun themeClicks(): Observable<Long>
-    fun nameClicks(): Observable<*>
-    fun nameChanges(): Observable<String>
-    fun notificationClicks(): Observable<*>
-    fun backgroundImageClicks(): Observable<*>
-    fun backgroundImageLongClicks(): Observable<*>
-    fun backgroundImageSelected(): Observable<Uri>
-    fun markUnreadClicks(): Observable<*>
-    fun pinClicks(): Observable<*>
-    fun archiveClicks(): Observable<*>
-    fun blockClicks(): Observable<*>
-    fun deleteClicks(): Observable<*>
-    fun confirmDelete(): Observable<*>
-    fun mediaClicks(): Observable<Long>
+    fun recipientClicks(): Flow<Long>
+    fun recipientLongClicks(): Flow<Long>
+    fun themeClicks(): Flow<Long>
+    fun nameClicks(): Flow<Unit>
+    fun nameChanges(): Flow<String>
+    fun notificationClicks(): Flow<Unit>
+    fun backgroundImageClicks(): Flow<Unit>
+    fun backgroundImageLongClicks(): Flow<Unit>
+    fun backgroundImageSelected(): Flow<Uri>
+    fun markUnreadClicks(): Flow<Unit>
+    fun pinClicks(): Flow<Unit>
+    fun archiveClicks(): Flow<Unit>
+    fun blockClicks(): Flow<Unit>
+    fun deleteClicks(): Flow<Unit>
+    fun confirmDelete(): Flow<Unit>
+    fun mediaClicks(): Flow<Long>
 
     fun showNameDialog(name: String)
     fun showThemePicker(recipientId: Long)
