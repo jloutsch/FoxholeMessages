@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.trash
 
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -26,14 +28,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.databinding.TrashControllerBinding
 import dev.octoshrimpy.quik.injection.appComponent
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
-class TrashController : QkController<TrashControllerBinding, TrashView, TrashState, TrashPresenter>(),
+class TrashController : QkFlowController<TrashControllerBinding, TrashView, TrashState, TrashPresenter>(),
     TrashView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): TrashControllerBinding =
@@ -41,10 +40,10 @@ class TrashController : QkController<TrashControllerBinding, TrashView, TrashSta
 
     override val restoreClicks by lazy { trashAdapter.restoreClicks }
     override val deleteForeverClicks by lazy { trashAdapter.deleteForeverClicks }
-    override val confirmDeleteForeverIntent: Subject<Long> = PublishSubject.create()
-    override val emptyTrashIntent: Subject<Unit> = PublishSubject.create()
-    override val confirmEmptyTrashIntent: Subject<Unit> = PublishSubject.create()
-    override val backClicked: Subject<Unit> = PublishSubject.create()
+    override val confirmDeleteForeverIntent = events<Long>()
+    override val emptyTrashIntent = events<Unit>()
+    override val confirmEmptyTrashIntent = events<Unit>()
+    override val backClicked = events<Unit>()
 
     @Inject lateinit var trashAdapter: TrashAdapter
     @Inject override lateinit var presenter: TrashPresenter
@@ -75,13 +74,13 @@ class TrashController : QkController<TrashControllerBinding, TrashView, TrashSta
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.emptyTrash -> emptyTrashIntent.onNext(Unit)
+            R.id.emptyTrash -> emptyTrashIntent.tryEmit(Unit)
         }
         return true
     }
 
     override fun handleBack(): Boolean {
-        backClicked.onNext(Unit)
+        backClicked.tryEmit(Unit)
         return true
     }
 
@@ -93,7 +92,7 @@ class TrashController : QkController<TrashControllerBinding, TrashView, TrashSta
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.trash_delete_forever_title)
                 .setMessage(R.string.trash_delete_forever_message)
-                .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteForeverIntent.onNext(messageId) }
+                .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteForeverIntent.tryEmit(messageId) }
                 .setNegativeButton(R.string.button_cancel, null)
                 .show()
     }
@@ -102,7 +101,7 @@ class TrashController : QkController<TrashControllerBinding, TrashView, TrashSta
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.trash_empty_all_title)
                 .setMessage(R.string.trash_empty_all_message)
-                .setPositiveButton(R.string.button_delete) { _, _ -> confirmEmptyTrashIntent.onNext(Unit) }
+                .setPositiveButton(R.string.button_delete) { _, _ -> confirmEmptyTrashIntent.tryEmit(Unit) }
                 .setNegativeButton(R.string.button_cancel, null)
                 .show()
     }

@@ -18,17 +18,17 @@
  */
 package dev.octoshrimpy.quik.feature.trash
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 
-interface TrashView : QkViewContract<TrashState> {
+interface TrashView : QkFlowView<TrashState> {
 
-    val restoreClicks: Observable<Long>
-    val deleteForeverClicks: Observable<Long>
-    val confirmDeleteForeverIntent: Observable<Long>
-    val emptyTrashIntent: Observable<Unit>
-    val confirmEmptyTrashIntent: Observable<Unit>
-    val backClicked: Observable<*>
+    val restoreClicks: Flow<Long>
+    val deleteForeverClicks: Flow<Long>
+    val confirmDeleteForeverIntent: Flow<Long>
+    val emptyTrashIntent: Flow<Unit>
+    val confirmEmptyTrashIntent: Flow<Unit>
+    val backClicked: Flow<Unit>
 
     fun showDeleteForeverDialog(messageId: Long)
     fun showEmptyTrashDialog()

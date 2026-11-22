@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.trash
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.R
@@ -26,23 +27,22 @@ import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.databinding.TrashListItemBinding
 import dev.octoshrimpy.quik.interactor.PurgeTrash
 import dev.octoshrimpy.quik.model.Message
-import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class TrashAdapter @Inject constructor() : QkListAdapter<Message, QkBindingViewHolder<TrashListItemBinding>>(itemId = { it.id }) {
 
-    val restoreClicks: PublishSubject<Long> = PublishSubject.create()
-    val deleteForeverClicks: PublishSubject<Long> = PublishSubject.create()
+    val restoreClicks = events<Long>()
+    val deleteForeverClicks = events<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<TrashListItemBinding> {
         val binding = TrashListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.restore.setOnClickListener {
-                getItem(bindingAdapterPosition)?.let { message -> restoreClicks.onNext(message.id) }
+                getItem(bindingAdapterPosition)?.let { message -> restoreClicks.tryEmit(message.id) }
             }
             binding.deleteForever.setOnClickListener {
-                getItem(bindingAdapterPosition)?.let { message -> deleteForeverClicks.onNext(message.id) }
+                getItem(bindingAdapterPosition)?.let { message -> deleteForeverClicks.tryEmit(message.id) }
             }
         }
     }
