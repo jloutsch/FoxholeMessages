@@ -18,6 +18,11 @@
  */
 package dev.octoshrimpy.quik.feature.conversationinfo
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -28,12 +33,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bluelinelabs.conductor.RouterTransaction
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
 import dev.octoshrimpy.quik.common.QkChangeHandler
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.QkActivityResultContracts
 import dev.octoshrimpy.quik.common.util.extensions.scrapViews
 import dev.octoshrimpy.quik.common.widget.TextInputDialog
@@ -42,14 +44,11 @@ import dev.octoshrimpy.quik.feature.blocking.BlockingDialog
 import dev.octoshrimpy.quik.feature.conversationinfo.injection.ConversationInfoModule
 import dev.octoshrimpy.quik.feature.themepicker.ThemePickerController
 import dev.octoshrimpy.quik.injection.appComponent
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class ConversationInfoController(
     val threadId: Long = 0
-) : QkController<ConversationInfoControllerBinding, ConversationInfoView, ConversationInfoState, ConversationInfoPresenter>(), ConversationInfoView {
+) : QkFlowController<ConversationInfoControllerBinding, ConversationInfoView, ConversationInfoState, ConversationInfoPresenter>(), ConversationInfoView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): ConversationInfoControllerBinding =
         ConversationInfoControllerBinding.inflate(inflater, container, false)
@@ -60,12 +59,12 @@ class ConversationInfoController(
     @Inject lateinit var adapter: ConversationInfoAdapter
 
     private val nameDialog: TextInputDialog by lazy {
-        TextInputDialog(activity!!, activity!!.getString(R.string.info_name), nameChangeSubject::onNext)
+        TextInputDialog(activity!!, activity!!.getString(R.string.info_name), { nameChangeEvents.tryEmit(it) })
     }
 
-    private val nameChangeSubject: Subject<String> = PublishSubject.create()
-    private val confirmDeleteSubject: Subject<Unit> = PublishSubject.create()
-    private val backgroundImageSelectedSubject: Subject<Uri> = PublishSubject.create()
+    private val nameChangeEvents = events<String>()
+    private val confirmDeleteEvents = events<Unit>()
+    private val backgroundImageSelectedEvents = events<Uri>()
 
     private lateinit var openBackgroundImage: ActivityResultLauncher<QkActivityResultContracts.OpenDocumentParams>
 
@@ -83,7 +82,7 @@ class ConversationInfoController(
                     if (uri != Uri.EMPTY) {
                         context.contentResolver.takePersistableUriPermission(
                                 uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        backgroundImageSelectedSubject.onNext(uri)
+                        backgroundImageSelectedEvents.tryEmit(uri)
                     }
                 }
     }
@@ -96,15 +95,13 @@ class ConversationInfoController(
                 override fun getSpanSize(position: Int): Int = if (adapter.getItemViewType(position) == 2) 1 else 3
             }
         }
-
-        themedActivity?.theme
-                ?.autoDisposable(scope())
-                ?.subscribe { binding.recyclerView.scrapViews() }
     }
 
     override fun onAttach(view: View) {
         super.onAttach(view)
         presenter.bindIntents(this)
+        // Redraw the rows when a recipient's color changes (QkThemedActivity is still RxJava: bridged)
+        themedActivity?.theme?.asFlow()?.collectIn(bindScope) { binding.recyclerView.scrapViews() }
         setTitle(R.string.info_title)
         showBackButton(true)
     }
@@ -118,22 +115,22 @@ class ConversationInfoController(
         adapter.data = state.data
     }
 
-    override fun recipientClicks(): Observable<Long> = adapter.recipientClicks
-    override fun recipientLongClicks(): Observable<Long> = adapter.recipientLongClicks
-    override fun themeClicks(): Observable<Long> = adapter.themeClicks
-    override fun nameClicks(): Observable<*> = adapter.nameClicks
-    override fun nameChanges(): Observable<String> = nameChangeSubject
-    override fun notificationClicks(): Observable<*> = adapter.notificationClicks
-    override fun backgroundImageClicks(): Observable<*> = adapter.backgroundImageClicks
-    override fun backgroundImageLongClicks(): Observable<*> = adapter.backgroundImageLongClicks
-    override fun backgroundImageSelected(): Observable<Uri> = backgroundImageSelectedSubject
-    override fun markUnreadClicks(): Observable<*> = adapter.markUnreadClicks
-    override fun pinClicks(): Observable<*> = adapter.pinClicks
-    override fun archiveClicks(): Observable<*> = adapter.archiveClicks
-    override fun blockClicks(): Observable<*> = adapter.blockClicks
-    override fun deleteClicks(): Observable<*> = adapter.deleteClicks
-    override fun confirmDelete(): Observable<*> = confirmDeleteSubject
-    override fun mediaClicks(): Observable<Long> = adapter.mediaClicks
+    override fun recipientClicks(): Flow<Long> = adapter.recipientClicks
+    override fun recipientLongClicks(): Flow<Long> = adapter.recipientLongClicks
+    override fun themeClicks(): Flow<Long> = adapter.themeClicks
+    override fun nameClicks(): Flow<Unit> = adapter.nameClicks
+    override fun nameChanges(): Flow<String> = nameChangeEvents
+    override fun notificationClicks(): Flow<Unit> = adapter.notificationClicks
+    override fun backgroundImageClicks(): Flow<Unit> = adapter.backgroundImageClicks
+    override fun backgroundImageLongClicks(): Flow<Unit> = adapter.backgroundImageLongClicks
+    override fun backgroundImageSelected(): Flow<Uri> = backgroundImageSelectedEvents
+    override fun markUnreadClicks(): Flow<Unit> = adapter.markUnreadClicks
+    override fun pinClicks(): Flow<Unit> = adapter.pinClicks
+    override fun archiveClicks(): Flow<Unit> = adapter.archiveClicks
+    override fun blockClicks(): Flow<Unit> = adapter.blockClicks
+    override fun deleteClicks(): Flow<Unit> = adapter.deleteClicks
+    override fun confirmDelete(): Flow<Unit> = confirmDeleteEvents
+    override fun mediaClicks(): Flow<Long> = adapter.mediaClicks
 
     override fun showNameDialog(name: String) = nameDialog.setText(name).show()
 
@@ -159,7 +156,7 @@ class ConversationInfoController(
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.dialog_delete_title)
                 .setMessage(resources?.getQuantityString(R.plurals.dialog_delete_message, 1))
-                .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteSubject.onNext(Unit) }
+                .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteEvents.tryEmit(Unit) }
                 .setNegativeButton(R.string.button_cancel, null)
                 .show()
     }

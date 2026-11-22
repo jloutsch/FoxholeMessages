@@ -18,20 +18,22 @@
  */
 package dev.octoshrimpy.quik.feature.conversationinfo
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import kotlinx.coroutines.flow.map
-import dev.octoshrimpy.quik.extensions.Optional
 import android.content.Context
-import androidx.lifecycle.Lifecycle
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
 import dev.octoshrimpy.quik.common.Navigator
-import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.ClipboardUtils
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoMedia
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.ConversationInfoRecipient
 import dev.octoshrimpy.quik.interactor.DeleteConversations
@@ -45,12 +47,6 @@ import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.Observables
-import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -69,178 +65,144 @@ class ConversationInfoPresenter @Inject constructor(
     private val navigator: Navigator,
     private val externalNavigator: ExternalNavigator,
     private val permissionManager: PermissionManager
-) : QkPresenter<ConversationInfoView, ConversationInfoState>(
+): QkFlowPresenter<ConversationInfoView, ConversationInfoState>(
         ConversationInfoState(threadId = threadId)
 ) {
 
-    private val conversation: Subject<Conversation> = BehaviorSubject.create()
+    // The current conversation; null until it loads (taps before then are ignored, as withLatestFrom did)
+    private val conversation = MutableStateFlow<Conversation?>(null)
 
     init {
         // A deleted conversation arrives as null, which closes the screen (hasError)
-        disposables += conversationRepo.observeConversation(threadId)
-                .map { conversation -> Optional(conversation) }
-                .asMainObservable()
-                .doOnNext { conversation ->
-                    if (conversation.value == null) {
-                        newState { copy(hasError = true) }
-                    }
-                }
-                .mapNotNull { conversation -> conversation.value }
-                .filter { conversation -> conversation.id != 0L }
-                .subscribe(conversation::onNext)
+        conversationRepo.observeConversation(threadId).collectIn(presenterScope) { conversation ->
+            when {
+                conversation == null -> newState { copy(hasError = true) }
+                conversation.id != 0L -> this.conversation.value = conversation
+            }
+        }
 
-        disposables += markArchived
-        disposables += markUnarchived
-        disposables += deleteConversations
+        combine(
+                conversation.filterNotNull(),
+                messageRepo.getPartsForConversation(threadId),
+                prefs.backgroundUri(threadId).asFlow()
+        ) { conversation, parts, backgroundUri ->
+            val data = mutableListOf<ConversationInfoItem>()
 
-        disposables += Observables
-                .combineLatest(
-                        conversation,
-                        messageRepo.getPartsForConversation(threadId).asMainObservable(),
-                        prefs.backgroundUri(threadId).asObservable()
-                ) { conversation, parts, backgroundUri ->
-                    val data = mutableListOf<ConversationInfoItem>()
+            data += conversation.recipients.map(::ConversationInfoRecipient)
+            data += ConversationInfoItem.ConversationInfoSettings(
+                    name = conversation.name,
+                    recipients = conversation.recipients,
+                    archived = conversation.archived,
+                    blocked = conversation.blocked,
+                    pinned = conversation.pinned,
+                    backgroundUri = backgroundUri)
+            data += parts.map(::ConversationInfoMedia)
+            data
+        }.collectIn(presenterScope) { data -> newState { copy(data = data) } }
+    }
 
-                    data += conversation.recipients.map(::ConversationInfoRecipient)
-                    data += ConversationInfoItem.ConversationInfoSettings(
-                            name = conversation.name,
-                            recipients = conversation.recipients,
-                            archived = conversation.archived,
-                            blocked = conversation.blocked,
-                            pinned = conversation.pinned,
-                            backgroundUri = backgroundUri)
-                    data += parts.map(::ConversationInfoMedia)
-
-                    newState { copy(data = data) }
-                }
-                .subscribe()
+    override fun onCleared() {
+        // What `disposables +=` held for these
+        markArchived.dispose()
+        markUnarchived.dispose()
+        deleteConversations.dispose()
+        super.onCleared()
     }
 
     override fun bindIntents(view: ConversationInfoView) {
         super.bindIntents(view)
 
-        // Add or display the contact
-        view.recipientClicks()
-                .observeOn(Schedulers.io())
-                .mapNotNull(conversationRepo::getRecipient)
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext { recipient ->
-                    recipient.contact?.lookupKey?.let(externalNavigator::showContact)
-                            ?: externalNavigator.addContact(recipient.address)
-                }
-                .autoDisposable(view.scope(Lifecycle.Event.ON_DESTROY)) // ... this should be the default
-                .subscribe()
+        // Add or display the contact. Runs in presenterScope: opening Contacts detaches this screen,
+        // which must not cancel the lookup (under RxJava this was scoped to ON_DESTROY)
+        view.recipientClicks().collectIn(view.bindScope) { recipientId ->
+            presenterScope.launch {
+                val recipient = withContext(Dispatchers.IO) { conversationRepo.getRecipient(recipientId) }
+                        ?: return@launch
+                recipient.contact?.lookupKey?.let(externalNavigator::showContact)
+                        ?: externalNavigator.addContact(recipient.address)
+            }
+        }
 
         // Copy phone number
-        view.recipientLongClicks()
-                .observeOn(Schedulers.io())
-                .mapNotNull(conversationRepo::getRecipient)
-                .map { recipient -> recipient.address }
-                .observeOn(AndroidSchedulers.mainThread())
-                .autoDisposable(view.scope())
-                .subscribe { address ->
-                    ClipboardUtils.copy(context, address)
-                    context.makeToast(R.string.info_copied_address)
-                }
+        view.recipientLongClicks().collectIn(view.bindScope) { recipientId ->
+            val address = withContext(Dispatchers.IO) { conversationRepo.getRecipient(recipientId)?.address }
+                    ?: return@collectIn
+            ClipboardUtils.copy(context, address)
+            context.makeToast(R.string.info_copied_address)
+        }
 
         // Show the theme settings for the conversation
-        view.themeClicks()
-                .autoDisposable(view.scope())
-                .subscribe(view::showThemePicker)
+        view.themeClicks().collectIn(view.bindScope, view::showThemePicker)
 
         // Show the conversation title dialog
-        view.nameClicks()
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .map { conversation -> conversation.name }
-                .autoDisposable(view.scope())
-                .subscribe(view::showNameDialog)
+        view.nameClicks().collectIn(view.bindScope) {
+            conversation.value?.let { conversation -> view.showNameDialog(conversation.name) }
+        }
 
         // Set the conversation title
-        view.nameChanges()
-                .withLatestFrom(conversation) { name, conversation ->
-                    conversationRepo.setConversationName(conversation.id, name)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                }
-                .flatMapCompletable { it }
-                .autoDisposable(view.scope())
-                .subscribe()
+        view.nameChanges().collectIn(view.bindScope) { name ->
+            val conversation = conversation.value ?: return@collectIn
+            withContext(Dispatchers.IO) { conversationRepo.setConversationName(conversation.id, name).await() }
+        }
 
         // Show the notifications settings for the conversation
-        view.notificationClicks()
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .autoDisposable(view.scope())
-                .subscribe { conversation -> externalNavigator.showNotificationSettings(conversation.id) }
+        view.notificationClicks().collectIn(view.bindScope) {
+            conversation.value?.let { conversation -> externalNavigator.showNotificationSettings(conversation.id) }
+        }
 
         // Open the background image picker
-        view.backgroundImageClicks()
-                .autoDisposable(view.scope())
-                .subscribe { view.showBackgroundImagePicker() }
+        view.backgroundImageClicks().collectIn(view.bindScope) { view.showBackgroundImagePicker() }
 
         // Save the selected background image
-        view.backgroundImageSelected()
-                .autoDisposable(view.scope())
-                .subscribe { uri -> prefs.backgroundUri(threadId).set(uri.toString()) }
+        view.backgroundImageSelected().collectIn(view.bindScope) { uri -> prefs.backgroundUri(threadId).set(uri.toString()) }
 
         // Clear the background image
-        view.backgroundImageLongClicks()
-                .autoDisposable(view.scope())
-                .subscribe { prefs.backgroundUri(threadId).delete() }
+        view.backgroundImageLongClicks().collectIn(view.bindScope) { prefs.backgroundUri(threadId).delete() }
 
-        view.markUnreadClicks()
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .autoDisposable(view.scope())
-                .subscribe {conversation ->
-                    markUnread.execute(listOf(conversation.id))
-                    navigator.showMainActivity()
-                }
+        view.markUnreadClicks().collectIn(view.bindScope) {
+            val conversation = conversation.value ?: return@collectIn
+            markUnread.execute(listOf(conversation.id))
+            navigator.showMainActivity()
+        }
 
         // Toggle the pinned state of the conversation. Pinned conversations already sort to the
         // top of the main list - this just surfaces the existing toggle somewhere findable, rather
         // than only behind a long-press on the conversation.
-        view.pinClicks()
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .autoDisposable(view.scope())
-                .subscribe { conversation ->
-                    when (conversation.pinned) {
-                        true -> markUnpinned.execute(listOf(conversation.id))
-                        false -> markPinned.execute(listOf(conversation.id))
-                    }
-                }
+        view.pinClicks().collectIn(view.bindScope) {
+            val conversation = conversation.value ?: return@collectIn
+            when (conversation.pinned) {
+                true -> markUnpinned.execute(listOf(conversation.id))
+                false -> markPinned.execute(listOf(conversation.id))
+            }
+        }
 
         // Toggle the archived state of the conversation
-        view.archiveClicks()
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .autoDisposable(view.scope())
-                .subscribe { conversation ->
-                    when (conversation.archived) {
-                        true -> markUnarchived.execute(listOf(conversation.id))
-                        false -> markArchived.execute(listOf(conversation.id))
-                    }
-                }
+        view.archiveClicks().collectIn(view.bindScope) {
+            val conversation = conversation.value ?: return@collectIn
+            when (conversation.archived) {
+                true -> markUnarchived.execute(listOf(conversation.id))
+                false -> markArchived.execute(listOf(conversation.id))
+            }
+        }
 
         // Toggle the blocked state of the conversation
-        view.blockClicks()
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .autoDisposable(view.scope())
-                .subscribe { conversation -> view.showBlockingDialog(listOf(conversation.id), !conversation.blocked) }
+        view.blockClicks().collectIn(view.bindScope) {
+            val conversation = conversation.value ?: return@collectIn
+            view.showBlockingDialog(listOf(conversation.id), !conversation.blocked)
+        }
 
         // Show the delete confirmation dialog
-        view.deleteClicks()
-                .filter { permissionManager.isDefaultSms().also { if (!it) view.requestDefaultSms() } }
-                .autoDisposable(view.scope())
-                .subscribe { view.showDeleteDialog() }
+        view.deleteClicks().collectIn(view.bindScope) {
+            if (permissionManager.isDefaultSms()) view.showDeleteDialog() else view.requestDefaultSms()
+        }
 
         // Delete the conversation
-        view.confirmDelete()
-                .withLatestFrom(conversation) { _, conversation -> conversation }
-                .autoDisposable(view.scope())
-                .subscribe { conversation -> deleteConversations.execute(listOf(conversation.id)) }
+        view.confirmDelete().collectIn(view.bindScope) {
+            conversation.value?.let { conversation -> deleteConversations.execute(listOf(conversation.id)) }
+        }
 
         // Media
-        view.mediaClicks()
-                .autoDisposable(view.scope())
-                .subscribe(navigator::showMedia)
+        view.mediaClicks().collectIn(view.bindScope, navigator::showMedia)
     }
 
 }

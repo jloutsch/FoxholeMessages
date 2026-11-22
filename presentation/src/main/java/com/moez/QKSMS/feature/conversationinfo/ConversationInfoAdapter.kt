@@ -1,11 +1,11 @@
 package dev.octoshrimpy.quik.feature.conversationinfo
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import com.bumptech.glide.Glide
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import com.jakewharton.rxbinding2.view.clicks
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkAdapter
 import dev.octoshrimpy.quik.common.base.QkViewHolder
@@ -17,8 +17,6 @@ import dev.octoshrimpy.quik.databinding.ConversationMediaListItemBinding
 import dev.octoshrimpy.quik.databinding.ConversationRecipientListItemBinding
 import dev.octoshrimpy.quik.extensions.isVideo
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoItem.*
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class ConversationInfoAdapter @Inject constructor(
@@ -26,19 +24,19 @@ class ConversationInfoAdapter @Inject constructor(
     private val colors: Colors
 ) : QkAdapter<ConversationInfoItem, QkViewHolder>() {
 
-    val recipientClicks: Subject<Long> = PublishSubject.create()
-    val recipientLongClicks: Subject<Long> = PublishSubject.create()
-    val themeClicks: Subject<Long> = PublishSubject.create()
-    val nameClicks: Subject<Unit> = PublishSubject.create()
-    val notificationClicks: Subject<Unit> = PublishSubject.create()
-    val backgroundImageClicks: Subject<Unit> = PublishSubject.create()
-    val backgroundImageLongClicks: Subject<Unit> = PublishSubject.create()
-    val markUnreadClicks: Subject<Unit> = PublishSubject.create()
-    val pinClicks: Subject<Unit> = PublishSubject.create()
-    val archiveClicks: Subject<Unit> = PublishSubject.create()
-    val blockClicks: Subject<Unit> = PublishSubject.create()
-    val deleteClicks: Subject<Unit> = PublishSubject.create()
-    val mediaClicks: Subject<Long> = PublishSubject.create()
+    val recipientClicks = events<Long>()
+    val recipientLongClicks = events<Long>()
+    val themeClicks = events<Long>()
+    val nameClicks = events<Unit>()
+    val notificationClicks = events<Unit>()
+    val backgroundImageClicks = events<Unit>()
+    val backgroundImageLongClicks = events<Unit>()
+    val markUnreadClicks = events<Unit>()
+    val pinClicks = events<Unit>()
+    val archiveClicks = events<Unit>()
+    val blockClicks = events<Unit>()
+    val deleteClicks = events<Unit>()
+    val mediaClicks = events<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -48,18 +46,18 @@ class ConversationInfoAdapter @Inject constructor(
                 QkViewHolder(binding.root).apply {
                     itemView.setOnClickListener {
                         val item = getItem(bindingAdapterPosition) as? ConversationInfoRecipient
-                        item?.value?.id?.run(recipientClicks::onNext)
+                        item?.value?.id?.let { recipientClicks.tryEmit(it) }
                     }
 
                     itemView.setOnLongClickListener {
                         val item = getItem(bindingAdapterPosition) as? ConversationInfoRecipient
-                        item?.value?.id?.run(recipientLongClicks::onNext)
+                        item?.value?.id?.let { recipientLongClicks.tryEmit(it) }
                         true
                     }
 
                     binding.theme.setOnClickListener {
                         val item = getItem(bindingAdapterPosition) as? ConversationInfoRecipient
-                        item?.value?.id?.run(themeClicks::onNext)
+                        item?.value?.id?.let { themeClicks.tryEmit(it) }
                     }
                 }
             }
@@ -67,18 +65,18 @@ class ConversationInfoAdapter @Inject constructor(
             1 -> {
                 val binding = ConversationInfoSettingsBinding.inflate(inflater, parent, false)
                 QkViewHolder(binding.root).apply {
-                    binding.groupName.clicks().subscribe(nameClicks)
-                    binding.notifications.clicks().subscribe(notificationClicks)
-                    binding.background.clicks().subscribe(backgroundImageClicks)
+                    binding.groupName.setOnClickListener { nameClicks.tryEmit(Unit) }
+                    binding.notifications.setOnClickListener { notificationClicks.tryEmit(Unit) }
+                    binding.background.setOnClickListener { backgroundImageClicks.tryEmit(Unit) }
                     binding.background.setOnLongClickListener {
-                        backgroundImageLongClicks.onNext(Unit)
+                        backgroundImageLongClicks.tryEmit(Unit)
                         true
                     }
-                    binding.markUnread.clicks().subscribe(markUnreadClicks)
-                    binding.pin.clicks().subscribe(pinClicks)
-                    binding.archive.clicks().subscribe(archiveClicks)
-                    binding.block.clicks().subscribe(blockClicks)
-                    binding.delete.clicks().subscribe(deleteClicks)
+                    binding.markUnread.setOnClickListener { markUnreadClicks.tryEmit(Unit) }
+                    binding.pin.setOnClickListener { pinClicks.tryEmit(Unit) }
+                    binding.archive.setOnClickListener { archiveClicks.tryEmit(Unit) }
+                    binding.block.setOnClickListener { blockClicks.tryEmit(Unit) }
+                    binding.delete.setOnClickListener { deleteClicks.tryEmit(Unit) }
                 }
             }
 
@@ -87,7 +85,7 @@ class ConversationInfoAdapter @Inject constructor(
                 QkViewHolder(binding.root).apply {
                     itemView.setOnClickListener {
                         val item = getItem(bindingAdapterPosition) as? ConversationInfoMedia
-                        item?.value?.id?.run(mediaClicks::onNext)
+                        item?.value?.id?.let { mediaClicks.tryEmit(it) }
                     }
                 }
             }
