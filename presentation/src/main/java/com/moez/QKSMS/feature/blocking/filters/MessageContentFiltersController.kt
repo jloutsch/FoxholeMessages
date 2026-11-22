@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.filters
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AlertDialog
-import com.jakewharton.rxbinding2.view.clicks
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.feature.blocking.BlockingRulesFile
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
@@ -35,19 +35,16 @@ import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.model.MessageContentFilterData
 import dev.octoshrimpy.quik.databinding.MessageContentFiltersControllerBinding
 import dev.octoshrimpy.quik.databinding.MessageContentFiltersAddDialogBinding
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
-class MessageContentFiltersController : QkController<MessageContentFiltersControllerBinding, MessageContentFiltersView, MessageContentFiltersState,
+class MessageContentFiltersController : QkFlowController<MessageContentFiltersControllerBinding, MessageContentFiltersView, MessageContentFiltersState,
         MessageContentFiltersPresenter>(), MessageContentFiltersView {
 
     @Inject override lateinit var presenter: MessageContentFiltersPresenter
     @Inject lateinit var colors: Colors
 
     private val adapter = MessageContentFiltersAdapter()
-    private val saveFilterSubject: Subject<MessageContentFilterData> = PublishSubject.create()
+    private val saveFilterEvents = events<MessageContentFilterData>()
 
     init {
         appComponent.inject(this)
@@ -76,9 +73,9 @@ class MessageContentFiltersController : QkController<MessageContentFiltersContro
         adapter.updateData(state.filters)
     }
 
-    override fun removeFilter(): Observable<Long> = adapter.removeMessageContentFilter
-    override fun addFilter(): Observable<*> = binding.add.clicks()
-    override fun saveFilter(): Observable<MessageContentFilterData> = saveFilterSubject
+    override fun removeFilter(): Flow<Long> = adapter.removeMessageContentFilter
+    override fun addFilter(): Flow<Unit> = binding.add.clicks()
+    override fun saveFilter(): Flow<MessageContentFilterData> = saveFilterEvents
 
     override fun showAddDialog() {
         val layout = MessageContentFiltersAddDialogBinding.inflate(LayoutInflater.from(activity))
@@ -86,13 +83,12 @@ class MessageContentFiltersController : QkController<MessageContentFiltersContro
         (0 until layout.addDialog.childCount)
             .map { index -> layout.addDialog.getChildAt(index) }
             .mapNotNull { view -> view as? PreferenceView }
-            .map { preference -> preference.clicks().map { preference } }
-            .let { Observable.merge(it) }
-            .autoDisposable(scope())
-            .subscribe { pref ->
-                pref.checkbox?.let { it.isChecked = !it.isChecked }
-                val regexChecked = layout.regexp.checkbox?.isChecked ?: false
-                layout.caseSensitivity.isEnabled = !regexChecked
+            .forEach { pref ->
+                pref.setOnClickListener {
+                    pref.checkbox?.let { it.isChecked = !it.isChecked }
+                    val regexChecked = layout.regexp.checkbox?.isChecked ?: false
+                    layout.caseSensitivity.isEnabled = !regexChecked
+                }
             }
 
         val dialog = AlertDialog.Builder(activity!!)
@@ -115,7 +111,7 @@ class MessageContentFiltersController : QkController<MessageContentFiltersContro
                     BlockingRulesFile.FilterProblem.INVALID_REGEX -> layout.input.error =
                         context.getString(R.string.message_content_filters_invalid_regex)
                     null -> {
-                        saveFilterSubject.onNext(
+                        saveFilterEvents.tryEmit(
                             MessageContentFilterData(
                                 text,
                                 (layout.caseSensitivity.checkbox?.isChecked == true) && !regexChecked,

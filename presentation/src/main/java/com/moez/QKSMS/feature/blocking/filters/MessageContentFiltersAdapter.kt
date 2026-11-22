@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.filters
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,20 +26,18 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
 import dev.octoshrimpy.quik.model.MessageContentFilter
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import dev.octoshrimpy.quik.databinding.MessageContentFilterListItemBinding
 
 class MessageContentFiltersAdapter : QkListAdapter<MessageContentFilter, QkBindingViewHolder<MessageContentFilterListItemBinding>>(itemId = { it.id }) {
 
-    val removeMessageContentFilter: Subject<Long> = PublishSubject.create()
+    val removeMessageContentFilter = events<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<MessageContentFilterListItemBinding> {
         val binding = MessageContentFilterListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.removeFilter.setOnClickListener {
                 val filter = getItem(bindingAdapterPosition) ?: return@setOnClickListener
-                removeMessageContentFilter.onNext(filter.id)
+                removeMessageContentFilter.tryEmit(filter.id)
             }
         }
     }
