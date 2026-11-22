@@ -27,7 +27,6 @@ import dev.octoshrimpy.quik.extensions.getResourceBytes
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import dev.octoshrimpy.quik.util.ScheduledMessageFiles
 import dev.octoshrimpy.quik.util.FileUtils
-import io.reactivex.Flowable
 import java.util.UUID
 import javax.inject.Inject
 
@@ -47,48 +46,47 @@ class AddScheduledMessage @Inject constructor(
     )
 
     @SuppressLint("Range")
-    override fun buildObservable(params: Params): Flowable<*> {
+    override suspend fun perform(params: Params) {
         // have to 3-step save scheduled message
-        return Flowable.just(params)
-            .map {  // step 1 - save, without attachments, to db to get primary key id which is
-                    // needed for building the save file location dir name in step 2
-                scheduledMessageRepo.saveScheduledMessage(
-                    it.date,
-                    it.subId,
-                    it.recipients,
-                    it.sendAsGroup,
-                    it.body,
-                    listOf(),
-                    it.conversationId
+        // step 1 - save, without attachments, to db to get primary key id which is
+        // needed for building the save file location dir name in step 2
+        val scheduledMessage = scheduledMessageRepo.saveScheduledMessage(
+            params.date,
+            params.subId,
+            params.recipients,
+            params.sendAsGroup,
+            params.body,
+            listOf(),
+            params.conversationId
+        )
+
+        // step 2 - copy attachments to app local storage
+        scheduledMessage.attachments = params.attachments.map { attachmentUri ->
+            try {
+                // get filename of input uri or use random uuid on fail to get
+                val filename = attachmentUri.getName(context) ?: UUID.randomUUID()
+
+                val (localUri, e) = FileUtils.createAndWrite(
+                    context,
+                    FileUtils.Location.Files,  // files dir so not deleted if app cache wiped by user
+                    "${ScheduledMessageFiles.dirName(scheduledMessage.id)}/" +
+                                        "${UUID.randomUUID()}/${filename}",
+                    "",
+                    attachmentUri.getResourceBytes(context)
                 )
+                if (e is Exception)
+                    throw e
+
+                localUri.toString()
+            } catch (e: Exception) {
+                attachmentUri.toString()  // on any error, use original uri string
             }
-            .map { scheduledMessage ->
-                // step 2 - copy attachments to app local storage
-                scheduledMessage.attachments = params.attachments.map { attachmentUri ->
-                        try {
-                            // get filename of input uri or use random uuid on fail to get
-                            val filename = attachmentUri.getName(context) ?: UUID.randomUUID()
+        }
 
-                            val (localUri, e) = FileUtils.createAndWrite(
-                                context,
-                                FileUtils.Location.Files,  // files dir so not deleted if app cache wiped by user
-                                "${ScheduledMessageFiles.dirName(scheduledMessage.id)}/" +
-                                                    "${UUID.randomUUID()}/${filename}",
-                                "",
-                                attachmentUri.getResourceBytes(context)
-                            )
-                            if (e is Exception)
-                                throw e
+        // step 3 - update scheduled message with new attachment uris
+        scheduledMessageRepo.updateScheduledMessage(scheduledMessage)
 
-                            localUri.toString()
-                        } catch (e: Exception) {
-                            attachmentUri.toString()  // on any error, use original uri string
-                        }
-                    }
-
-                // step 3 - update scheduled message with new attachment uris
-                scheduledMessageRepo.updateScheduledMessage(scheduledMessage)
-            }
-            .flatMap { updateScheduledMessageAlarms.buildObservable(Unit) }
+        updateScheduledMessageAlarms.perform(Unit)
     }
+
 }

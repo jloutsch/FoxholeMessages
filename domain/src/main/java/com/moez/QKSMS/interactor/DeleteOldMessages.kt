@@ -21,7 +21,6 @@ package dev.octoshrimpy.quik.interactor
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.Flowable
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -31,8 +30,8 @@ class DeleteOldMessages @Inject constructor(
     private val prefs: Preferences
 ) : Interactor<Unit>() {
 
-    override fun buildObservable(params: Unit): Flowable<*> = Flowable.fromCallable {
-        val maxAge = prefs.autoDelete.get().takeIf { it > 0 } ?: return@fromCallable
+    override suspend fun perform(params: Unit) {
+        val maxAge = prefs.autoDelete.get().takeIf { it > 0 } ?: return
         val counts = messageRepo.getOldMessageCounts(maxAge)
 
         Timber.d("Deleting ${counts.values.sum()} old messages from ${counts.keys.size} conversations")

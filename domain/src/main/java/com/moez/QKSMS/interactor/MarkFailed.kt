@@ -20,7 +20,6 @@ package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.manager.NotificationManager
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class MarkFailed @Inject constructor(
@@ -29,11 +28,9 @@ class MarkFailed @Inject constructor(
 ) : Interactor<MarkFailed.Params>() {
     data class Params(val messageId: Long, val resultCode: Int)
 
-    override fun buildObservable(params: Params): Flowable<Unit> =
-        Flowable.just(Unit)
-            .doOnNext {
-                if (messageRepo.markFailed(params.messageId, params.resultCode))
-                    notificationManager.notifyFailed(params.messageId)
-            }
+    override suspend fun perform(params: Params) {
+        if (messageRepo.markFailed(params.messageId, params.resultCode))
+            notificationManager.notifyFailed(params.messageId)
+    }
 
 }

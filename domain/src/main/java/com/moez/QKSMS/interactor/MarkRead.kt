@@ -20,7 +20,6 @@ package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.manager.NotificationManager
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class MarkRead @Inject constructor(
@@ -29,11 +28,10 @@ class MarkRead @Inject constructor(
     private val updateBadge: UpdateBadge
 ) : Interactor<List<Long>>() {
 
-    override fun buildObservable(params: List<Long>): Flowable<*> {
-        return Flowable.just(params)
-            .doOnNext { threadIds -> messageRepo.markRead(threadIds) }
-            .doOnNext { threadIds -> threadIds.forEach(notificationManager::update) }
-            .flatMap { updateBadge.buildObservable(Unit) } // Update the badge
+    override suspend fun perform(params: List<Long>) {
+        messageRepo.markRead(params)
+        params.forEach(notificationManager::update)
+        updateBadge.perform(Unit) // Update the badge
     }
 
 }

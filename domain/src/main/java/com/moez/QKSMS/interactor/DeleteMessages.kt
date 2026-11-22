@@ -21,7 +21,6 @@ package dev.octoshrimpy.quik.interactor
 import dev.octoshrimpy.quik.manager.NotificationManager
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 // Soft-deletes (trashes) messages rather than removing them outright - see PurgeTrash
@@ -35,16 +34,11 @@ class DeleteMessages @Inject constructor(
 
     data class Params(val messageIds: List<Long>, val threadId: Long)
 
-    override fun buildObservable(params: Params): Flowable<*> {
-        return Flowable.just(params.messageIds)
-            .doOnNext { messageIds ->
-                messageRepo.trashMessages(messageIds)
-
-                conversationRepo.updateConversations(listOf(params.threadId))
-
-                notificationManager.update(params.threadId)
-            }
-            .flatMap { updateBadge.buildObservable(Unit) } // Update the badge
+    override suspend fun perform(params: Params) {
+        messageRepo.trashMessages(params.messageIds)
+        conversationRepo.updateConversations(listOf(params.threadId))
+        notificationManager.update(params.threadId)
+        updateBadge.perform(Unit) // Update the badge
     }
 
 }
