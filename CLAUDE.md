@@ -1198,9 +1198,11 @@ advice still applies.
   background thread; Realm used the main thread, and screens assume it. Convert a database Flow for
   a screen with `asMainObservable()` (presentation `FlowExtensions.kt`), never `asObservable()`.
   `MainThreadDatabaseUpdatesTest` enforces it. Missing this crashed group threads in 2.8.0–2.9.1.
-- **Main-thread reads (#71):** debug builds no longer call `allowMainThreadQueries()`, so Room throws
-  on any database read on the main thread; release builds still allow them until debug has run
-  clean for a while. Read in the background (`observeOn(Schedulers.io())`, then back to the main
+- **Main-thread reads (#71, closed 2026-11-21):** debug builds don't call `allowMainThreadQueries()`,
+  so Room throws on any database read on the main thread during testing. Release builds keep it **on
+  purpose**: the Note 10 isn't used for daily messaging, so a read the sweep missed would first show
+  up on Justin's phone, where allowing it costs about 1 ms and flipping it would crash. Don't remove
+  it from release without a way to catch misses first. Read in the background (`observeOn(Schedulers.io())`, then back to the main
   thread for the screen). `newState {}`'s block runs on the main thread: read first, then pass the
   result in. Conversations carry `unreadCount`, filled by `Relations.conversations`.
 - **App-only fields:** the full sync keeps `AppOnlyMessageFields` and `AppOnlyConversationFields`
