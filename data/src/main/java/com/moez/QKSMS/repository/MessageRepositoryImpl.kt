@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.db.FoxholeDatabase
 import dev.octoshrimpy.quik.db.Relations
@@ -93,8 +94,8 @@ open class MessageRepositoryImpl @Inject constructor(
     private val relations: Relations,
 ) : MessageRepository {
 
-    override val deduplicationProgress: Subject<MessageRepository.DeduplicationProgress> =
-        BehaviorSubject.createDefault(MessageRepository.DeduplicationProgress.Idle)
+    override val deduplicationProgress =
+        MutableStateFlow<MessageRepository.DeduplicationProgress>(MessageRepository.DeduplicationProgress.Idle)
 
     companion object {
         const val TELEPHONY_UPDATE_CHUNK_SIZE = 200
@@ -921,7 +922,7 @@ open class MessageRepositoryImpl @Inject constructor(
             if (duplicates.isEmpty()) {
                 MessageRepository.DeduplicationResult.NoDuplicates
             } else {
-                deduplicationProgress.onNext(MessageRepository.DeduplicationProgress.Running(0, 0, true))
+                deduplicationProgress.tryEmit(MessageRepository.DeduplicationProgress.Running(0, 0, true))
                 // To Trash rather than deleted outright: a false match is then recoverable for 30
                 // days, and the provider rows are removed by the normal Trash purge afterwards.
                 trashMessages(duplicates.keys)
@@ -930,7 +931,7 @@ open class MessageRepositoryImpl @Inject constructor(
         }
         .onErrorReturn { MessageRepository.DeduplicationResult.Failure(it) }
         .doFinally {
-            deduplicationProgress.onNext(MessageRepository.DeduplicationProgress.Idle)
+            deduplicationProgress.tryEmit(MessageRepository.DeduplicationProgress.Idle)
         }
 
     /** Duplicate message ids mapped to their thread ids. The first (lowest-id) copy is kept. */
@@ -944,7 +945,7 @@ open class MessageRepositoryImpl @Inject constructor(
             ++progress
             tryOrNull {
                 if (progress % 100 == 0 || progress == max) {
-                    deduplicationProgress.onNext(
+                    deduplicationProgress.tryEmit(
                         MessageRepository.DeduplicationProgress.Running(max, progress, false)
                     )
                 }
