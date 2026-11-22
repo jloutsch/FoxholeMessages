@@ -18,57 +18,44 @@
  */
 package dev.octoshrimpy.quik.feature.trash
 
-import io.reactivex.rxkotlin.plusAssign
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.interactor.EmptyTrash
 import dev.octoshrimpy.quik.interactor.RestoreMessages
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class TrashPresenter @Inject constructor(
     private val messageRepo: MessageRepository,
     private val restoreMessages: RestoreMessages,
     private val emptyTrash: EmptyTrash
-) : QkPresenter<TrashView, TrashState>(TrashState()) {
+) : QkFlowPresenter<TrashView, TrashState>(TrashState()) {
 
     init {
-        disposables += messageRepo.getDeletedMessages().asMainObservable()
-            .subscribe { messages -> newState { copy(data = messages) } }
+        // Collected on the main thread (presenterScope); the query itself runs in the background
+        messageRepo.getDeletedMessages().collectIn(presenterScope) { messages -> newState { copy(data = messages) } }
     }
 
     override fun bindIntents(view: TrashView) {
         super.bindIntents(view)
 
-        view.restoreClicks
-                .autoDisposable(view.scope())
-                .subscribe { messageId -> restoreMessages.execute(listOf(messageId)) }
+        view.restoreClicks.collectIn(view.bindScope) { messageId -> restoreMessages.execute(listOf(messageId)) }
 
         // Manual permanent-delete, in addition to the automatic 30-day purge - the user
         // shouldn't have to wait if they want a message gone for good right away
-        view.deleteForeverClicks
-                .autoDisposable(view.scope())
-                .subscribe { messageId -> view.showDeleteForeverDialog(messageId) }
+        view.deleteForeverClicks.collectIn(view.bindScope) { messageId -> view.showDeleteForeverDialog(messageId) }
 
-        view.confirmDeleteForeverIntent
-                .observeOn(Schedulers.io()) // Realm refuses writes on the main thread
-                .autoDisposable(view.scope())
-                .subscribe { messageId -> messageRepo.deleteMessages(listOf(messageId)) }
+        view.confirmDeleteForeverIntent.collectIn(view.bindScope) { messageId ->
+            withContext(Dispatchers.IO) { messageRepo.deleteMessages(listOf(messageId)) }
+        }
 
-        view.emptyTrashIntent
-                .autoDisposable(view.scope())
-                .subscribe { view.showEmptyTrashDialog() }
+        view.emptyTrashIntent.collectIn(view.bindScope) { view.showEmptyTrashDialog() }
 
-        view.confirmEmptyTrashIntent
-                .autoDisposable(view.scope())
-                .subscribe { emptyTrash.execute(Unit) }
+        view.confirmEmptyTrashIntent.collectIn(view.bindScope) { emptyTrash.execute(Unit) }
 
-        view.backClicked
-                .autoDisposable(view.scope())
-                .subscribe { view.goBack() }
+        view.backClicked.collectIn(view.bindScope) { view.goBack() }
     }
 
 }
