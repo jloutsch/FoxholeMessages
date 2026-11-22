@@ -18,33 +18,30 @@
  */
 package dev.octoshrimpy.quik.feature.settings.about
 
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import javax.inject.Inject
 
 class AboutPresenter @Inject constructor(
     private val externalNavigator: ExternalNavigator
-) : QkPresenter<AboutView, Unit>(Unit) {
+) : QkFlowPresenter<AboutView, Unit>(Unit) {
 
     override fun bindIntents(view: AboutView) {
         super.bindIntents(view)
 
-        view.preferenceClicks()
-                .autoDisposable(view.scope())
-                .subscribe { preference ->
-                    when (preference.id) {
-                        R.id.source -> externalNavigator.showSourceCode()
+        view.preferenceClicks().collectIn(view.bindScope) { preference ->
+            when (preference.id) {
+                R.id.source -> externalNavigator.showSourceCode()
 
-                        R.id.changelog -> externalNavigator.showChangelog()
+                R.id.changelog -> externalNavigator.showChangelog()
 
-                        R.id.contact -> externalNavigator.showSupport()
+                R.id.contact -> externalNavigator.showSupport()
 
-                        R.id.license -> externalNavigator.showLicense()
-                    }
-                }
+                R.id.license -> externalNavigator.showLicense()
+            }
+        }
     }
 
 }
