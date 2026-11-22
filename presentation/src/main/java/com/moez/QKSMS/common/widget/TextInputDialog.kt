@@ -21,6 +21,7 @@ package dev.octoshrimpy.quik.common.widget
 import android.app.Activity
 import android.content.DialogInterface
 import android.view.LayoutInflater
+import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.databinding.TextInputDialogBinding
@@ -38,6 +39,16 @@ class TextInputDialog(context: Activity, hint: String, listener: (String) -> Uni
         setButton(DialogInterface.BUTTON_POSITIVE, context.getString(R.string.button_save)) { _, _ ->
             listener(layout.field.text.toString())
         }
+
+        // Open with the keyboard up and the cursor blinking in the box. The box has no outline, so
+        // without focus its text or grey hint read as a label rather than something to type in.
+        window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        layout.field.requestFocus()
+        layout.field.setSelection(layout.field.length())
     }
 
     fun setText(text: String): TextInputDialog {
