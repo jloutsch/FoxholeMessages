@@ -1,0 +1,3 @@
+What's new in 2.9.7:
+- Improved: a reaction's notification leads with its emoji, as in the inbox (for example "❤️ Loved an image").
+- Improved: renaming a tab or conversation opens with the cursor in the box and the keyboard up.
