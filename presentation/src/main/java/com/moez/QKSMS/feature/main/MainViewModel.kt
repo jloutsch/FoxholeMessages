@@ -131,6 +131,7 @@ class MainViewModel @Inject constructor(
 
         // Inbox tabs, Starred and Archived follow the database live, re-queried when the
         // "unread at top" setting changes
+        @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest: stable in practice
         prefs.unreadAtTop.asFlow()
             .distinctUntilChanged()
             .flatMapLatest { unreadAtTop -> observeTabData(conversationRepo, unreadAtTop) }
@@ -139,6 +140,7 @@ class MainViewModel @Inject constructor(
         messageRepo.getStarredMessages()
             .collectIn(viewModelScope) { starred -> newState { copy(starredMessages = starred) } }
 
+        @OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest: stable in practice
         prefs.unreadAtTop.asFlow()
             .distinctUntilChanged()
             .flatMapLatest { unreadAtTop -> conversationRepo.getConversations(unreadAtTop, true) }

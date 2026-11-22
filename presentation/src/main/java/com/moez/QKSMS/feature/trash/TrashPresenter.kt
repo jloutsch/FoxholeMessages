@@ -55,7 +55,6 @@ class TrashPresenter @Inject constructor(
 
         view.confirmEmptyTrashIntent.collectIn(view.bindScope) { emptyTrash.execute(Unit) }
 
-        view.backClicked.collectIn(view.bindScope) { view.goBack() }
     }
 
 }

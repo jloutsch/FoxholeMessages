@@ -28,10 +28,8 @@ interface TrashView : QkView<TrashState> {
     val confirmDeleteForeverIntent: Flow<Long>
     val emptyTrashIntent: Flow<Unit>
     val confirmEmptyTrashIntent: Flow<Unit>
-    val backClicked: Flow<Unit>
 
     fun showDeleteForeverDialog(messageId: Long)
     fun showEmptyTrashDialog()
-    fun goBack()
 
 }
