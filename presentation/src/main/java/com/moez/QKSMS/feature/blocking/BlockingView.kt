@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.blocking
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 
-interface BlockingView : QkViewContract<BlockingState> {
+interface BlockingView : QkFlowView<BlockingState> {
 
-    val blockedNumbersIntent: Observable<*>
-    val messageContentFiltersIntent: Observable<*>
-    val blockedMessagesIntent: Observable<*>
-    val dropClickedIntent: Observable<*>
+    val blockedNumbersIntent: Flow<Unit>
+    val messageContentFiltersIntent: Flow<Unit>
+    val blockedMessagesIntent: Flow<Unit>
+    val dropClickedIntent: Flow<Unit>
 
     fun openBlockedNumbers()
     fun openMessageContentFilters()

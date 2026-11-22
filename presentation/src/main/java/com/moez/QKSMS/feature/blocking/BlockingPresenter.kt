@@ -18,40 +18,29 @@
  */
 package dev.octoshrimpy.quik.feature.blocking
 
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.rxkotlin.plusAssign
 import javax.inject.Inject
 
 class BlockingPresenter @Inject constructor(
     private val prefs: Preferences
-) : QkPresenter<BlockingView, BlockingState>(BlockingState()) {
+) : QkFlowPresenter<BlockingView, BlockingState>(BlockingState()) {
 
     init {
-        disposables += prefs.drop.asObservable()
-                .subscribe { enabled -> newState { copy(dropEnabled = enabled) } }
+        prefs.drop.asFlow().collectIn(presenterScope) { enabled -> newState { copy(dropEnabled = enabled) } }
     }
 
     override fun bindIntents(view: BlockingView) {
         super.bindIntents(view)
 
-        view.blockedNumbersIntent
-                .autoDisposable(view.scope())
-                .subscribe { view.openBlockedNumbers() }
+        view.blockedNumbersIntent.collectIn(view.bindScope) { view.openBlockedNumbers() }
 
-        view.messageContentFiltersIntent
-                .autoDisposable(view.scope())
-                .subscribe { view.openMessageContentFilters() }
+        view.messageContentFiltersIntent.collectIn(view.bindScope) { view.openMessageContentFilters() }
 
-        view.blockedMessagesIntent
-                .autoDisposable(view.scope())
-                .subscribe { view.openBlockedMessages() }
+        view.blockedMessagesIntent.collectIn(view.bindScope) { view.openBlockedMessages() }
 
-        view.dropClickedIntent
-                .autoDisposable(view.scope())
-                .subscribe { prefs.drop.set(!prefs.drop.get()) }
+        view.dropClickedIntent.collectIn(view.bindScope) { prefs.drop.set(!prefs.drop.get()) }
     }
 
 }
