@@ -1,57 +1,105 @@
 # FOXHOLE MESSAGES
 
-[![Manual Release](https://github.com/curly815/foxholemessages/actions/workflows/manual-release.yml/badge.svg)](https://github.com/curly815/foxholemessages/actions/workflows/manual-release.yml)
+[![Build](https://github.com/jloutsch/FoxholeMessages/actions/workflows/build-on-pull.yml/badge.svg)](https://github.com/jloutsch/FoxholeMessages/actions/workflows/build-on-pull.yml)
 
-Foxhole Message is an open source Blend of QUIK SMS and other features i wanted add. RIP Samsung Messages and the soon to be RIP of Microsoft SMS Organizer. 
+Foxhole Messages is a free, open source texting app for Android (SMS and MMS). It started as Erik
+Castillo's blend of QUIK SMS with features he wanted, after Samsung Messages and Microsoft SMS
+Organizer went away. This is a fork of his app that keeps adding features and fixes.
 
-## Features
+It has no ads and no tracking, and it doesn't use the internet: your messages stay on your phone.
 
-- Scheduled messages
-- Message backup
-- Speech-to-text and text-to-speech integrated within the app
-- Message blocking and archiving
-- Voice messages
-- Attachments of any type of file
-- Message sorting
-- Message pinning
-- Delayed sending
-- Quick reply from notifications
-- Swipe actions
-- Emoji reaction handling
-- and much, much more
+## What it does
+
+### Your inbox, sorted for you
+- New messages are sorted into **Personal**, **Transactions** and **Promotions** tabs, so bank
+  alerts and sales texts stay out of the way of people you know.
+- A **Starred** tab collects the messages you star, and shows how many there are.
+- Move a conversation to another tab and future messages from that sender follow it.
+- Rename any tab by long-pressing it.
+- "Sort existing messages" sorts your older messages too, and shows its progress.
+- Each conversation shows how many unread messages it has.
+
+### One-time codes
+- Verification codes show in large type in their notification, even on the lock screen, with a
+  Copy button. The code is also copied for you as soon as it arrives.
+- Choose how long code messages are kept (never deleted, or 1, 7 or 30 days).
+
+### Reactions from iPhones
+- When someone on an iPhone "likes" or "loves" your message or picture, it shows as an emoji on that
+  message instead of a separate text, and the notification starts with the emoji too.
+
+### Writing and sending
+- Schedule a message for later, and edit it before it goes.
+- Delay sending for a few seconds so you can cancel a message you didn't mean to send.
+- Speech-to-text and text-to-speech built in.
+- Voice messages, and attachments of any file type.
+- A signature added to the end of your messages.
+- Reply straight from the notification.
+
+### Finding and keeping messages
+- Search all messages, or search inside one conversation and step through the matches.
+- Star a message to find it again later.
+- Pin conversations to the top.
+- Deleted messages go to **Trash** for 30 days, so you can restore them. You can also empty Trash
+  sooner.
+- Back up your messages, pictures included, to a file you choose, and restore them later.
+- Save pictures, videos and voice messages, one at a time or all at once.
+- Remove duplicate messages.
+- Automatically delete old messages, if you want that.
+
+### Blocking
+- Block numbers, conversations, or messages that contain certain words or patterns.
+- Export your blocking rules to a file and import them on another phone.
+
+### Looks
+- Light, dark, or pure black night mode.
+- Match your wallpaper colours on Android 12 and newer, or pick a colour for each contact.
+- Pinch the conversation to make text bigger or smaller.
+- A home-screen widget that shows the tabs you choose.
+
+### Everyday comfort
+- Swipe a conversation to archive, delete, block, call or mark it read (you pick what each swipe
+  does). Archiving asks first, so a stray swipe doesn't hide a conversation.
+- Recent conversations appear when you share something from another app.
 
 ## Download
 
-Grab Foxhole Messages from the official [github releases page](https://github.com/curly815/foxholemessages/releases), or keep up with updates with the following:
+- **This fork:** get the newest version from
+  [this fork's releases page](https://github.com/jloutsch/FoxholeMessages/releases).
+- **Erik's original:** his official builds are on
+  [Foxhole Messages' releases page](https://github.com/curly815/foxholemessages/releases) and on
+  Google Play.
 
-<img src="https://user-images.githubusercontent.com/69304392/148696068-0cfea65d-b18f-4685-82b5-329a330b1c0d.png"
-alt="Download from GitHub releases" height="100" /></a>
+The two are signed differently, so Android won't install one over the other. To switch, back up
+your messages in the app, uninstall it, install the other version, and restore your backup.
+
+Needs Android 7.0 or newer.
 
 ## Reporting bugs
 
-A great bug report contains a description of the problem and steps to reproduce the problem. We need to know what we're looking for and where to look for it.
-
-When reporting a bug, please make sure to provide the following information:
-- Steps to reproduce the issue
-- Foxhole Messages version
-- Device / OS information
+Please open an issue on [this fork's issues page](https://github.com/jloutsch/FoxholeMessages/issues).
+A useful report says:
+- what you did, step by step
+- what happened, and what you expected
+- the app version (Settings → About) and your phone model and Android version
 
 ## Contributing
-Contributions are very welcome! Please see the [contributing guidelines](/CONTRIBUTING.md) for details.
 
+Contributions are welcome. See the [contributing guidelines](/CONTRIBUTING.md).
 
 ## Thank you
 
-A special thank you to QUIK creators that encouraged this app and allowed me to create a blend of my own creation! Jake ([@klinker41](https://github.com/klinker41)) and Luke Klinker ([@klinker24](https://github.com/klinker24)) for their work on [android-smsmms](https://github.com/klinker41/android-smsmms), which has been an unspeakably large help in implementing MMS into QUIK which inspired me to make Foxhole Messages!
-
-A giant thank you to Moez [moezbhatti](https://github.com/moezbhatti) for creating and maintaining QKSMS, of which QUIK would not exist without which in turn this app would not have been created!
-
-## Contact
-
-Foxhole Messages is developed and maintained by Erik Castillo; erik.castillo0318@gmail.com 
-
----
+- **Erik Castillo** ([@curly815](https://github.com/curly815)) created Foxhole Messages; this fork
+  builds on his work.
+- **Moez Bhatti** ([@moezbhatti](https://github.com/moezbhatti)) created and maintained QKSMS. QUIK,
+  and then Foxhole Messages, wouldn't exist without it.
+- The **QUIK** creators, who encouraged this app.
+- **Jake and Luke Klinker** ([@klinker41](https://github.com/klinker41),
+  [@klinker24](https://github.com/klinker24)) for
+  [android-smsmms](https://github.com/klinker41/android-smsmms), which made picture messages
+  possible in QUIK.
 
 ## License
 
-Foxhole Messages is released under the **The GNU General Public License v3.0 (GPLv3)**, which can be found in the [LICENSE](LICENSE) file in the root of this project.
+Foxhole Messages is released under the **GNU General Public License v3.0 (GPLv3)**. The full text is
+in the [LICENSE](LICENSE) file.
