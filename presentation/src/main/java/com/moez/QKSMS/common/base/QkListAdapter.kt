@@ -40,7 +40,8 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
             value?.setVisible(data?.isEmpty() == true)
         }
 
-    // The current selection (a BehaviorSubject under RxJava): replays the latest to new collectors
+    // The current selection, replayed to new collectors. Each emission is a copy: a screen that
+    // keeps one while the adapter clears its own would otherwise see it emptied (#119).
     val selectionChanges = MutableSharedFlow<List<Long>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private var selection = mutableListOf<Long>()
@@ -79,7 +80,7 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
             true -> selection -= id
             false -> selection += id
         }
-        selectionChanges.tryEmit(selection)
+        selectionChanges.tryEmit(selection.toList())
         return true
     }
 
@@ -87,7 +88,7 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
 
     fun clearSelection() {
         selection.clear()
-        selectionChanges.tryEmit(selection)
+        selectionChanges.tryEmit(selection.toList())
         notifyDataSetChanged()
     }
 
@@ -97,7 +98,7 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
         if (needToSelectAll) {
             for (position in 0 until itemCount) selection += getItemId(position)
         }
-        selectionChanges.tryEmit(selection)
+        selectionChanges.tryEmit(selection.toList())
         notifyDataSetChanged()
     }
 }

@@ -365,9 +365,7 @@ class MainViewModel @Inject constructor(
         view.conversationsSelectedIntent.collectIn(view.bindScope) { selection -> selectedConversations = selection }
 
         view.optionsItemIntent.collectIn(view.bindScope) { itemId ->
-            // A copy: the live selection list is emptied by clearSelection() before
-            // MarkArchived's mark-as-read step reads it, so the conversation stayed unread.
-            val conversations = selectedConversations.toList()
+            val conversations = selectedConversations
             when (itemId) {
                 R.id.select_all -> view.toggleSelectAll()
 

@@ -28,6 +28,10 @@ import dev.octoshrimpy.quik.interactor.MarkRead
 import dev.octoshrimpy.quik.interactor.SendNewMessage
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -54,34 +58,39 @@ class RemoteMessagingReceiver : BroadcastReceiver() {
                 "(${remoteInput.getCharSequence("body")?.length ?: 0} chars) - marking thread read"
         )
 
-        // getMessages() loads asynchronously, so read here it was always empty and every reply went
-        // out on the default SIM. The synchronous query gets the SIM the conversation actually uses.
-        val lastMessage = messageRepo.getMessagesSync(threadId).lastOrNull()
-        val conversation = conversationRepo.getConversation(threadId) ?: return
+        val body = remoteInput.getCharSequence("body").toString()
 
-        // Keep the process alive until both markRead (which dismisses/refreshes the
-        // notification) and sendNewMessage have actually finished - finishing early lets
-        // the system reclaim the process mid-flight, leaving the notification stuck.
+        // goAsync() keeps the process alive until markRead (which dismisses/refreshes the
+        // notification) and sendNewMessage have finished; finishing early lets the system reclaim
+        // the process mid-flight, leaving the notification stuck. The database is read in the
+        // background: on the main thread it crashed debug builds and slowed replies in long threads.
         val pendingResult = goAsync()
-        var pending = 2
-        val onOneComplete = {
-            pending -= 1
-            if (pending == 0) pendingResult.finish()
+
+        @OptIn(DelicateCoroutinesApi::class) // a receiver has no scope; goAsync() keeps it alive until finish()
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                // The synchronous query gets the SIM the conversation actually uses
+                val lastMessage = messageRepo.getMessagesSync(threadId).lastOrNull()
+                val conversation = conversationRepo.getConversation(threadId) ?: return@launch
+
+                // A failure here must not stop the reply going out
+                runCatching { markRead.perform(listOf(threadId)) }.onFailure { Timber.e(it, "mark read failed") }
+                sendNewMessage.perform(
+                    SendNewMessage.Params(
+                        subscriptionManager.activeSubscriptionInfoList
+                            .firstOrNull { it.subscriptionId == lastMessage?.subId }
+                            ?.subscriptionId ?: -1,
+                        0,
+                        conversation.recipients.map { it.address },
+                        body,
+                        conversation.sendAsGroup
+                    )
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "remote reply failed")
+            } finally {
+                pendingResult.finish()
+            }
         }
-
-        markRead.execute(listOf(threadId), onTerminate = onOneComplete)
-
-        sendNewMessage.execute(
-            SendNewMessage.Params(
-                subscriptionManager.activeSubscriptionInfoList
-                    .firstOrNull { it.subscriptionId == lastMessage?.subId }
-                    ?.subscriptionId ?: -1,
-                0,
-                conversation.recipients.map { it.address },
-                remoteInput.getCharSequence("body").toString(),
-                conversation.sendAsGroup
-            ),
-            onTerminate = onOneComplete
-        )
     }
 }
