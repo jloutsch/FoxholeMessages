@@ -18,26 +18,25 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.numbers
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkListAdapter
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
 import dev.octoshrimpy.quik.model.BlockedNumber
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import dev.octoshrimpy.quik.databinding.BlockedNumberListItemBinding
 
 class BlockedNumbersAdapter : QkListAdapter<BlockedNumber, QkBindingViewHolder<BlockedNumberListItemBinding>>(itemId = { it.id }) {
 
-    val unblockAddress: Subject<Long> = PublishSubject.create()
+    val unblockAddress = events<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<BlockedNumberListItemBinding> {
         val binding = BlockedNumberListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return QkBindingViewHolder(binding).apply {
             binding.unblock.setOnClickListener {
                 val number = getItem(bindingAdapterPosition) ?: return@setOnClickListener
-                unblockAddress.onNext(number.id)
+                unblockAddress.tryEmit(number.id)
             }
         }
     }

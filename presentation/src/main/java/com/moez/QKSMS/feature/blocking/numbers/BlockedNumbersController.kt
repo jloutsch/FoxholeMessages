@@ -18,27 +18,26 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.numbers
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import com.jakewharton.rxbinding2.view.clicks
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.feature.blocking.BlockingRulesFile
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import dev.octoshrimpy.quik.databinding.BlockedNumbersControllerBinding
 import dev.octoshrimpy.quik.databinding.BlockedNumbersAddDialogBinding
 import javax.inject.Inject
 
-class BlockedNumbersController : QkController<BlockedNumbersControllerBinding, BlockedNumbersView, BlockedNumbersState, BlockedNumbersPresenter>(),
+class BlockedNumbersController : QkFlowController<BlockedNumbersControllerBinding, BlockedNumbersView, BlockedNumbersState, BlockedNumbersPresenter>(),
     BlockedNumbersView {
 
     @Inject override lateinit var presenter: BlockedNumbersPresenter
@@ -46,7 +45,7 @@ class BlockedNumbersController : QkController<BlockedNumbersControllerBinding, B
     @Inject lateinit var phoneNumberUtils: PhoneNumberUtils
 
     private val adapter = BlockedNumbersAdapter()
-    private val saveAddressSubject: Subject<String> = PublishSubject.create()
+    private val saveAddressEvents = events<String>()
 
     init {
         appComponent.inject(this)
@@ -75,9 +74,9 @@ class BlockedNumbersController : QkController<BlockedNumbersControllerBinding, B
         adapter.updateData(state.numbers)
     }
 
-    override fun unblockAddress(): Observable<Long> = adapter.unblockAddress
-    override fun addAddress(): Observable<*> = binding.add.clicks()
-    override fun saveAddress(): Observable<String> = saveAddressSubject
+    override fun unblockAddress(): Flow<Long> = adapter.unblockAddress
+    override fun addAddress(): Flow<Unit> = binding.add.clicks()
+    override fun saveAddress(): Flow<String> = saveAddressEvents
 
     override fun showAddDialog() {
         val layout = BlockedNumbersAddDialogBinding.inflate(LayoutInflater.from(activity))
@@ -99,7 +98,7 @@ class BlockedNumbersController : QkController<BlockedNumbersControllerBinding, B
                     !BlockingRulesFile.isValidNumber(number) -> layout.input.error = layout.root.context
                         .getString(R.string.blocked_numbers_too_long, BlockingRulesFile.MAX_NUMBER_LENGTH)
                     else -> {
-                        saveAddressSubject.onNext(number)
+                        saveAddressEvents.tryEmit(number)
                         dialog.dismiss()
                     }
                 }
