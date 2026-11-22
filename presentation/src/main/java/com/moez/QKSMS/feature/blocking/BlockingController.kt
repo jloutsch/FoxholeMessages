@@ -18,6 +18,14 @@
  */
 package dev.octoshrimpy.quik.feature.blocking
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,12 +34,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.bluelinelabs.conductor.RouterTransaction
-import com.jakewharton.rxbinding2.view.clicks
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.QkChangeHandler
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.animateLayoutChanges
 import dev.octoshrimpy.quik.feature.blocking.messages.BlockedMessagesController
@@ -42,13 +46,10 @@ import dev.octoshrimpy.quik.repository.BlockingRepository
 import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
 import dev.octoshrimpy.quik.databinding.BlockingControllerBinding
 import androidx.appcompat.app.AlertDialog
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
-class BlockingController : QkController<BlockingControllerBinding, BlockingView, BlockingState, BlockingPresenter>(), BlockingView {
+class BlockingController : QkFlowController<BlockingControllerBinding, BlockingView, BlockingState, BlockingPresenter>(), BlockingView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): BlockingControllerBinding =
         BlockingControllerBinding.inflate(inflater, container, false)
@@ -89,8 +90,8 @@ class BlockingController : QkController<BlockingControllerBinding, BlockingView,
     override fun onAttach(view: View) {
         super.onAttach(view)
         presenter.bindIntents(this)
-        exportClicks.autoDisposable(scope()).subscribe { createDocument.launch("foxhole-blocking-rules.json") }
-        importClicks.autoDisposable(scope()).subscribe { openDocument.launch(arrayOf("application/json", "text/*", "application/octet-stream")) }
+        exportClicks.collectIn(bindScope) { createDocument.launch("foxhole-blocking-rules.json") }
+        importClicks.collectIn(bindScope) { openDocument.launch(arrayOf("application/json", "text/*", "application/octet-stream")) }
         setTitle(R.string.blocking_title)
         showBackButton(true)
     }
@@ -99,64 +100,69 @@ class BlockingController : QkController<BlockingControllerBinding, BlockingView,
     // can be replaced (rotation) or gone (user left) mid-transfer. The resolver comes from the
     // application context, captured up front; results are shown on the main thread against
     // whatever activity is current by then.
+    @OptIn(DelicateCoroutinesApi::class)
     private fun exportRules(uri: Uri) {
         val appContext = applicationContext ?: return
         val resolver = appContext.contentResolver
-        Single.fromCallable {
-            val json = BlockingRulesFile.toJson(blockingRepository.exportBlockedAddresses(), filterRepository.exportFilters())
-            resolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(json) }
-                ?: error("Unable to open destination")
-        }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
+        // Not tied to this screen (see above), as the Rx version wasn't
+        GlobalScope.launch(Dispatchers.Main) {
+            try {
+                withContext(Dispatchers.IO) {
+                    val json = BlockingRulesFile.toJson(blockingRepository.exportBlockedAddresses(), filterRepository.exportFilters())
+                    resolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(json) }
+                        ?: error("Unable to open destination")
+                }
                 Toast.makeText(appContext, R.string.blocking_rules_exported, Toast.LENGTH_SHORT).show()
-            }, { error ->
+            } catch (error: Exception) {
                 Timber.e(error, "blocking rules export failed")
                 Toast.makeText(appContext, R.string.blocking_rules_export_error, Toast.LENGTH_LONG).show()
-            })
+            }
+        }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun importRules(uri: Uri) {
         val appContext = applicationContext ?: return
         val resolver = appContext.contentResolver
-        Single.fromCallable {
-            val raw = resolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
-                val text = StringBuilder()
-                val buffer = CharArray(8192)
-                while (true) {
-                    val count = reader.read(buffer)
-                    if (count < 0) break
-                    require(text.length + count <= BlockingRulesFile.MAX_FILE_CHARS) { "File too large" }
-                    text.append(buffer, 0, count)
+        GlobalScope.launch(Dispatchers.Main) {
+            val (numbers, filters, skipped) = try {
+                withContext(Dispatchers.IO) {
+                    val raw = resolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                        val text = StringBuilder()
+                        val buffer = CharArray(8192)
+                        while (true) {
+                            val count = reader.read(buffer)
+                            if (count < 0) break
+                            require(text.length + count <= BlockingRulesFile.MAX_FILE_CHARS) { "File too large" }
+                            text.append(buffer, 0, count)
+                        }
+                        text.toString()
+                    } ?: error("Unable to open file")
+                    val parsed = BlockingRulesFile.parse(raw)
+                    val (addedNumbers, addedFilters) = blockingRepository.importBlockingRules(parsed.numbers, parsed.filters)
+                    Triple(addedNumbers, addedFilters, parsed.skipped)
                 }
-                text.toString()
-            } ?: error("Unable to open file")
-            val parsed = BlockingRulesFile.parse(raw)
-            val (addedNumbers, addedFilters) = blockingRepository.importBlockingRules(parsed.numbers, parsed.filters)
-            Triple(addedNumbers, addedFilters, parsed.skipped)
-        }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ (numbers, filters, skipped) ->
-                val res = appContext.resources
-                var message = res.getString(R.string.blocking_rules_imported,
-                    res.getQuantityString(R.plurals.blocking_rules_numbers, numbers, numbers),
-                    res.getQuantityString(R.plurals.blocking_rules_filters, filters, filters))
-                if (skipped > 0) message += "\n\n" + res.getQuantityString(R.plurals.blocking_rules_skipped, skipped, skipped)
-
-                // A dialog rather than a toast: Android 12+ cuts toasts off after two lines.
-                activity?.let { activity ->
-                    AlertDialog.Builder(activity)
-                        .setTitle(R.string.blocking_rules_imported_title)
-                        .setMessage(message)
-                        .setPositiveButton(android.R.string.ok, null)
-                        .show()
-                } ?: Toast.makeText(appContext, message, Toast.LENGTH_LONG).show()
-            }, { error ->
+            } catch (error: Exception) {
                 Timber.e(error, "blocking rules import failed")
                 Toast.makeText(appContext, R.string.blocking_rules_import_error, Toast.LENGTH_LONG).show()
-            })
+                return@launch
+            }
+
+            val res = appContext.resources
+            var message = res.getString(R.string.blocking_rules_imported,
+                res.getQuantityString(R.plurals.blocking_rules_numbers, numbers, numbers),
+                res.getQuantityString(R.plurals.blocking_rules_filters, filters, filters))
+            if (skipped > 0) message += "\n\n" + res.getQuantityString(R.plurals.blocking_rules_skipped, skipped, skipped)
+
+            // A dialog rather than a toast: Android 12+ cuts toasts off after two lines.
+            activity?.let { activity ->
+                AlertDialog.Builder(activity)
+                    .setTitle(R.string.blocking_rules_imported_title)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            } ?: Toast.makeText(appContext, message, Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun render(state: BlockingState) {
