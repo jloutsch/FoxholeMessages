@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.contacts
 
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.map
@@ -59,7 +60,6 @@ class ContactsViewModel @Inject constructor(
     private val setDefaultPhoneNumber: SetDefaultPhoneNumber
 ) : QkViewModel<ContactsContract, ContactsState>(ContactsState()) {
 
-    // The repositories are still RxJava (other screens read them): bridged until Task 29
     private val contactGroups: Flow<List<ContactGroup>> by lazy { contactsRepo.getUnmanagedContactGroups() }
     private val contacts: Flow<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts() }
     private val recents: Flow<List<Conversation>> by lazy {
@@ -100,9 +100,10 @@ class ContactsViewModel @Inject constructor(
 
         // Update the list of contact suggestions based on the query input, while also filtering out any contacts
         // that have already been selected
-        combine(view.queryChangedIntent, recents, starredContacts, contactGroups, contacts, ::Sources)
-                .combine(selectedChips) { sources, selectedChips -> composeItems(sources, selectedChips) }
-                .flowOn(Dispatchers.Default)
+        // The text listener stays on the main thread; only building the list runs on Default
+        combine(view.queryChangedIntent.map { it.toString() }, recents, starredContacts, contactGroups, contacts, ::Sources)
+                .combine(selectedChips) { sources, selectedChips -> sources to selectedChips }
+                .map { (sources, selectedChips) -> withContext(Dispatchers.Default) { composeItems(sources, selectedChips) } }
                 .collectIn(view.bindScope) { items -> newState { copy(composeItems = items) } }
 
         // Listen for ComposeItems being selected, and then send them off to the number picker dialog in case

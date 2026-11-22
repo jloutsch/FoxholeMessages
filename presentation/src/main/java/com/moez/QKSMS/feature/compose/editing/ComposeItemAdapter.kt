@@ -188,7 +188,6 @@ class ComposeItemAdapter @Inject constructor(
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
-        // The repository is still RxJava (main-thread updates): bridged until Task 29
         recipientsJob = MainScope().launch {
             conversationRepo.getUnmanagedRecipients()
                     .map { recipients -> recipients.associateByNotNull { recipient -> recipient.contact?.lookupKey } }

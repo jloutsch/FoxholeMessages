@@ -65,8 +65,7 @@ class ConversationItemTouchCallback @Inject constructor(
     private val iconLength = 24.dpToPx(context)
 
     init {
-        // Colors is still RxJava (other screens read it): bridged until Task 29. Both run until the
-        // activity's scope ends, as the activity's CompositeDisposable did
+        // Both run until the activity's scope ends
         colors.themeChanges()
                 .onEach { theme -> backgroundPaint.color = theme.theme }
                 .flowOn(Dispatchers.IO)

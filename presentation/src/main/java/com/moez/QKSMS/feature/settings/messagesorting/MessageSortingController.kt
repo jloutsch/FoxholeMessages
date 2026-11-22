@@ -110,7 +110,6 @@ class MessageSortingController :
 
     override fun confirmSortExistingIntent(): Flow<Unit> = confirmSortExistingEvents
 
-    // QkDialog is shared with screens still on RxJava: bridged until its last user converts
     override fun otpRetentionSelected(): Flow<Int> = otpRetentionDialog.adapter.menuItemClicks
 
     override fun showOtpRetentionPicker() = otpRetentionDialog.show(activity!!)

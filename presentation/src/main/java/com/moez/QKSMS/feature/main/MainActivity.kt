@@ -121,7 +121,6 @@ class MainActivity : QkThemedActivity(), MainView {
     override val optionsItemIntent = events<Int>()
     override val dismissRatingIntent by lazy { binding.drawer.rateDismiss.clicks() }
     override val rateIntent by lazy { binding.drawer.rateOkay.clicks() }
-    // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
     override val conversationsSelectedIntent by lazy {
         allConversationsAdapters.map { it.selectionChanges }.merge()
     }
@@ -217,7 +216,6 @@ class MainActivity : QkThemedActivity(), MainView {
         binding.drawer.root.setOnClickListener { }
 
         // Set the theme color tint to the recyclerView, progressbar, and FAB
-        // QkThemedActivity's theme is still RxJava: bridged until Task 29
         theme.collectIn(lifecycleScope) { theme ->
                     // Set the color for the drawer icons
                     val states = arrayOf(

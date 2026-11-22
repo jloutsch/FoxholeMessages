@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.scheduled
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.MainScope
@@ -59,6 +60,8 @@ class ScheduledMessageAdapter @Inject constructor(
                 contacts = withContext(Dispatchers.IO) { contactRepo.getContacts() }
                 contactCache.clear()
                 notifyDataSetChanged()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.w(e)
             }

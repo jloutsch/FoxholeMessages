@@ -46,7 +46,6 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
     override val bindScope get() = lifecycleScope
 
     override val composeIntent by lazy { binding.compose.clicks() }
-    // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
     override val messagesSelectedIntent by lazy { scheduledMessageAdapter.selectionChanges }
     override val optionsItemIntent = events<Int>()
     override val deleteScheduledMessages = events<List<Long>>()

@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.blocking
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.GlobalScope
@@ -113,6 +114,8 @@ class BlockingController : QkController<BlockingControllerBinding, BlockingView,
                         ?: error("Unable to open destination")
                 }
                 Toast.makeText(appContext, R.string.blocking_rules_exported, Toast.LENGTH_SHORT).show()
+            } catch (e: CancellationException) {
+                throw e
             } catch (error: Exception) {
                 Timber.e(error, "blocking rules export failed")
                 Toast.makeText(appContext, R.string.blocking_rules_export_error, Toast.LENGTH_LONG).show()
@@ -142,6 +145,8 @@ class BlockingController : QkController<BlockingControllerBinding, BlockingView,
                     val (addedNumbers, addedFilters) = blockingRepository.importBlockingRules(parsed.numbers, parsed.filters)
                     Triple(addedNumbers, addedFilters, parsed.skipped)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (error: Exception) {
                 Timber.e(error, "blocking rules import failed")
                 Toast.makeText(appContext, R.string.blocking_rules_import_error, Toast.LENGTH_LONG).show()

@@ -99,7 +99,7 @@ class ConversationInfoController(
     override fun onAttach(view: View) {
         super.onAttach(view)
         presenter.bindIntents(this)
-        // Redraw the rows when a recipient's color changes (QkThemedActivity is still RxJava: bridged)
+        // Redraw the rows when a recipient's color changes
         themedActivity?.theme?.collectIn(bindScope) { binding.recyclerView.scrapViews() }
         setTitle(R.string.info_title)
         showBackButton(true)

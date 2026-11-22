@@ -77,7 +77,6 @@ class SwipeActionsController : QkController<SwipeActionsControllerBinding, Swipe
 
     override fun actionClicks(): Flow<SwipeActionsView.Action> = actionClicks
 
-    // QkDialog is shared with screens still on RxJava: bridged until its last user converts
     override fun actionSelected(): Flow<Int> = actionsDialog.adapter.menuItemClicks
 
     override fun showSwipeActions(selected: Int) {
