@@ -18,52 +18,42 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.numbers
 
-import io.reactivex.rxkotlin.plusAssign
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.interactor.MarkUnblocked
 import dev.octoshrimpy.quik.repository.BlockingRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class BlockedNumbersPresenter @Inject constructor(
     private val blockingRepo: BlockingRepository,
     private val conversationRepo: ConversationRepository,
     private val markUnblocked: MarkUnblocked
-) : QkPresenter<BlockedNumbersView, BlockedNumbersState>(BlockedNumbersState()) {
+) : QkFlowPresenter<BlockedNumbersView, BlockedNumbersState>(BlockedNumbersState()) {
 
     init {
-        disposables += blockingRepo.getBlockedNumbers().asMainObservable()
-            .subscribe { list -> newState { copy(numbers = list) } }
+        blockingRepo.getBlockedNumbers().collectIn(presenterScope) { list -> newState { copy(numbers = list) } }
     }
 
     override fun bindIntents(view: BlockedNumbersView) {
         super.bindIntents(view)
 
-        view.unblockAddress()
-            .observeOn(Schedulers.io())
-            .doOnNext { id ->
+        view.unblockAddress().collectIn(view.bindScope) { id ->
+            withContext(Dispatchers.IO) {
                 blockingRepo.getBlockedNumber(id)?.address
                     ?.let { address -> conversationRepo.getConversation(listOf(address)) }
                     ?.let { conversation -> markUnblocked.execute(listOf(conversation.id)) }
+                blockingRepo.unblockNumber(id)
             }
-            .doOnNext(blockingRepo::unblockNumber)
-            .subscribeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe()
+        }
 
-        view.addAddress()
-            .autoDisposable(view.scope())
-            .subscribe { view.showAddDialog() }
+        view.addAddress().collectIn(view.bindScope) { view.showAddDialog() }
 
-        view.saveAddress()
-            .observeOn(Schedulers.io())
-            .subscribeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe { address -> blockingRepo.blockNumber(address) }
+        view.saveAddress().collectIn(view.bindScope) { address ->
+            withContext(Dispatchers.IO) { blockingRepo.blockNumber(address) }
+        }
     }
 
 }

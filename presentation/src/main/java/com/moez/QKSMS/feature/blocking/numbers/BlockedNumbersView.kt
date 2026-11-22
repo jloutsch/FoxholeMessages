@@ -18,14 +18,14 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.numbers
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 
-interface BlockedNumbersView : QkViewContract<BlockedNumbersState> {
+interface BlockedNumbersView : QkFlowView<BlockedNumbersState> {
 
-    fun unblockAddress(): Observable<Long>
-    fun addAddress(): Observable<*>
-    fun saveAddress(): Observable<String>
+    fun unblockAddress(): Flow<Long>
+    fun addAddress(): Flow<Unit>
+    fun saveAddress(): Flow<String>
 
     fun showAddDialog()
 
