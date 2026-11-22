@@ -18,30 +18,30 @@
  */
 package dev.octoshrimpy.quik.feature.backup
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import android.net.Uri
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
 
-interface BackupView : QkViewContract<BackupState> {
-    fun setBackupLocationClicks(): Observable<*>
-    fun restoreClicks(): Observable<*>
+interface BackupView : QkFlowView<BackupState> {
+    fun setBackupLocationClicks(): Flow<Unit>
+    fun restoreClicks(): Flow<Unit>
 
-    fun backupClicks(): Observable<*>
+    fun backupClicks(): Flow<Unit>
 
-    fun locationRationaleConfirmClicks(): Observable<*>
-    fun locationRationaleCancelClicks(): Observable<*>
+    fun locationRationaleConfirmClicks(): Flow<Unit>
+    fun locationRationaleCancelClicks(): Flow<Unit>
 
-    fun selectedBackupErrorClicks(): Observable<*>
+    fun selectedBackupErrorClicks(): Flow<Unit>
 
-    fun confirmRestoreBackupConfirmClicks(): Observable<*>
-    fun confirmRestoreBackupCancelClicks(): Observable<*>
+    fun confirmRestoreBackupConfirmClicks(): Flow<Unit>
+    fun confirmRestoreBackupCancelClicks(): Flow<Unit>
 
-    fun stopRestoreClicks(): Observable<*>
-    fun stopRestoreConfirmed(): Observable<*>
-    fun stopRestoreCancel(): Observable<*>
+    fun stopRestoreClicks(): Flow<Unit>
+    fun stopRestoreConfirmed(): Flow<Unit>
+    fun stopRestoreCancel(): Flow<Unit>
 
-    fun documentTreeSelected(): Observable<Uri>
-    fun documentSelected(): Observable<Uri>
+    fun documentTreeSelected(): Flow<Uri>
+    fun documentSelected(): Flow<Uri>
 
     fun selectFolder(initialUri: Uri)
     fun selectFile(initialUri: Uri)

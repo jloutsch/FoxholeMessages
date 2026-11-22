@@ -93,6 +93,20 @@ class FlowScreenKitTest {
     }
 
     @Test
+    fun eventRightAfterAttachIsNotLost() {
+        // A screen re-attaches and, in the same moment, gets a result (a picked file). The collector
+        // must already be listening, as RxJava's synchronous subscribe was.
+        val attach = AttachScope()
+        val results = events<Int>()
+        val seen = mutableListOf<Int>()
+        attach.start()
+        results.collectIn(attach.scope) { seen += it }
+        results.tryEmit(7) // no idle in between
+        idle()
+        assertEquals(listOf(7), seen)
+    }
+
+    @Test
     fun clicksEmitAndUnregister() {
         val button = View(context)
         var clicks = 0

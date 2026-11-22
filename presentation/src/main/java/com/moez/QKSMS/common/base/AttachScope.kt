@@ -1,7 +1,8 @@
 package dev.octoshrimpy.quik.common.base
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
 /**
@@ -18,7 +19,10 @@ class AttachScope {
 
     fun start() {
         current?.cancel()
-        current = MainScope()
+        // Main.immediate: collectors subscribe synchronously when bindIntents launches them, as
+        // RxJava's subscribe did. With plain Main they started a frame later, and an event emitted
+        // in between (a picked file arriving as the screen re-attaches) was lost.
+        current = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     }
 
     fun stop() {

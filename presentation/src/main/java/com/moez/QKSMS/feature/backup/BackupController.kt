@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.backup
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
@@ -30,9 +34,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.children
 import androidx.core.view.isVisible
-import com.jakewharton.rxbinding2.view.clicks
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.QkActivityResultContracts
 import dev.octoshrimpy.quik.common.util.extensions.getLabel
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
@@ -44,35 +46,32 @@ import dev.octoshrimpy.quik.common.widget.PreferenceView
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.repository.BackupRepository
 import dev.octoshrimpy.quik.databinding.BackupControllerBinding
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
-class BackupController : QkController<BackupControllerBinding, BackupView, BackupState, BackupPresenter>(), BackupView {
+class BackupController : QkFlowController<BackupControllerBinding, BackupView, BackupState, BackupPresenter>(), BackupView {
 
     @Inject override lateinit var presenter: BackupPresenter
 
-    private val selectFolderCancelSubject: Subject<Unit> = PublishSubject.create()
-    private val selectFolderConfirmSubject: Subject<Unit> = PublishSubject.create()
+    private val selectFolderCancelEvents = events<Unit>()
+    private val selectFolderConfirmEvents = events<Unit>()
 
-    private val restoreErrorConfirmSubject: Subject<Unit> = PublishSubject.create()
+    private val restoreErrorConfirmEvents = events<Unit>()
 
-    private val confirmRestoreCancelSubject: Subject<Unit> = PublishSubject.create()
-    private val confirmRestoreConfirmSubject: Subject<Unit> = PublishSubject.create()
+    private val confirmRestoreCancelEvents = events<Unit>()
+    private val confirmRestoreConfirmEvents = events<Unit>()
 
-    private val stopRestoreConfirmSubject: Subject<Unit> = PublishSubject.create()
-    private val stopRestoreCancelSubject: Subject<Unit> = PublishSubject.create()
+    private val stopRestoreConfirmEvents = events<Unit>()
+    private val stopRestoreCancelEvents = events<Unit>()
 
-    private val documentTreeSelectedSubject: Subject<Uri> = PublishSubject.create()
-    private val documentSelectedSubject: Subject<Uri> = PublishSubject.create()
+    private val documentTreeSelectedEvents = events<Uri>()
+    private val documentSelectedEvents = events<Uri>()
 
     private val stopRestoreDialog by lazy {
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.backup_restore_stop_title)
                 .setMessage(R.string.backup_restore_stop_message)
-                .setPositiveButton(R.string.button_stop, stopRestoreConfirmSubject)
-                .setNegativeButton(R.string.button_cancel, stopRestoreCancelSubject)
+                .setPositiveButton(R.string.button_stop) { _, _ -> stopRestoreConfirmEvents.tryEmit(Unit) }
+                .setNegativeButton(R.string.button_cancel) { _, _ -> stopRestoreCancelEvents.tryEmit(Unit) }
                 .setCancelable(false)
                 .create()
     }
@@ -81,8 +80,8 @@ class BackupController : QkController<BackupControllerBinding, BackupView, Backu
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.backup_select_location_rationale_title)
                 .setMessage(R.string.backup_select_location_rationale_message)
-                .setPositiveButton(R.string.button_continue, selectFolderConfirmSubject)
-                .setNegativeButton(R.string.button_cancel, selectFolderCancelSubject)
+                .setPositiveButton(R.string.button_continue) { _, _ -> selectFolderConfirmEvents.tryEmit(Unit) }
+                .setNegativeButton(R.string.button_cancel) { _, _ -> selectFolderCancelEvents.tryEmit(Unit) }
                 .setCancelable(false)
                 .create()
     }
@@ -91,7 +90,7 @@ class BackupController : QkController<BackupControllerBinding, BackupView, Backu
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.backup_selected_backup_error_title)
                 .setMessage(R.string.backup_selected_backup_error_message)
-                .setPositiveButton(R.string.button_continue, restoreErrorConfirmSubject)
+                .setPositiveButton(R.string.button_continue) { _, _ -> restoreErrorConfirmEvents.tryEmit(Unit) }
                 .setCancelable(false)
                 .create()
     }
@@ -99,8 +98,8 @@ class BackupController : QkController<BackupControllerBinding, BackupView, Backu
     private val selectedBackupDetailsDialog by lazy {
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.backup_selected_backup_details_title)
-                .setPositiveButton(R.string.backup_restore_title, confirmRestoreConfirmSubject)
-                .setNegativeButton(R.string.button_cancel, confirmRestoreCancelSubject)
+                .setPositiveButton(R.string.backup_restore_title) { _, _ -> confirmRestoreConfirmEvents.tryEmit(Unit) }
+                .setNegativeButton(R.string.button_cancel) { _, _ -> confirmRestoreCancelEvents.tryEmit(Unit) }
                 .setCancelable(false)
                 .create()
     }
@@ -119,12 +118,12 @@ class BackupController : QkController<BackupControllerBinding, BackupView, Backu
         // Init activity result contracts
         openDirectory = themedActivity!!
             .registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-                uri?.let(documentTreeSelectedSubject::onNext)
+                uri?.let { documentTreeSelectedEvents.tryEmit(it) }
             }
 
         openDocument = themedActivity!!
             .registerForActivityResult(QkActivityResultContracts.OpenDocument()) { uri ->
-                uri?.let(documentSelectedSubject::onNext)
+                uri?.let { documentSelectedEvents.tryEmit(it) }
             }
     }
 
@@ -203,31 +202,31 @@ class BackupController : QkController<BackupControllerBinding, BackupView, Backu
         stopRestoreDialog.setShowing(state.showStopRestoreDialog)
     }
 
-    override fun setBackupLocationClicks(): Observable<*> = binding.location.clicks()
+    override fun setBackupLocationClicks(): Flow<Unit> = binding.location.clicks()
 
-    override fun restoreClicks(): Observable<*> = binding.restore.clicks()
+    override fun restoreClicks(): Flow<Unit> = binding.restore.clicks()
 
-    override fun locationRationaleConfirmClicks(): Observable<*> = selectFolderConfirmSubject
+    override fun locationRationaleConfirmClicks(): Flow<Unit> = selectFolderConfirmEvents
 
-    override fun locationRationaleCancelClicks(): Observable<*> = selectFolderCancelSubject
+    override fun locationRationaleCancelClicks(): Flow<Unit> = selectFolderCancelEvents
 
-    override fun selectedBackupErrorClicks(): Observable<*> = restoreErrorConfirmSubject
+    override fun selectedBackupErrorClicks(): Flow<Unit> = restoreErrorConfirmEvents
 
-    override fun confirmRestoreBackupConfirmClicks(): Observable<*> = confirmRestoreConfirmSubject
+    override fun confirmRestoreBackupConfirmClicks(): Flow<Unit> = confirmRestoreConfirmEvents
 
-    override fun confirmRestoreBackupCancelClicks(): Observable<*> = confirmRestoreCancelSubject
+    override fun confirmRestoreBackupCancelClicks(): Flow<Unit> = confirmRestoreCancelEvents
 
-    override fun stopRestoreClicks(): Observable<*> = binding.progressCancel.clicks()
+    override fun stopRestoreClicks(): Flow<Unit> = binding.progressCancel.clicks()
 
-    override fun stopRestoreConfirmed(): Observable<*> = stopRestoreConfirmSubject
+    override fun stopRestoreConfirmed(): Flow<Unit> = stopRestoreConfirmEvents
 
-    override fun stopRestoreCancel(): Observable<*> = stopRestoreCancelSubject
+    override fun stopRestoreCancel(): Flow<Unit> = stopRestoreCancelEvents
 
-    override fun backupClicks(): Observable<*> = binding.fab.clicks()
+    override fun backupClicks(): Flow<Unit> = binding.fab.clicks()
 
-    override fun documentTreeSelected(): Observable<Uri> = documentTreeSelectedSubject
+    override fun documentTreeSelected(): Flow<Uri> = documentTreeSelectedEvents
 
-    override fun documentSelected(): Observable<Uri> = documentSelectedSubject
+    override fun documentSelected(): Flow<Uri> = documentSelectedEvents
 
     override fun selectFolder(initialUri: Uri) {
         openDirectory.launch(initialUri)
