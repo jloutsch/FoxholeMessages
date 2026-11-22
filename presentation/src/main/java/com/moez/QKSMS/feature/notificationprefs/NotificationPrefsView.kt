@@ -18,18 +18,17 @@
  */
 package dev.octoshrimpy.quik.feature.notificationprefs
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import android.net.Uri
-import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.common.widget.PreferenceView
-import io.reactivex.Observable
-import io.reactivex.subjects.Subject
 
-interface NotificationPrefsView : QkView<NotificationPrefsState> {
+interface NotificationPrefsView : QkFlowView<NotificationPrefsState> {
 
-    val preferenceClickIntent: Subject<PreferenceView>
-    val previewModeSelectedIntent: Subject<Int>
-    val ringtoneSelectedIntent: Observable<String>
-    val actionsSelectedIntent: Subject<Int>
+    val preferenceClickIntent: Flow<PreferenceView>
+    val previewModeSelectedIntent: Flow<Int>
+    val ringtoneSelectedIntent: Flow<String>
+    val actionsSelectedIntent: Flow<Int>
 
     fun showPreviewModeDialog()
     fun showRingtonePicker(default: Uri?)
