@@ -18,28 +18,25 @@
  */
 package dev.octoshrimpy.quik.feature.settings.swipe
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import com.jakewharton.rxbinding2.view.clicks
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.QkDialog
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.animateLayoutChanges
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.databinding.SwipeActionsControllerBinding
 import dev.octoshrimpy.quik.injection.appComponent
-import io.reactivex.Observable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
-class SwipeActionsController : QkController<SwipeActionsControllerBinding, SwipeActionsView, SwipeActionsState, SwipeActionsPresenter>(), SwipeActionsView {
+class SwipeActionsController : QkFlowController<SwipeActionsControllerBinding, SwipeActionsView, SwipeActionsState, SwipeActionsPresenter>(), SwipeActionsView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): SwipeActionsControllerBinding =
         SwipeActionsControllerBinding.inflate(inflater, container, false)
@@ -48,10 +45,8 @@ class SwipeActionsController : QkController<SwipeActionsControllerBinding, Swipe
     @Inject lateinit var actionsDialog: QkDialog
     @Inject lateinit var colors: Colors
 
-    /**
-     * Allows us to subscribe to [actionClicks] more than once
-     */
-    private val actionClicks: Subject<SwipeActionsView.Action> = PublishSubject.create()
+    /** Taps on either side; a shared flow, so it can be collected more than once */
+    private val actionClicks = events<SwipeActionsView.Action>()
 
     init {
         appComponent.inject(this)
@@ -70,11 +65,8 @@ class SwipeActionsController : QkController<SwipeActionsControllerBinding, Swipe
         binding.right.postDelayed({ binding.right.animateLayoutChanges = true }, 100)
         binding.left.postDelayed({ binding.left.animateLayoutChanges = true }, 100)
 
-        Observable.merge(
-                binding.right.clicks().map { SwipeActionsView.Action.RIGHT },
-                binding.left.clicks().map { SwipeActionsView.Action.LEFT })
-                .autoDisposable(scope())
-                .subscribe(actionClicks)
+        binding.right.setOnClickListener { actionClicks.tryEmit(SwipeActionsView.Action.RIGHT) }
+        binding.left.setOnClickListener { actionClicks.tryEmit(SwipeActionsView.Action.LEFT) }
     }
 
     override fun onAttach(view: View) {
@@ -84,9 +76,10 @@ class SwipeActionsController : QkController<SwipeActionsControllerBinding, Swipe
         showBackButton(true)
     }
 
-    override fun actionClicks(): Observable<SwipeActionsView.Action> = actionClicks
+    override fun actionClicks(): Flow<SwipeActionsView.Action> = actionClicks
 
-    override fun actionSelected(): Observable<Int> = actionsDialog.adapter.menuItemClicks
+    // QkDialog is shared with screens still on RxJava: bridged until its last user converts
+    override fun actionSelected(): Flow<Int> = actionsDialog.adapter.menuItemClicks.asFlow()
 
     override fun showSwipeActions(selected: Int) {
         actionsDialog.adapter.selectedItem = selected
