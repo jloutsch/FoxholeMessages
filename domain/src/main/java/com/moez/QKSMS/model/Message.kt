@@ -157,6 +157,16 @@ open class Message {
     }
 
     /**
+     * [getSummary], led by the reaction's emoji when this message is a reaction. A reaction's text is
+     * what the sender's phone wrote ("Loved an image"); inside the conversation it shows as an emoji
+     * on the message, so previews lead with the emoji too. Skipped if the text already contains it.
+     */
+    fun summaryWithReaction(emoji: String?): String {
+        val summary = getSummary()
+        return emoji?.takeUnless { it in summary }?.let { "$it $summary" } ?: summary
+    }
+
+    /**
      * Returns the text that should be displayed when a preview of the message
      * needs to be displayed, such as in the conversation view or in a notification
      */

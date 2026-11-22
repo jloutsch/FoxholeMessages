@@ -47,6 +47,9 @@ interface MessageRepository {
 
     fun getMessage(messageId: Long): Message?
 
+    /** The emoji of each of these messages that is a reaction, by message id. */
+    fun getReactionEmoji(messageIds: List<Long>): Map<Long, String>
+
     fun getUnmanagedMessage(messageId: Long): Message?
 
     fun getMessages(messageIds: Collection<Long>): List<Message>

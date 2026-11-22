@@ -1465,7 +1465,7 @@ list**, which is the thing to know before touching that area:
   the other tabs count unread conversations and hide 0 (`Tab.badgeText`). The unread-only count was
   nearly always 0 because people star messages they've already read.
 
-### Reactions to pictures — shipped but UNVERIFIED
+### Reactions to pictures (verified 2026-11-21)
 
 Reported as "RCS emojis broke again", but it was never a regression:
 reactions to **pictures have never worked**. The log proved it in one
@@ -1506,7 +1506,11 @@ that was never confirmed:
   rather than `(threadId, text, realm)`, since it needs the date and the
   flag. Three call sites: receive, sync, reparse.
 
-**Status: not device-verified.** Erik sideloaded and the `Loved an
+**Update 2026-11-21: verified.** Justin confirmed on 2.9.x that a reaction to a picture shows as an
+emoji on the picture in the thread. Notifications still showed the text ("Loved an image") until
+they too led with the emoji (`Message.summaryWithReaction`, shared with the inbox preview).
+
+**Earlier status: not device-verified.** Erik sideloaded and the `Loved an
 image` message was still showing as text, but no log was captured, and
 he chose to keep the change and stop rather than chase it — reactions on
 text messages are the common case and those work. So treat this as
