@@ -1,0 +1,5 @@
+What's new in 2.9.11:
+- Fixed: one press of Back now leaves Trash.
+- Fixed: cancelling the file picker in Restore no longer shows "Couldn't read backup file".
+- Fixed: the in-app log keeps writing after the app restarts.
+- Improved: built with the current Android build tools. Nothing should look different.

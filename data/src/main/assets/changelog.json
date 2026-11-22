@@ -1,5 +1,17 @@
 [
   {
+    "versionCode": 2280,
+    "versionName": "2.9.11",
+    "improved": [
+      "Built with the current Android build tools (Android Gradle Plugin 9.5, Gradle 9.8); nothing should look different"
+    ],
+    "fixed": [
+      "One press of Back now leaves Trash",
+      "Cancelling the file picker in Restore no longer shows \"Couldn't read backup file\"",
+      "The in-app log (long-press About in Settings) keeps writing after the app restarts"
+    ]
+  },
+  {
     "versionCode": 2279,
     "versionName": "2.9.10",
     "improved": [
