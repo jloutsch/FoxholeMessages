@@ -18,16 +18,16 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.model.TrustedSender
-import io.reactivex.Observable
 
-interface TrustedSendersView : QkViewContract<TrustedSendersState> {
+interface TrustedSendersView : QkFlowView<TrustedSendersState> {
 
-    fun removeSender(): Observable<TrustedSender>
-    fun confirmRemoveLocked(): Observable<TrustedSender>
-    fun addAddress(): Observable<*>
-    fun saveAddress(): Observable<String>
+    fun removeSender(): Flow<TrustedSender>
+    fun confirmRemoveLocked(): Flow<TrustedSender>
+    fun addAddress(): Flow<Unit>
+    fun saveAddress(): Flow<String>
 
     fun showAddDialog()
     fun showRemoveLockedConfirmDialog(sender: TrustedSender)
