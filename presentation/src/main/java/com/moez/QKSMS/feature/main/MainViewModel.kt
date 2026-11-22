@@ -683,7 +683,9 @@ class MainViewModel @Inject constructor(
             .observeOn(Schedulers.io())
             .autoDisposable(view.scope())
             .subscribe {
-                newState { copy(tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)) }
+                // Counted here, on the background thread: newState's block runs on the main thread (#71)
+                val counts = buildTabUnreadCounts(conversationRepo, messageRepo)
+                newState { copy(tabUnreadCounts = counts) }
             }
 
         // Refresh tab contents/unread counts on resume too, as a fallback in case data changed
@@ -693,7 +695,9 @@ class MainViewModel @Inject constructor(
             .observeOn(Schedulers.io())
             .autoDisposable(view.scope())
             .subscribe {
-                newState { copy(tabUnreadCounts = buildTabUnreadCounts(conversationRepo, messageRepo)) }
+                // Counted here, on the background thread: newState's block runs on the main thread (#71)
+                val counts = buildTabUnreadCounts(conversationRepo, messageRepo)
+                newState { copy(tabUnreadCounts = counts) }
             }
     }
 

@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.scheduled
 
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+import timber.log.Timber
 import android.content.Context
 import android.net.Uri
 import android.view.LayoutInflater
@@ -45,8 +49,21 @@ class ScheduledMessageAdapter @Inject constructor(
     private val phoneNumberUtils: PhoneNumberUtils
 ) : QkListAdapter<ScheduledMessage, QkBindingViewHolder<ScheduledMessageListItemBinding>>(itemId = { it.id }) {
 
-    private val contacts by lazy { contactRepo.getContacts() }
+    // Loaded in the background (#71): reading every contact took about 20 ms on the main thread.
+    // Rows drawn before it arrives show the number, then redraw with the name.
+    private var contacts: List<Contact> = emptyList()
     private val contactCache = ContactCache()
+
+    init {
+        Single.fromCallable { contactRepo.getContacts() }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ loaded ->
+                contacts = loaded
+                contactCache.clear()
+                notifyDataSetChanged()
+            }, Timber::w)
+    }
     private val imagesViewPool = RecyclerView.RecycledViewPool()
 
     val clicks: Subject<Long> = PublishSubject.create()
