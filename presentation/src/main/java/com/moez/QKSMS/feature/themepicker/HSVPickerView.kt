@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.themepicker
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -29,14 +31,13 @@ import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.common.util.extensions.within
 import dev.octoshrimpy.quik.databinding.HsvPickerViewBinding
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 
 class HSVPickerView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : ConstraintLayout(context, attrs) {
 
-    val selectedColor: Subject<Int> = BehaviorSubject.create()
+    // The latest colour, replayed to new collectors (it was a BehaviorSubject)
+    val selectedColor = MutableSharedFlow<Int>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val hues = arrayOf(0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000)
             .map { it.toInt() }.toIntArray()
@@ -131,7 +132,7 @@ class HSVPickerView @JvmOverloads constructor(
         val color = Color.HSVToColor(hsv)
 
         binding.swatch.setTint(color)
-        selectedColor.onNext(color)
+        selectedColor.tryEmit(color)
     }
 
     fun setColor(color: Int) {

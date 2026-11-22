@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.themepicker
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
+import dev.octoshrimpy.quik.common.base.QkFlowView
+import kotlinx.coroutines.flow.Flow
 
-interface ThemePickerView : QkViewContract<ThemePickerState> {
+interface ThemePickerView : QkFlowView<ThemePickerState> {
 
-    fun themeSelected(): Observable<Int>
-    fun hsvThemeSelected(): Observable<Int>
-    fun clearHsvThemeClicks(): Observable<*>
-    fun applyHsvThemeClicks(): Observable<*>
+    fun themeSelected(): Flow<Int>
+    fun hsvThemeSelected(): Flow<Int>
+    fun clearHsvThemeClicks(): Flow<Unit>
+    fun applyHsvThemeClicks(): Flow<Unit>
 
     fun setCurrentTheme(color: Int)
 
