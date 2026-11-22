@@ -18,18 +18,18 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.common.widget.PreferenceView
-import io.reactivex.Observable
 
-interface MessageSortingView : QkViewContract<MessageSortingState> {
+interface MessageSortingView : QkFlowView<MessageSortingState> {
 
-    fun preferenceClicks(): Observable<PreferenceView>
-    fun confirmSortExistingIntent(): Observable<*>
-    fun otpRetentionSelected(): Observable<Int>
-    fun otpNotificationSizeSelected(): Observable<Int>
+    fun preferenceClicks(): Flow<PreferenceView>
+    fun confirmSortExistingIntent(): Flow<Unit>
+    fun otpRetentionSelected(): Flow<Int>
+    fun otpNotificationSizeSelected(): Flow<Int>
     /** Category names (see InboxTab) the user ticked in the widget-tabs picker. */
-    fun widgetTabsSelected(): Observable<Set<String>>
+    fun widgetTabsSelected(): Flow<Set<String>>
 
     fun showSenderRules()
     fun showTrustedSenders()

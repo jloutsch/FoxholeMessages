@@ -18,12 +18,11 @@
  */
 package dev.octoshrimpy.quik.worker
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import androidx.work.workDataOf
 import androidx.work.WorkInfo
-import io.reactivex.Observable
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.rx2.asObservable
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.ExistingWorkPolicy
@@ -54,10 +53,9 @@ class ClassifyExistingMessagesWorker(appContext: Context, workerParams: WorkerPa
         private const val RESULT_SORTED = "sorted"
 
         /** The latest sorting run, as the Message Sorting screen shows it. */
-        fun observeStatus(context: Context): Observable<SortStatus> =
+        fun observeStatus(context: Context): Flow<SortStatus> =
             WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(WORKER_TAG)
                 .map { infos -> statusOf(infos.lastOrNull()) }
-                .asObservable()
 
         fun statusOf(info: WorkInfo?): SortStatus = when (info?.state) {
             WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED, WorkInfo.State.RUNNING -> SortStatus.Running(
