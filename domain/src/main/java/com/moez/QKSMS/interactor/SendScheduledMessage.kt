@@ -21,11 +21,8 @@ package dev.octoshrimpy.quik.interactor
 import android.content.Context
 import android.net.Uri
 import dev.octoshrimpy.quik.compat.TelephonyCompat
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
-import io.reactivex.Flowable
-import io.reactivex.rxkotlin.toFlowable
 import java.util.Collections
 import javax.inject.Inject
 
@@ -43,29 +40,28 @@ class SendScheduledMessage @Inject constructor(
         private val sending: MutableSet<Long> = Collections.synchronizedSet(HashSet())
     }
 
-    override fun buildObservable(params: Long): Flowable<*> {
-        if (!sending.add(params)) return Flowable.empty<Unit>()
+    override suspend fun perform(params: Long) {
+        if (!sending.add(params)) return
 
-        return Flowable.just(params)
-            .mapNotNull(scheduledMessageRepo::getScheduledMessage)
-            .flatMap { message ->
-                if (message.sendAsGroup) {
-                    listOf(message)
-                } else {
-                    message.recipients.map { recipient -> message.copy(recipients = listOf(recipient)) }
-                }.toFlowable()
+        try {
+            val message = scheduledMessageRepo.getScheduledMessage(params) ?: return
+            val messages = if (message.sendAsGroup) {
+                listOf(message)
+            } else {
+                message.recipients.map { recipient -> message.copy(recipients = listOf(recipient)) }
             }
-            .map { message ->
-                val threadId = TelephonyCompat.getOrCreateThreadId(context, message.recipients)
-                val attachments = message.attachments.mapNotNull(Uri::parse).map { Attachment(context, it) }
-                SendNewMessage.Params(
-                    message.subId, threadId, message.recipients, message.body,
-                    message.sendAsGroup, attachments
-                )
+
+            messages.forEach { each ->
+                val threadId = TelephonyCompat.getOrCreateThreadId(context, each.recipients)
+                val attachments = each.attachments.mapNotNull(Uri::parse).map { Attachment(context, it) }
+                val sent = sendNewMessage.perform(SendNewMessage.Params(
+                    each.subId, threadId, each.recipients, each.body, each.sendAsGroup, attachments
+                ))
+                if (sent) deleteScheduledMessagesInteractor.execute(listOf(params))
             }
-            .flatMap(sendNewMessage::buildObservable)
-            .doOnNext { deleteScheduledMessagesInteractor.execute(listOf(params)) }
-            .doFinally { sending.remove(params) }
+        } finally {
+            sending.remove(params)
+        }
     }
 
 }

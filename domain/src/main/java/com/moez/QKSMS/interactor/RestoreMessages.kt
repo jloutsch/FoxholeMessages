@@ -20,7 +20,6 @@ package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class RestoreMessages @Inject constructor(
@@ -28,15 +27,12 @@ class RestoreMessages @Inject constructor(
     private val messageRepo: MessageRepository
 ) : Interactor<List<Long>>() {
 
-    override fun buildObservable(params: List<Long>): Flowable<*> {
-        return Flowable.just(params)
-            .doOnNext { messageIds ->
-                val threadIds = messageRepo.getMessages(messageIds).map { it.threadId }.distinct()
+    override suspend fun perform(params: List<Long>) {
+        val threadIds = messageRepo.getMessages(params).map { it.threadId }.distinct()
 
-                messageRepo.restoreMessages(messageIds)
+        messageRepo.restoreMessages(params)
 
-                conversationRepo.updateConversations(threadIds)
-            }
+        conversationRepo.updateConversations(threadIds)
     }
 
 }

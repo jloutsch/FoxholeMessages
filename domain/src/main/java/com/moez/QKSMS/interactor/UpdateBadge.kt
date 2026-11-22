@@ -20,7 +20,6 @@ package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.manager.ShortcutManager
 import dev.octoshrimpy.quik.manager.WidgetManager
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class UpdateBadge @Inject constructor(
@@ -28,10 +27,9 @@ class UpdateBadge @Inject constructor(
     private val widgetManager: WidgetManager
 ) : Interactor<Unit>() {
 
-    override fun buildObservable(params: Unit): Flowable<*> {
-        return Flowable.just(params)
-                .doOnNext { shortcutManager.updateBadge() }
-                .doOnNext { widgetManager.sendDatasetChanged() }
+    override suspend fun perform(params: Unit) {
+        shortcutManager.updateBadge()
+        widgetManager.sendDatasetChanged()
     }
 
 }
