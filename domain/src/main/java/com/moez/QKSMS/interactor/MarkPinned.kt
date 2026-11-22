@@ -20,7 +20,6 @@ package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.manager.ShortcutManager
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class MarkPinned @Inject constructor(
@@ -29,11 +28,10 @@ class MarkPinned @Inject constructor(
     private val shortcutManager: ShortcutManager
 ) : Interactor<List<Long>>() {
 
-    override fun buildObservable(params: List<Long>): Flowable<*> {
-        return Flowable.just(params.toLongArray())
-                .doOnNext { threadIds -> conversationRepo.markPinned(*threadIds) }
-                .doOnNext { shortcutManager.updateShortcuts() } // Update shortcuts
-                .flatMap { updateBadge.buildObservable(Unit) } // Update the badge and widget
+    override suspend fun perform(params: List<Long>) {
+        conversationRepo.markPinned(*params.toLongArray())
+        shortcutManager.updateShortcuts() // Update shortcuts
+        updateBadge.perform(Unit) // Update the badge and widget
     }
 
 }

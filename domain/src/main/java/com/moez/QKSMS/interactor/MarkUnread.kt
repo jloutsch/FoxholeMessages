@@ -19,7 +19,6 @@
 package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class MarkUnread @Inject constructor(
@@ -27,10 +26,9 @@ class MarkUnread @Inject constructor(
     private val updateBadge: UpdateBadge
 ) : Interactor<List<Long>>() {
 
-    override fun buildObservable(params: List<Long>): Flowable<*> {
-        return Flowable.just(params)
-            .doOnNext { threadIds -> messageRepo.markUnread(threadIds) }
-            .flatMap { updateBadge.buildObservable(Unit) } // Update the badge
+    override suspend fun perform(params: List<Long>) {
+        messageRepo.markUnread(params)
+        updateBadge.perform(Unit) // Update the badge
     }
 
 }

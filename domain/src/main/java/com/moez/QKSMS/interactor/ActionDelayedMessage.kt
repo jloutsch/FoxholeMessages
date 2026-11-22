@@ -20,7 +20,6 @@ package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -36,30 +35,29 @@ class ActionDelayedMessage @Inject constructor(
 
     data class Params(val messageId: Long, val action: Action)
 
-    override fun buildObservable(params: Params): Flowable<*> =
-        Flowable.just(params).doOnNext {
-            val updateConversations = mutableListOf<Long>()
+    override suspend fun perform(params: Params) {
+        val updateConversations = mutableListOf<Long>()
 
-            // cancel the timer before doing anything else
-            messageRepo.cancelDelayedSmsAlarm(params.messageId)
+        // cancel the timer before doing anything else
+        messageRepo.cancelDelayedSmsAlarm(params.messageId)
 
-            messageRepo.getUnmanagedMessage(params.messageId)?.let { message ->
-                when (params.action) {
-                    Action.Cancel -> {
-                        messageRepo.deleteMessages(listOf(message.id))
-                        updateConversations.add(message.threadId)
-                    }
-
-                    Action.Send -> {
-                        messageRepo.markAsSendingNow(message.id)
-                        updateConversations.addAll(
-                            messageRepo.sendMessage(message).map { it.threadId }
-                        )
-                    }
+        messageRepo.getUnmanagedMessage(params.messageId)?.let { message ->
+            when (params.action) {
+                Action.Cancel -> {
+                    messageRepo.deleteMessages(listOf(message.id))
+                    updateConversations.add(message.threadId)
                 }
 
-                conversationRepo.updateConversations(updateConversations)
-            } ?:let { Timber.e("couldn't find message id ${params.messageId}") }
-        }
+                Action.Send -> {
+                    messageRepo.markAsSendingNow(message.id)
+                    updateConversations.addAll(
+                        messageRepo.sendMessage(message).map { it.threadId }
+                    )
+                }
+            }
+
+            conversationRepo.updateConversations(updateConversations)
+        } ?: Timber.e("couldn't find message id ${params.messageId}")
+    }
 
 }

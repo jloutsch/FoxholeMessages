@@ -19,7 +19,6 @@
 package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class MarkBlocked @Inject constructor(
@@ -29,12 +28,9 @@ class MarkBlocked @Inject constructor(
 
     data class Params(val threadIds: List<Long>, val blockingClient: Int, val blockReason: String?)
 
-    override fun buildObservable(params: Params): Flowable<*> {
-        return Flowable.just(params)
-                .doOnNext { (threadIds, blockingClient, blockReason) ->
-                    conversationRepo.markBlocked(threadIds, blockingClient, blockReason)
-                }
-                .flatMap { (threadIds) -> markRead.buildObservable(threadIds) }
+    override suspend fun perform(params: Params) {
+        conversationRepo.markBlocked(params.threadIds, params.blockingClient, params.blockReason)
+        markRead.perform(params.threadIds)
     }
 
 }

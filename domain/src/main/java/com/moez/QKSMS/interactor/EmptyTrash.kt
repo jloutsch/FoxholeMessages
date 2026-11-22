@@ -19,15 +19,12 @@
 package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class EmptyTrash @Inject constructor(
     private val messageRepo: MessageRepository
 ) : Interactor<Unit>() {
 
-    override fun buildObservable(params: Unit): Flowable<*> = Flowable.fromCallable {
-        messageRepo.emptyTrash()
-    }
+    override suspend fun perform(params: Unit) = messageRepo.emptyTrash()
 
 }

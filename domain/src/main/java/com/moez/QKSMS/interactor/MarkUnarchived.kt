@@ -19,14 +19,10 @@
 package dev.octoshrimpy.quik.interactor
 
 import dev.octoshrimpy.quik.repository.ConversationRepository
-import io.reactivex.Flowable
 import javax.inject.Inject
 
 class MarkUnarchived @Inject constructor(private val conversationRepo: ConversationRepository)
     : Interactor<List<Long>>() {
-    override fun buildObservable(params: List<Long>): Flowable<*> {
-        return Flowable.just(params)
-            .doOnNext { threadIds -> conversationRepo.markUnarchived(threadIds) }
-    }
+    override suspend fun perform(params: List<Long>) = conversationRepo.markUnarchived(params)
 
 }

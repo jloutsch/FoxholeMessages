@@ -18,23 +18,21 @@
  */
 package dev.octoshrimpy.quik.interactor
 
+import kotlinx.coroutines.rx2.await
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
-import io.reactivex.Flowable
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class DeduplicateMessages @Inject constructor(
     private val messageRepo: MessageRepository,
     private val conversationRepo: ConversationRepository
 ) : Interactor<Unit>() {
-    override fun buildObservable(params: Unit): Flowable<MessageRepository.DeduplicationResult> =
-        messageRepo.deduplicateMessages()
-            .doOnNext { result ->
-                // Duplicates go to Trash, so recompute snippets/dates for the conversations they were in.
-                if (result is MessageRepository.DeduplicationResult.Success) {
-                    conversationRepo.updateConversations(result.threadIds)
-                }
+    override suspend fun perform(params: Unit): MessageRepository.DeduplicationResult =
+        messageRepo.deduplicateMessages().singleOrError().await().also { result ->
+            // Duplicates go to Trash, so recompute snippets/dates for the conversations they were in.
+            if (result is MessageRepository.DeduplicationResult.Success) {
+                conversationRepo.updateConversations(result.threadIds)
             }
-            .subscribeOn(Schedulers.io())
+        }
+
 }
