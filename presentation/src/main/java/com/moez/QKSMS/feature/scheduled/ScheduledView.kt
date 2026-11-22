@@ -18,18 +18,18 @@
  */
 package dev.octoshrimpy.quik.feature.scheduled
 
-import dev.octoshrimpy.quik.common.base.QkView
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 
-interface ScheduledView : QkView<ScheduledState> {
+interface ScheduledView : QkFlowView<ScheduledState> {
 
-    val composeIntent: Observable<*>
-    val messagesSelectedIntent: Observable<List<Long>>
-    val optionsItemIntent: Observable<Int>
-    val deleteScheduledMessages: Observable<List<Long>>
-    val sendScheduledMessages: Observable<List<Long>>
-    val editScheduledMessage: Observable<Long>
-    val backPressedIntent: Observable<Unit>
+    val composeIntent: Flow<Unit>
+    val messagesSelectedIntent: Flow<List<Long>>
+    val optionsItemIntent: Flow<Int>
+    val deleteScheduledMessages: Flow<List<Long>>
+    val sendScheduledMessages: Flow<List<Long>>
+    val editScheduledMessage: Flow<Long>
+    val backPressedIntent: Flow<Unit>
 
     fun clearSelection()
     fun toggleSelectAll()

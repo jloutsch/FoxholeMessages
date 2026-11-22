@@ -18,21 +18,22 @@
  */
 package dev.octoshrimpy.quik.feature.scheduled
 
+import kotlinx.coroutines.rx2.asFlow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import androidx.lifecycle.lifecycleScope
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
-import com.jakewharton.rxbinding2.view.clicks
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkThemedActivity
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.databinding.ScheduledActivityBinding
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 
@@ -43,13 +44,16 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
     @Inject lateinit var scheduledMessageAdapter: ScheduledMessageAdapter
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
+    override val bindScope get() = lifecycleScope
+
     override val composeIntent by lazy { binding.compose.clicks() }
-    override val messagesSelectedIntent by lazy { scheduledMessageAdapter.selectionChanges }
-    override val optionsItemIntent: Subject<Int> = PublishSubject.create()
-    override val deleteScheduledMessages: Subject<List<Long>> = PublishSubject.create()
-    override val sendScheduledMessages: Subject<List<Long>> = PublishSubject.create()
-    override val editScheduledMessage: Subject<Long> = PublishSubject.create()
-    override val backPressedIntent: Subject<Unit> = PublishSubject.create()
+    // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
+    override val messagesSelectedIntent by lazy { scheduledMessageAdapter.selectionChanges.asFlow() }
+    override val optionsItemIntent = events<Int>()
+    override val deleteScheduledMessages = events<List<Long>>()
+    override val sendScheduledMessages = events<List<Long>>()
+    override val editScheduledMessage = events<Long>()
+    override val backPressedIntent = events<Unit>()
 
     private val viewModel by lazy {
         ViewModelProvider(this, viewModelFactory)[ScheduledViewModel::class.java]
@@ -60,7 +64,7 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
         super.onCreate(savedInstanceState)
         binding = ScheduledActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        onBack { backPressedIntent.onNext(Unit) }
+        onBack { backPressedIntent.tryEmit(Unit) }
         setTitle(R.string.scheduled_title)
         showBackButton(true)
         viewModel.bindView(this)
@@ -110,7 +114,7 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
         AlertDialog.Builder(this)
             .setTitle(R.string.dialog_delete_title)
             .setMessage(resources.getQuantityString(R.plurals.dialog_delete_chat, count, count))
-            .setPositiveButton(R.string.button_delete) { _, _ -> deleteScheduledMessages.onNext(messages) }
+            .setPositiveButton(R.string.button_delete) { _, _ -> deleteScheduledMessages.tryEmit(messages) }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
     }
@@ -120,7 +124,7 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
         AlertDialog.Builder(this)
             .setTitle(R.string.main_menu_send_now)
             .setMessage(resources.getQuantityString(R.plurals.dialog_send_now, count, count))
-            .setPositiveButton(R.string.main_menu_send_now) { _, _ -> sendScheduledMessages.onNext(messages) }
+            .setPositiveButton(R.string.main_menu_send_now) { _, _ -> sendScheduledMessages.tryEmit(messages) }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
     }
@@ -130,7 +134,7 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
             .setTitle(R.string.dialog_edit_scheduled_message_title)
             .setMessage(R.string.dialog_edit_scheduled_message)
             .setPositiveButton(R.string.dialog_edit_scheduled_message_positive_button) { _, _ ->
-                editScheduledMessage.onNext(message)
+                editScheduledMessage.tryEmit(message)
             }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
@@ -142,7 +146,7 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        optionsItemIntent.onNext(item.itemId)
+        optionsItemIntent.tryEmit(item.itemId)
         return true
     }
 

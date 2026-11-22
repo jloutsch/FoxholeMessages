@@ -1,20 +1,18 @@
 package dev.octoshrimpy.quik.feature.scheduled
 
-import io.reactivex.disposables.Disposable
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import androidx.lifecycle.viewModelScope
 import android.content.Context
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.Navigator
-import dev.octoshrimpy.quik.common.base.QkViewModel
 import dev.octoshrimpy.quik.common.util.ClipboardUtils
 import dev.octoshrimpy.quik.interactor.DeleteScheduledMessages
 import dev.octoshrimpy.quik.interactor.SendScheduledMessage
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -25,7 +23,7 @@ class ScheduledViewModel @Inject constructor(
     private val scheduledMessageRepo: ScheduledMessageRepository,
     private val sendScheduledMessageInteractor: SendScheduledMessage,
     private val deleteScheduledMessagesInteractor: DeleteScheduledMessages,
-) : QkViewModel<ScheduledView, ScheduledState>(ScheduledState(
+) : QkFlowViewModel<ScheduledView, ScheduledState>(ScheduledState(
     conversationId = conversationId
 )) {
 
@@ -36,138 +34,110 @@ class ScheduledViewModel @Inject constructor(
     override fun bindView(view: ScheduledView) {
         super.bindView(view)
 
+        // The latest selection, which the menu actions apply to (what withLatestFrom read)
+        var selectedMessages: List<Long> = emptyList()
+
         // update the state when the message selected count changes
-        view.messagesSelectedIntent
-            .map { selection -> selection.size }
-            .autoDisposable(view.scope())
-            .subscribe { newState { copy(selectedMessages = it) } }
+        view.messagesSelectedIntent.collectIn(view.bindScope) { selection ->
+            selectedMessages = selection
+            newState { copy(selectedMessages = selection.size) }
+        }
 
-        // toggle select all / select none
-        view.optionsItemIntent
-            .filter { it == R.id.select_all }
-            .autoDisposable(view.scope())
-            .subscribe { view.toggleSelectAll() }
+        view.optionsItemIntent.collectIn(view.bindScope) { itemId ->
+            when (itemId) {
+                // toggle select all / select none
+                R.id.select_all -> view.toggleSelectAll()
 
-        // show the delete message dialog if one or more messages selected
-        view.optionsItemIntent
-            .filter { it == R.id.delete }
-            .withLatestFrom(view.messagesSelectedIntent) { _, selectedMessages ->
-                selectedMessages }
-            .observeOn(Schedulers.io())
-            .map { selected -> selected.mapNotNull(scheduledMessageRepo::getScheduledMessage).map { it.id } }
-            .observeOn(AndroidSchedulers.mainThread())
-            .autoDisposable(view.scope())
-            .subscribe { ids -> view.showDeleteDialog(ids) }
-
-
-        // copy the selected message text to the clipboard
-        view.optionsItemIntent
-            .filter { it == R.id.copy }
-            .withLatestFrom(view.messagesSelectedIntent) { _, selectedMessageIds -> selectedMessageIds }
-            .observeOn(Schedulers.io())
-            .map { selectedMessageIds ->
-                selectedMessageIds  // same order as messages on screen
-                    .mapNotNull(scheduledMessageRepo::getScheduledMessage)
-                    .sortedBy { it.date }
-                    .let { scheduledMessages ->
-                            when (scheduledMessages.size) {
-                                1 -> scheduledMessages.first().body
-                                else -> scheduledMessages.fold(StringBuilder()) { acc, message ->
-                                    if (acc.isNotEmpty() && message.body.isNotEmpty())
-                                        acc.append("\n\n")
-                                    acc.append(message.body)
-                                }
-                            }.toString()
+                // show the delete message dialog if one or more messages selected
+                R.id.delete -> {
+                    val selected = selectedMessages
+                    val ids = withContext(Dispatchers.IO) {
+                        selected.mapNotNull(scheduledMessageRepo::getScheduledMessage).map { it.id }
                     }
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .autoDisposable(view.scope())
-            .subscribe { text -> ClipboardUtils.copy(context, text) }
+                    view.showDeleteDialog(ids)
+                }
 
-        // send the messages now menu item selected
-        view.optionsItemIntent
-            .filter { it == R.id.send_now }
-            .withLatestFrom(view.messagesSelectedIntent) { _, selectedMessages ->
-                view.showSendNowDialog(selectedMessages)
-            }
-            .autoDisposable(view.scope())
-            .subscribe()
+                // copy the selected message text to the clipboard
+                R.id.copy -> {
+                    val selected = selectedMessages
+                    val text = withContext(Dispatchers.IO) {
+                        selected  // same order as messages on screen
+                            .mapNotNull(scheduledMessageRepo::getScheduledMessage)
+                            .sortedBy { it.date }
+                            .let { scheduledMessages ->
+                                when (scheduledMessages.size) {
+                                    1 -> scheduledMessages.first().body
+                                    else -> scheduledMessages.fold(StringBuilder()) { acc, message ->
+                                        if (acc.isNotEmpty() && message.body.isNotEmpty())
+                                            acc.append("\n\n")
+                                        acc.append(message.body)
+                                    }
+                                }.toString()
+                            }
+                    }
+                    ClipboardUtils.copy(context, text)
+                }
 
-        // edit message menu item selected
-        view.optionsItemIntent
-            .filter { it == R.id.edit_message }
-            .withLatestFrom(view.messagesSelectedIntent) { _, selectedMessage ->
-                view.showEditMessageDialog(selectedMessage.first())
+                // send the messages now menu item selected
+                R.id.send_now -> view.showSendNowDialog(selectedMessages)
+
+                // edit message menu item selected
+                R.id.edit_message -> selectedMessages.firstOrNull()?.let(view::showEditMessageDialog)
+
+                // navigate back or unselect
+                android.R.id.home -> backOrUnselect(view)
             }
-            .autoDisposable(view.scope())
-            .subscribe()
+        }
 
         // delete message(s) (fired after the confirmation dialog has been shown)
-        view.deleteScheduledMessages
-            .autoDisposable(view.scope())
-            .subscribe { selectedMessagesIds ->
-                deleteScheduledMessagesInteractor.execute(selectedMessagesIds.toList())
-                view.clearSelection()
-            }
+        view.deleteScheduledMessages.collectIn(view.bindScope) { selectedMessagesIds ->
+            deleteScheduledMessagesInteractor.execute(selectedMessagesIds.toList())
+            view.clearSelection()
+        }
 
         // send message(s) now (fired after the confirmation dialog has been shown)
-        view.sendScheduledMessages
-            .autoDisposable(view.scope())
-            .subscribe { selectedMessagesIds ->
-                selectedMessagesIds.forEach { selectedMessagesId ->
-                    sendScheduledMessageInteractor.execute(selectedMessagesId)
-                }
-                view.clearSelection()
+        view.sendScheduledMessages.collectIn(view.bindScope) { selectedMessagesIds ->
+            selectedMessagesIds.forEach { selectedMessagesId ->
+                sendScheduledMessageInteractor.execute(selectedMessagesId)
             }
-
+            view.clearSelection()
+        }
 
         // edit message (fired after the confirmation dialog has been shown)
-        view.editScheduledMessage
-            .observeOn(Schedulers.io())
-            .doOnNext { selectedMessageId ->
+        view.editScheduledMessage.collectIn(view.bindScope) { selectedMessageId ->
+            val scheduledMessage = withContext(Dispatchers.IO) {
                 scheduledMessageRepo.getScheduledMessage(selectedMessageId)
-                    ?.let { scheduledMessage ->
-                        navigator.showCompose(scheduledMessage)
-                        scheduledMessageRepo.deleteScheduledMessage(scheduledMessage.id)
-                    }
             }
-            .observeOn(AndroidSchedulers.mainThread())
-            .autoDisposable(view.scope())
-            .subscribe { view.clearSelection() }
+            if (scheduledMessage != null) {
+                navigator.showCompose(scheduledMessage)
+                withContext(Dispatchers.IO) { scheduledMessageRepo.deleteScheduledMessage(scheduledMessage.id) }
+            }
+            view.clearSelection()
+        }
 
         // navigate back or unselect
-        view.optionsItemIntent
-            .filter { it == android.R.id.home }
-            .map { }
-            .mergeWith(view.backPressedIntent)
-            .withLatestFrom(state) { _, state -> state }
-            .autoDisposable(view.scope())
-            .subscribe {
-                when {
-                    (it.selectedMessages > 0) -> view.clearSelection()
-                    else -> view.finishActivity()
-                }
-            }
+        view.backPressedIntent.collectIn(view.bindScope) { backOrUnselect(view) }
 
-        view.composeIntent
-            .autoDisposable(view.scope())
-            .subscribe {
-                navigator.showCompose(mode = "scheduling")
-                view.clearSelection()
-            }
+        view.composeIntent.collectIn(view.bindScope) {
+            navigator.showCompose(mode = "scheduling")
+            view.clearSelection()
+        }
+    }
+
+    private fun backOrUnselect(view: ScheduledView) = when {
+        state.value.selectedMessages > 0 -> view.clearSelection()
+        else -> view.finishActivity()
     }
 
     // Replaced, not added to, when the conversation filter changes
-    private var messagesSubscription: Disposable? = null
+    private var messagesJob: Job? = null
 
     private fun loadMessages(conversationId: Long?) {
         val messages = if (conversationId != null)
             scheduledMessageRepo.getScheduledMessagesForConversation(conversationId)
         else
             scheduledMessageRepo.observeScheduledMessages()
-        messagesSubscription?.dispose()
-        messagesSubscription = messages.asMainObservable()
-            .subscribe { list -> newState { copy(scheduledMessages = list) } }
-            .also { disposables += it }
+        messagesJob?.cancel()
+        messagesJob = messages.collectIn(viewModelScope) { list -> newState { copy(scheduledMessages = list) } }
     }
 }
