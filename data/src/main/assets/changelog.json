@@ -1,5 +1,15 @@
 [
   {
+    "versionCode": 2279,
+    "versionName": "2.9.10",
+    "improved": [
+      "One-time code notifications are left off the lock screen while the phone is locked; they still sound or vibrate, and the code shows once you unlock"
+    ],
+    "fixed": [
+      "A new text now alerts even when an earlier one from the same conversation is still in the notification shade"
+    ]
+  },
+  {
     "versionCode": 2278,
     "versionName": "2.9.9",
     "improved": [

@@ -1,0 +1,3 @@
+What's new in 2.9.10:
+- Improved: one-time code notifications are left off the lock screen while the phone is locked. They still sound or vibrate, and the code shows once you unlock.
+- Fixed: a new text now alerts even when an earlier one from the same conversation is still in the notification shade.
