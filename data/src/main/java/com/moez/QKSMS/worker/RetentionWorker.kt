@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.worker
 
+import kotlinx.coroutines.runBlocking
 import android.content.Context
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -75,9 +76,9 @@ class RetentionWorker(appContext: Context, workerParams: WorkerParameters)
             else -> throw IllegalArgumentException("Unknown job: $job")
         }
         Timber.i("Running $job")
-        // Blocking: execute() subscribes asynchronously and would be cut off when doWork() returns.
-        // blockingAwait rethrows an error; blockingSubscribe() would hand it to RxJava's global handler.
-        interactor.buildObservable(Unit).ignoreElements().blockingAwait()
+        // Waits here: execute() runs asynchronously and would be cut off when doWork() returns.
+        // An error is rethrown, so the job reports failure.
+        runBlocking { interactor.perform(Unit) }
         Result.success()
     } catch (e: Throwable) {
         Timber.e(e, "failed")

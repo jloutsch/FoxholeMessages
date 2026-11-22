@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
@@ -119,22 +122,20 @@ class SyncRepositoryImpl @Inject constructor(
 
         // Only once the sync has committed, so the dedupe's own writes see the new rows
         if (rxPrefs.getBoolean("autoDeduplicateMessages").get()) {
-            DeduplicateMessages(messageRepo.get(), conversationRepo)
-                .buildObservable(Unit)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { result ->
-                    when (result) {
-                        is MessageRepository.DeduplicationResult.NoDuplicates -> {
-                            Timber.i("No duplicate messages found.")
-                        }
-                        is MessageRepository.DeduplicationResult.Success -> {
+            // Runs on its own, as before: the sync doesn't wait for it
+            val deduplicate = DeduplicateMessages(messageRepo.get(), conversationRepo)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    when (val result = deduplicate.perform(Unit)) {
+                        is MessageRepository.DeduplicationResult.NoDuplicates -> Timber.i("No duplicate messages found.")
+                        is MessageRepository.DeduplicationResult.Success ->
                             Timber.i("Moved ${result.trashedCount} duplicate messages to Trash")
-                        }
-                        is MessageRepository.DeduplicationResult.Failure -> {
-                            Timber.e(result.error, "Deduplication failed")
-                        }
+                        is MessageRepository.DeduplicationResult.Failure -> Timber.e(result.error, "Deduplication failed")
                     }
+                } catch (e: Exception) {
+                    Timber.e(e, "Deduplication failed")
                 }
+            }
         }
 
         // A full sync imports messages that have no category yet (every message, on a

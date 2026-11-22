@@ -66,5 +66,6 @@ dependencies {
 
     // Plain-JVM unit tests (src/test) for logic with no Android dependencies, e.g. message sorting.
     testImplementation 'junit:junit:4.13.2'
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
 
 }
