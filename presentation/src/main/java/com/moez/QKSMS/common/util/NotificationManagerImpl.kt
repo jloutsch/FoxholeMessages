@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.common.util
 
+import android.os.Bundle
 import com.bumptech.glide.Glide
 import dev.octoshrimpy.quik.classifier.InboxTab
 import android.app.Notification
@@ -91,6 +92,7 @@ class NotificationManagerImpl @Inject constructor(
         const val BACKUP_RESTORE_CHANNEL_ID = "notifications_backup_restore"
         const val RECEIVING_WORKER_CHANNEL_ID = "notifications_receiving_worker"
         const val CLASSIFICATION_CHANNEL_ID = "notifications_classification"
+        private const val EXTRA_NEWEST_MESSAGE_ID = "dev.octoshrimpy.quik.NEWEST_MESSAGE_ID"
 
         val MARK_TYPE_COUNT = MessageMarkReceiver.MarkType.values().size
 
@@ -191,6 +193,16 @@ class NotificationManagerImpl @Inject constructor(
                     context.grantUriPermission("com.android.systemui", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
 
+        // Rebuilding the notification (a deleted message, a read elsewhere) stays quiet, but each new
+        // text alerts, even while the previous one is still in the shade. The shown notification
+        // remembers the newest message it alerted for.
+        val newestId = messages.lastOrNull()?.id ?: 0L
+        val shownNewestId = notificationManager.activeNotifications
+                .firstOrNull { it.id == threadId.toInt() }
+                ?.notification?.extras
+                ?.takeIf { it.containsKey(EXTRA_NEWEST_MESSAGE_ID) }
+                ?.getLong(EXTRA_NEWEST_MESSAGE_ID)
+
         val notification = NotificationCompat.Builder(context, getChannelIdForNotification(threadId))
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setColor(colors.theme(lastRecipient).theme)
@@ -198,7 +210,8 @@ class NotificationManagerImpl @Inject constructor(
                 .setSmallIcon(R.drawable.ic_notification)
                 .setNumber(messages.size)
                 .setAutoCancel(true)
-                .setOnlyAlertOnce(true)
+                .setOnlyAlertOnce(!alertsForNewest(shownNewestId, newestId))
+                .addExtras(Bundle().apply { putLong(EXTRA_NEWEST_MESSAGE_ID, newestId) })
                 .setContentIntent(contentPI)
                 .setDeleteIntent(seenPI)
                 .setLights(Color.WHITE, 500, 2000)
@@ -277,8 +290,9 @@ class NotificationManagerImpl @Inject constructor(
         }
         // A one-time code is drawn large instead (Settings > Message Sorting > Code notification
         // size), only when the newest unread message is the code and previews show message text.
-        // It follows the preview settings and the lock screen's own rules like any other message:
-        // it used to be shown on the lock screen even with previews off.
+        // It is left off a locked phone's lock screen entirely (it still sounds), whatever the phone's
+        // lock screen settings. "Private" plus a public version only hides content when the phone is
+        // set to hide it, and Android ignores an app's lock screen setting on a channel.
         val newest = messages.last()
         val code = newest?.takeIf { it.isOtp }?.let { otpDetector.extractCode(it.getText()) }
         val codeTextSize = when (prefs.otpNotificationSize.get()) {
@@ -305,6 +319,7 @@ class NotificationManagerImpl @Inject constructor(
                     .setCustomContentView(codeView)
                     .setCustomBigContentView(codeView)
                     .setCustomHeadsUpContentView(codeView)
+                    .setVisibility(NotificationCompat.VISIBILITY_SECRET)
 
             // Copy it on arrival, once per message: this also runs whenever the conversation's
             // notification is rebuilt (e.g. after a delete)
@@ -707,3 +722,7 @@ class NotificationManagerImpl @Inject constructor(
     }
 
 }
+
+/** Whether a conversation's rebuilt notification should alert: only for a text newer than the shown one's. */
+internal fun alertsForNewest(shownNewestId: Long?, newestId: Long): Boolean =
+    shownNewestId == null || newestId > shownNewestId
