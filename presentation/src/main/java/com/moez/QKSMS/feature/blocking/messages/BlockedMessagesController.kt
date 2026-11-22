@@ -18,6 +18,9 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.messages
 
+import kotlinx.coroutines.rx2.asFlow
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.base.QkFlowController
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.Menu
@@ -28,27 +31,25 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.databinding.BlockedMessagesControllerBinding
 import dev.octoshrimpy.quik.feature.blocking.BlockingDialog
 import dev.octoshrimpy.quik.injection.appComponent
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
-class BlockedMessagesController : QkController<BlockedMessagesControllerBinding, BlockedMessagesView, BlockedMessagesState, BlockedMessagesPresenter>(),
+class BlockedMessagesController : QkFlowController<BlockedMessagesControllerBinding, BlockedMessagesView, BlockedMessagesState, BlockedMessagesPresenter>(),
     BlockedMessagesView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): BlockedMessagesControllerBinding =
         BlockedMessagesControllerBinding.inflate(inflater, container, false)
 
-    override val menuReadyIntent: Subject<Unit> = PublishSubject.create()
-    override val optionsItemIntent: Subject<Int> = PublishSubject.create()
+    override val menuReadyIntent = events<Unit>()
+    override val optionsItemIntent = events<Int>()
     override val conversationClicks by lazy { blockedMessagesAdapter.clicks }
-    override val selectionChanges by lazy { blockedMessagesAdapter.selectionChanges }
-    override val confirmDeleteIntent: Subject<List<Long>> = PublishSubject.create()
-    override val backClicked: Subject<Unit> = PublishSubject.create()
+    // The shared list adapter's selection is still RxJava: bridged until QkListAdapter converts
+    override val selectionChanges by lazy { blockedMessagesAdapter.selectionChanges.asFlow() }
+    override val confirmDeleteIntent = events<List<Long>>()
+    override val backClicked = events<Unit>()
 
     @Inject lateinit var blockedMessagesAdapter: BlockedMessagesAdapter
     @Inject lateinit var blockingDialog: BlockingDialog
@@ -78,16 +79,16 @@ class BlockedMessagesController : QkController<BlockedMessagesControllerBinding,
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.blocked_messages, menu)
-        menuReadyIntent.onNext(Unit)
+        menuReadyIntent.tryEmit(Unit)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        optionsItemIntent.onNext(item.itemId)
+        optionsItemIntent.tryEmit(item.itemId)
         return true
     }
 
     override fun handleBack(): Boolean {
-        backClicked.onNext(Unit)
+        backClicked.tryEmit(Unit)
         return true
     }
 
@@ -115,7 +116,7 @@ class BlockedMessagesController : QkController<BlockedMessagesControllerBinding,
         AlertDialog.Builder(activity!!)
                 .setTitle(R.string.dialog_delete_title)
                 .setMessage(resources?.getQuantityString(R.plurals.dialog_delete_message, count, count))
-                .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteIntent.onNext(conversations) }
+                .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteIntent.tryEmit(conversations) }
                 .setNegativeButton(R.string.button_cancel, null)
                 .show()
     }

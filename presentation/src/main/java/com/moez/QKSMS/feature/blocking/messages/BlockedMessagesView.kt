@@ -18,17 +18,17 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.messages
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 
-interface BlockedMessagesView : QkViewContract<BlockedMessagesState> {
+interface BlockedMessagesView : QkFlowView<BlockedMessagesState> {
 
-    val menuReadyIntent: Observable<Unit>
-    val optionsItemIntent: Observable<Int>
-    val conversationClicks: Observable<Long>
-    val selectionChanges: Observable<List<Long>>
-    val confirmDeleteIntent: Observable<List<Long>>
-    val backClicked: Observable<*>
+    val menuReadyIntent: Flow<Unit>
+    val optionsItemIntent: Flow<Int>
+    val conversationClicks: Flow<Long>
+    val selectionChanges: Flow<List<Long>>
+    val confirmDeleteIntent: Flow<List<Long>>
+    val backClicked: Flow<Unit>
 
     fun clearSelection()
     fun showBlockingDialog(conversations: List<Long>, block: Boolean)
