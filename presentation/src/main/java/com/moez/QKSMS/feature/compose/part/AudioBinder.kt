@@ -18,6 +18,11 @@
  */
 package dev.octoshrimpy.quik.feature.compose.part
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Dispatchers
 import com.bumptech.glide.Glide
 import android.content.Context
 import android.content.res.ColorStateList
@@ -43,12 +48,7 @@ import dev.octoshrimpy.quik.extensions.resourceExists
 import dev.octoshrimpy.quik.feature.compose.MessagesAdapter
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
-import io.reactivex.Observable
-import io.reactivex.Single
 import android.util.LruCache
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
@@ -66,17 +66,16 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
 
     private fun startSeekBarUpdateTimer() {
         audioState.apply {
-            seekBarUpdater?.dispose()
-            seekBarUpdater = Observable.interval(500, TimeUnit.MILLISECONDS)
-                .subscribeOn(Schedulers.single())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext {
+            seekBarUpdater?.cancel()
+            seekBarUpdater = MainScope().launch {
+                while (true) {
+                    delay(500)
                     viewHolder?.let { holder ->
                         val binding = MmsAudioPreviewListItemBinding.bind(holder.itemView)
                         binding.seekBar.progress = QkMediaPlayer.currentPosition
                     }
                 }
-                .subscribe()
+            }
         }
     }
 
@@ -113,12 +112,12 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
         val binding = MmsAudioPreviewListItemBinding.bind(holder.itemView)
 
         // click on background - passes back to compose view model
-        holder.itemView.setOnClickListener { clicks.onNext(part.id) }
+        holder.itemView.setOnClickListener { onClick(part.id) }
 
         // The seek bar and play button fill this card and swallow a long press, so the part
         // context menu's Save is effectively unreachable here - hence an explicit button.
         // TooltipCompat rather than android:tooltipText so the label shows below API 26 too.
-        binding.save.setOnClickListener { saveClicks.onNext(part.id) }
+        binding.save.setOnClickListener { onSave(part.id) }
         TooltipCompat.setTooltipText(
             binding.save, context.getString(R.string.audio_save)
         )
@@ -133,7 +132,7 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
                         audioState.state = QkMediaPlayer.PlayingState.Paused
 
                         // stop progress bar update timer
-                        audioState.seekBarUpdater?.dispose()
+                        audioState.seekBarUpdater?.cancel()
                     }
                 }
                 QkMediaPlayer.PlayingState.Paused -> {
@@ -180,7 +179,7 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
                                 viewHolder = null
                                 // Stop the progress timer too. It used to keep ticking every 500ms for
                                 // the life of the app, holding a reference to the old screen.
-                                seekBarUpdater?.dispose()
+                                seekBarUpdater?.cancel()
                                 seekBarUpdater = null
                             }
                         }
@@ -279,14 +278,16 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
         } else {
             bindMetadata(binding, AudioMetadata(null, null), primaryColor, secondaryColor)
             val uri = part.getUri()
-            Single.fromCallable { readMetadata(uri) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ metadata ->
-                    metadataCache.put(partId, metadata)
-                    // the view may have been reused for another part meanwhile
-                    if (binding.thumbnail.tag == partId) bindMetadata(binding, metadata, primaryColor, secondaryColor)
-                }, { /* leave the plain placeholder */ })
+            MainScope().launch {
+                val metadata = try {
+                    withContext(Dispatchers.IO) { readMetadata(uri) }
+                } catch (e: Exception) {
+                    return@launch // leave the plain placeholder
+                }
+                metadataCache.put(partId, metadata)
+                // the view may have been reused for another part meanwhile
+                if (binding.thumbnail.tag == partId) bindMetadata(binding, metadata, primaryColor, secondaryColor)
+            }
         }
     }
 

@@ -49,7 +49,7 @@ class ImageBinder @Inject constructor(colors: Colors, private val context: Conte
     ) {
         val binding = MmsImagePreviewListItemBinding.bind(holder.itemView)
         binding.video.setVisible(part.isVideo())
-        holder.itemView.setOnClickListener { clicks.onNext(part.id) }
+        holder.itemView.setOnClickListener { onClick(part.id) }
 
         binding.thumbnail.bubbleStyle = when {
             !canGroupWithPrevious && canGroupWithNext -> if (message.isMe()) BubbleImageView.Style.OUT_FIRST else BubbleImageView.Style.IN_FIRST

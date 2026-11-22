@@ -18,8 +18,8 @@
  */
 package dev.octoshrimpy.quik.common.util
 
-import io.reactivex.Maybe
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import me.saket.unfurl.Unfurler
 import me.saket.unfurl.UnfurlLogger
 import javax.inject.Inject
@@ -39,16 +39,15 @@ data class LinkPreview(
  * this app uses Realm rather than Room and a persistent cache isn't worth the complexity here.
  *
  * Any failure (timeout, no connection, blocked host, unparsable page) or a page with no usable
- * metadata surfaces as an empty [Maybe] rather than throwing, so callers can fall back to
- * rendering the message as a plain link. [Unfurler.unfurl] is blocking, so callers must not
- * subscribe on the main thread; this wraps it in [Schedulers.io].
+ * metadata gives null, or an exception for a failure, so callers can fall back to rendering the
+ * message as a plain link. [Unfurler.unfurl] is blocking; this runs it on [Dispatchers.IO].
  */
 @Singleton
 class LinkPreviewRepository @Inject constructor() {
 
     private val unfurler = Unfurler(logger = UnfurlLogger.NoOp)
 
-    fun unfurl(url: String): Maybe<LinkPreview> = Maybe.defer {
+    suspend fun unfurl(url: String): LinkPreview? = withContext(Dispatchers.IO) {
         val preview = unfurler.unfurl(url)?.let { result ->
             LinkPreview(
                 url = result.url.toString(),
@@ -59,7 +58,7 @@ class LinkPreviewRepository @Inject constructor() {
             )
         }?.takeIf { it.title != null || it.thumbnailUrl != null }
 
-        if (preview != null) Maybe.just(preview) else Maybe.empty()
-    }.subscribeOn(Schedulers.io())
+        preview
+    }
 
 }

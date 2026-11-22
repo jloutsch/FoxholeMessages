@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.compose.part
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Dispatchers
 import android.annotation.SuppressLint
 import android.content.Context
 import android.text.format.Formatter
@@ -29,14 +33,10 @@ import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.databinding.MmsFileListItemBinding
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.compose.BubbleUtils
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.util.tryOrNull
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class FileBinder @Inject constructor(colors: Colors, private val context: Context) : PartBinder() {
@@ -62,16 +62,13 @@ class FileBinder @Inject constructor(colors: Colors, private val context: Contex
                 .let(binding.fileBackground::setBackgroundResource)
 
         tryOrNull(true) {
-            Observable.just(part.getUri())
-                .mapNotNull { uri ->
-                    tryOrNull(true) {
-                        context.contentResolver.openInputStream(uri)?.use { it.available() }
-                    }
-                }
-                .map { bytes -> Formatter.formatShortFileSize(context, bytes.toLong()) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { size -> binding.size.text = size }
+            val uri = part.getUri()
+            MainScope().launch {
+                val bytes = withContext(Dispatchers.IO) {
+                    tryOrNull(true) { context.contentResolver.openInputStream(uri)?.use { it.available() } }
+                } ?: return@launch
+                binding.size.text = Formatter.formatShortFileSize(context, bytes.toLong())
+            }
 
             binding.filename.text = part.getBestFilename()
         }

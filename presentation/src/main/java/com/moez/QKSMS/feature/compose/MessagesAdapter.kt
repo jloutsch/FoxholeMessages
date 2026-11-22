@@ -18,6 +18,11 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.os.SystemClock
 import com.bumptech.glide.Glide
 import android.animation.ObjectAnimator
@@ -75,10 +80,6 @@ import dev.octoshrimpy.quik.databinding.MessageListItemInBinding
 import dev.octoshrimpy.quik.databinding.MessageListItemOutBinding
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import timber.log.Timber
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -99,7 +100,7 @@ class MessagesAdapter @Inject constructor(
     class AudioState(
         var partId: Long = -1,
         var state: QkMediaPlayer.PlayingState = QkMediaPlayer.PlayingState.Stopped,
-        var seekBarUpdater: Disposable? = null,
+        var seekBarUpdater: Job? = null,
         var viewHolder: QkViewHolder? = null
     )
 
@@ -111,14 +112,14 @@ class MessagesAdapter @Inject constructor(
     }
 
     // click events passed back to compose view model
-    val partClicks: Subject<Long> = PublishSubject.create()
-    val partSaveClicks: Subject<Long> = PublishSubject.create()
-    val messageLinkClicks: Subject<Uri> = PublishSubject.create()
-    val cancelSendingClicks: Subject<Long> = PublishSubject.create()
-    val sendNowClicks: Subject<Long> = PublishSubject.create()
-    val resendClicks: Subject<Long> = PublishSubject.create()
-    val partContextMenuRegistrar: Subject<View> = PublishSubject.create()
-    val reactionClicks: Subject<Long> = PublishSubject.create()
+    val partClicks = events<Long>()
+    val partSaveClicks = events<Long>()
+    val messageLinkClicks = events<Uri>()
+    val cancelSendingClicks = events<Long>()
+    val sendNowClicks = events<Long>()
+    val resendClicks = events<Long>()
+    val partContextMenuRegistrar = events<View>()
+    val reactionClicks = events<Long>()
 
     var threadData: Pair<Conversation, List<Message>>? = null
         set(value) {
@@ -150,7 +151,7 @@ class MessagesAdapter @Inject constructor(
 
     /** Stops the voice-message progress timer; call when the screen goes away. */
     fun releaseAudio() {
-        audioState.seekBarUpdater?.dispose()
+        audioState.seekBarUpdater?.cancel()
         audioState.seekBarUpdater = null
         audioState.viewHolder = null
     }
@@ -185,7 +186,7 @@ class MessagesAdapter @Inject constructor(
         body.hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
 
         // register recycler view with compose activity for context menus
-        partContextMenuRegistrar.onNext(parts)
+        partContextMenuRegistrar.tryEmit(parts)
 
         return QkViewHolder(view).apply {
             view.setOnClickListener {
@@ -272,8 +273,8 @@ class MessagesAdapter @Inject constructor(
                 binding.cancelFrame.visibility = View.VISIBLE
                 binding.sendNowIcon.visibility = View.VISIBLE
 
-                binding.cancelFrame.setOnClickListener { cancelSendingClicks.onNext(message.id) }
-                binding.sendNowIcon.setOnClickListener { sendNowClicks.onNext(message.id) }
+                binding.cancelFrame.setOnClickListener { cancelSendingClicks.tryEmit(message.id) }
+                binding.sendNowIcon.setOnClickListener { sendNowClicks.tryEmit(message.id) }
 
                 binding.cancel.progress = 2
 
@@ -302,7 +303,7 @@ class MessagesAdapter @Inject constructor(
                 binding.resendIcon.visibility = View.VISIBLE
                 // A listener replaces the previous one; clicks().subscribe() added one more each bind
                 binding.resendIcon.setOnClickListener {
-                    resendClicks.onNext(message.id)
+                    resendClicks.tryEmit(message.id)
                     binding.resendIcon.visibility = View.GONE
                 }
             } else {
@@ -443,7 +444,7 @@ class MessagesAdapter @Inject constructor(
                         setSpan(
                             object : ClickableSpan() {
                                 override fun onClick(widget: View) {
-                                    messageLinkClicks.onNext(span.url.toUri())
+                                    messageLinkClicks.tryEmit(span.url.toUri())
                                 }
                             },
                             getSpanStart(span),
@@ -479,8 +480,8 @@ class MessagesAdapter @Inject constructor(
             this.theme = theme
             setData(message, previous, next, holder, audioState)
             contextMenuValue = message.id
-            clicks.subscribe(partClicks)    // part clicks gets passed back to compose view model
-            saveClicks.subscribe(partSaveClicks)
+            // part clicks get passed back to compose view model
+            setPartListeners(onClick = { partClicks.tryEmit(it) }, onSave = { partSaveClicks.tryEmit(it) })
         }
 
         showEmojiReactions(reactions, reactionText, message)
@@ -514,7 +515,7 @@ class MessagesAdapter @Inject constructor(
         favicon: ImageView,
         host: TextView
     ) {
-        (linkPreview.tag as? LinkPreviewBinding)?.disposable?.dispose()
+        (linkPreview.tag as? LinkPreviewBinding)?.job?.cancel()
         linkPreview.tag = LinkPreviewBinding(message.id, null)
         linkPreview.setVisible(false)
         linkPreview.setOnClickListener(null)
@@ -523,10 +524,16 @@ class MessagesAdapter @Inject constructor(
 
         val url = extractFirstUrl(text) ?: return
 
-        val disposable = linkPreviewRepository.unfurl(url)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ preview ->
-                    if ((linkPreview.tag as? LinkPreviewBinding)?.messageId != message.id) return@subscribe
+        val job = MainScope().launch {
+                    val preview = try {
+                        linkPreviewRepository.unfurl(url)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to bind link preview for $url")
+                        null
+                    } ?: return@launch
+                    if ((linkPreview.tag as? LinkPreviewBinding)?.messageId != message.id) return@launch
 
                     title.text = preview.title
                     title.setVisible(preview.title != null)
@@ -552,7 +559,7 @@ class MessagesAdapter @Inject constructor(
 
                     linkPreview.setOnClickListener {
                         when (prefs.messageLinkHandling.get()) {
-                            Preferences.MESSAGE_LINK_HANDLING_ASK -> messageLinkClicks.onNext(url.toUri())
+                            Preferences.MESSAGE_LINK_HANDLING_ASK -> messageLinkClicks.tryEmit(url.toUri())
                             else -> try {
                                 linkPreview.context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                             } catch (e: ActivityNotFoundException) {
@@ -561,15 +568,15 @@ class MessagesAdapter @Inject constructor(
                         }
                     }
                     linkPreview.setVisible(true)
-                }, { Timber.w(it, "Failed to bind link preview for $url") })
+                }
 
-        linkPreview.tag = LinkPreviewBinding(message.id, disposable)
+        linkPreview.tag = LinkPreviewBinding(message.id, job)
     }
 
     override fun onViewRecycled(holder: QkViewHolder) {
         super.onViewRecycled(holder)
         val linkPreview = holder.itemView.findViewById<View>(R.id.linkPreview)
-        (linkPreview?.tag as? LinkPreviewBinding)?.disposable?.dispose()
+        (linkPreview?.tag as? LinkPreviewBinding)?.job?.cancel()
     }
 
     private fun extractFirstUrl(text: CharSequence): String? {
@@ -578,7 +585,7 @@ class MessagesAdapter @Inject constructor(
         return spannable.getSpans(0, spannable.length, URLSpan::class.java).firstOrNull()?.url
     }
 
-    private data class LinkPreviewBinding(val messageId: Long, val disposable: Disposable?)
+    private data class LinkPreviewBinding(val messageId: Long, val job: Job?)
 
     private fun showEmojiReactions(reactionsContainer: View, reactionTextView: TextView, message: Message) {
         val reactions = message.emojiReactions
@@ -596,7 +603,7 @@ class MessagesAdapter @Inject constructor(
             }
 
             reactionTextView.text = reactionText
-            reactionTextView.setOnClickListener { reactionClicks.onNext(message.id) }
+            reactionTextView.setOnClickListener { reactionClicks.tryEmit(message.id) }
             reactionsContainer.setVisible(true)
         } else {
             reactionsContainer.setVisible(false)
