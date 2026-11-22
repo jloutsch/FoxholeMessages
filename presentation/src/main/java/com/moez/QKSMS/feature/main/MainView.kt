@@ -18,32 +18,32 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import android.content.Intent
-import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.manager.ChangelogManager
-import io.reactivex.Observable
 
-interface MainView : QkView<MainState> {
+interface MainView : QkFlowView<MainState> {
 
-    val onNewIntentIntent: Observable<Intent>
-    val activityResumedIntent: Observable<Boolean>
-    val queryChangedIntent: Observable<CharSequence>
-    val composeIntent: Observable<Unit>
-    val drawerToggledIntent: Observable<Boolean>
-    val homeIntent: Observable<*>
-    val navigationIntent: Observable<NavItem>
-    val optionsItemIntent: Observable<Int>
-    val dismissRatingIntent: Observable<*>
-    val rateIntent: Observable<*>
-    val conversationsSelectedIntent: Observable<List<Long>>
-    val confirmDeleteIntent: Observable<List<Long>>
-    val confirmArchiveIntent: Observable<List<Long>>
-    val moveToIntent: Observable<String>
-    val renameConversationIntent: Observable<String>
-    val swipeConversationIntent: Observable<Pair<Long, Int>>
-    val changelogMoreIntent: Observable<*>
-    val undoArchiveIntent: Observable<Unit>
-    val snackbarButtonIntent: Observable<Unit>
+    val onNewIntentIntent: Flow<Intent>
+    val activityResumedIntent: Flow<Boolean>
+    val queryChangedIntent: Flow<CharSequence>
+    val composeIntent: Flow<Unit>
+    val drawerToggledIntent: Flow<Boolean>
+    val homeIntent: Flow<Unit>
+    val navigationIntent: Flow<NavItem>
+    val optionsItemIntent: Flow<Int>
+    val dismissRatingIntent: Flow<Unit>
+    val rateIntent: Flow<Unit>
+    val conversationsSelectedIntent: Flow<List<Long>>
+    val confirmDeleteIntent: Flow<List<Long>>
+    val confirmArchiveIntent: Flow<List<Long>>
+    val moveToIntent: Flow<String>
+    val renameConversationIntent: Flow<String>
+    val swipeConversationIntent: Flow<Pair<Long, Int>>
+    val changelogMoreIntent: Flow<Unit>
+    val undoArchiveIntent: Flow<Unit>
+    val snackbarButtonIntent: Flow<Unit>
 
     fun requestDefaultSms()
     fun requestPermissions()

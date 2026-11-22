@@ -1,5 +1,6 @@
 package dev.octoshrimpy.quik.common.base
 
+import kotlinx.coroutines.Dispatchers
 import androidx.annotation.CallSuper
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,7 +18,9 @@ abstract class QkFlowViewModel<in V : QkFlowView<S>, S : Any>(initialState: S) :
 
     @CallSuper
     open fun bindView(view: V) {
-        view.bindScope.launch { state.collect(view::render) }
+        // Dispatched, not immediate: renders run after the caller (onCreate/onAttach) returns, as
+        // RxJava's observeOn(mainThread) did, so render never sees half-built views
+        view.bindScope.launch(Dispatchers.Main) { state.collect(view::render) }
     }
 
 }

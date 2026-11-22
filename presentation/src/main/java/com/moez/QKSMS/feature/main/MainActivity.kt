@@ -18,6 +18,18 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.CoroutineScope
+import dev.octoshrimpy.quik.common.util.extensions.textChanges
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.drawerOpens
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import androidx.lifecycle.lifecycleScope
 import android.Manifest
 import android.animation.ObjectAnimator
 import android.content.Intent
@@ -34,19 +46,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
 import androidx.viewpager2.widget.ViewPager2
-import com.jakewharton.rxbinding2.view.clicks
-import com.jakewharton.rxbinding2.widget.textChanges
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
-import dev.octoshrimpy.quik.common.androidxcompat.drawerOpen
 import dev.octoshrimpy.quik.common.base.QkThemedActivity
 import dev.octoshrimpy.quik.common.util.extensions.autoScrollToStart
 import dev.octoshrimpy.quik.common.util.extensions.dismissKeyboard
@@ -70,17 +76,13 @@ import dev.octoshrimpy.quik.feature.conversations.Tab
 import dev.octoshrimpy.quik.feature.conversations.badgeText
 import dev.octoshrimpy.quik.manager.ChangelogManager
 import dev.octoshrimpy.quik.repository.SyncRepository
-import io.reactivex.Observable
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import javax.inject.Provider
 
 class MainActivity : QkThemedActivity(), MainView {
 
     @Inject lateinit var blockingDialog: BlockingDialog
-    @Inject lateinit var disposables: CompositeDisposable
+    @Inject lateinit var activityScope: CoroutineScope
     @Inject lateinit var externalNavigator: ExternalNavigator
     @Inject lateinit var conversationsAdapter: ConversationsAdapter
     @Inject lateinit var searchAdapter: SearchAdapter
@@ -93,17 +95,19 @@ class MainActivity : QkThemedActivity(), MainView {
     private lateinit var snackbarBinding: MainPermissionHintBinding
     private lateinit var syncingBinding: MainSyncingBinding
 
-    override val onNewIntentIntent: Subject<Intent> = PublishSubject.create()
-    override val activityResumedIntent: Subject<Boolean> = PublishSubject.create()
+    override val bindScope get() = lifecycleScope
+
+    override val onNewIntentIntent = events<Intent>()
+    override val activityResumedIntent = events<Boolean>()
     override val queryChangedIntent by lazy { binding.toolbarSearch.textChanges() }
     override val composeIntent by lazy { binding.compose.clicks() }
-    override val drawerToggledIntent: Observable<Boolean> by lazy {
-        binding.drawerLayout.drawerOpen(Gravity.START)
+    override val drawerToggledIntent: Flow<Boolean> by lazy {
+        binding.drawerLayout.drawerOpens(Gravity.START)
     }
-    override val homeIntent: Subject<Unit> = PublishSubject.create()
-    override val navigationIntent: Observable<NavItem> by lazy {
-        Observable.merge(listOf(
-                backPressedSubject,
+    override val homeIntent = events<Unit>()
+    override val navigationIntent: Flow<NavItem> by lazy {
+        merge(
+                backPressedEvents,
                 binding.drawer.inbox.clicks().map { NavItem.INBOX },
                 binding.drawer.archived.clicks().map { NavItem.ARCHIVED },
                 binding.drawer.trash.clicks().map { NavItem.TRASH },
@@ -113,24 +117,25 @@ class MainActivity : QkThemedActivity(), MainView {
                 binding.drawer.messageUtils.clicks().map { NavItem.MESSAGE_UTILS },
                 binding.drawer.settings.clicks().map { NavItem.SETTINGS },
                 binding.drawer.about.clicks().map { NavItem.ABOUT },
-                binding.drawer.invite.clicks().map { NavItem.INVITE }))
+                binding.drawer.invite.clicks().map { NavItem.INVITE })
     }
-    override val optionsItemIntent: Subject<Int> = PublishSubject.create()
+    override val optionsItemIntent = events<Int>()
     override val dismissRatingIntent by lazy { binding.drawer.rateDismiss.clicks() }
     override val rateIntent by lazy { binding.drawer.rateOkay.clicks() }
+    // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
     override val conversationsSelectedIntent by lazy {
-        Observable.merge(allConversationsAdapters.map { it.selectionChanges })
+        allConversationsAdapters.map { it.selectionChanges.asFlow() }.merge()
     }
-    override val confirmDeleteIntent: Subject<List<Long>> = PublishSubject.create()
-    override val confirmArchiveIntent: Subject<List<Long>> = PublishSubject.create()
-    override val renameConversationIntent: Subject<String> = PublishSubject.create()
-    override val moveToIntent: Subject<String> = PublishSubject.create()
+    override val confirmDeleteIntent = events<List<Long>>()
+    override val confirmArchiveIntent = events<List<Long>>()
+    override val renameConversationIntent = events<String>()
+    override val moveToIntent = events<String>()
     override val swipeConversationIntent by lazy {
-        Observable.merge(conversationTabPages.map { it.touchCallback.swipes })
+        conversationTabPages.map { it.touchCallback.swipes }.merge()
     }
     override val changelogMoreIntent by lazy { changelogDialog.moreClicks }
-    override val undoArchiveIntent: Subject<Unit> = PublishSubject.create()
-    override val snackbarButtonIntent: Subject<Unit> = PublishSubject.create()
+    override val undoArchiveIntent = events<Unit>()
+    override val snackbarButtonIntent = events<Unit>()
 
     // Message sorting: the Inbox page shows a ViewPager2 of category tabs instead of the flat
     // recyclerView above, which remains in use for Archived/Search. Each category tab gets its
@@ -172,21 +177,19 @@ class MainActivity : QkThemedActivity(), MainView {
         ObjectAnimator.ofInt(syncingBinding.syncingProgress, "progress", 0, 0)
     }
     private val changelogDialog by lazy { ChangelogDialog(this) }
-    private val backPressedSubject: Subject<NavItem> = PublishSubject.create()
+    private val backPressedEvents = events<NavItem>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
         super.onCreate(savedInstanceState)
         binding = MainActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        onBack { backPressedSubject.onNext(NavItem.BACK) }
+        onBack { backPressedEvents.tryEmit(NavItem.BACK) }
         viewModel.bindView(this)
-        onNewIntentIntent.onNext(intent)
+        onNewIntentIntent.tryEmit(intent)
 
         snackbarBinding = MainPermissionHintBinding.bind(binding.snackbar.inflate()).also {
-            it.snackbarButton.clicks()
-                .autoDisposable(scope(Lifecycle.Event.ON_DESTROY))
-                .subscribe(snackbarButtonIntent)
+            it.snackbarButton.setOnClickListener { snackbarButtonIntent.tryEmit(Unit) }
         }
 
         syncingBinding = MainSyncingBinding.bind(binding.syncing.inflate()).also {
@@ -197,7 +200,7 @@ class MainActivity : QkThemedActivity(), MainView {
         toggle.syncState()
         binding.toolbar.setNavigationOnClickListener {
             dismissKeyboard()
-            homeIntent.onNext(Unit)
+            homeIntent.tryEmit(Unit)
         }
 
         conversationsAdapter.autoScrollToStart(binding.recyclerView)
@@ -212,12 +215,11 @@ class MainActivity : QkThemedActivity(), MainView {
         buildTabStrip()
 
         // Don't allow clicks to pass through the drawer layout
-        binding.drawer.root.clicks().autoDisposable(scope()).subscribe()
+        binding.drawer.root.setOnClickListener { }
 
         // Set the theme color tint to the recyclerView, progressbar, and FAB
-        theme
-                .autoDisposable(scope())
-                .subscribe { theme ->
+        // QkThemedActivity's theme is still RxJava: bridged until Task 29
+        theme.asFlow().collectIn(lifecycleScope) { theme ->
                     // Set the color for the drawer icons
                     val states = arrayOf(
                             intArrayOf(android.R.attr.state_activated),
@@ -243,7 +245,7 @@ class MainActivity : QkThemedActivity(), MainView {
 
                     // Set the FAB compose icon color
                     binding.compose.setTint(theme.textPrimary)
-                }
+        }
     }
 
     private var lastTabUnreadCounts: Map<Tab, Long> = emptyMap()
@@ -285,11 +287,11 @@ class MainActivity : QkThemedActivity(), MainView {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) =
-        intent?.let {
-            super.onNewIntent(intent)
-            it.run(onNewIntentIntent::onNext)
-        } ?: Unit
+    override fun onNewIntent(intent: Intent?) {
+        intent ?: return
+        super.onNewIntent(intent)
+        onNewIntentIntent.tryEmit(intent)
+    }
 
     override fun render(state: MainState) {
         if (state.hasError) {
@@ -475,13 +477,13 @@ class MainActivity : QkThemedActivity(), MainView {
     }
 
     override fun onResume() =
-        super.onResume().also { activityResumedIntent.onNext(true) }
+        super.onResume().also { activityResumedIntent.tryEmit(true) }
 
     override fun onPause() =
-        super.onPause().also { activityResumedIntent.onNext(false) }
+        super.onPause().also { activityResumedIntent.tryEmit(false) }
 
     override fun onDestroy() =
-        super.onDestroy().also { disposables.dispose() }
+        super.onDestroy().also { activityScope.cancel() }
 
     override fun showBackButton(show: Boolean) =
         toggle.let {
@@ -545,7 +547,7 @@ class MainActivity : QkThemedActivity(), MainView {
                     conversations.size
                 )
             )
-            .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteIntent.onNext(conversations) }
+            .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteIntent.tryEmit(conversations) }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
     }
@@ -560,7 +562,7 @@ class MainActivity : QkThemedActivity(), MainView {
                     conversations.size
                 )
             )
-            .setPositiveButton(R.string.button_archive) { _, _ -> confirmArchiveIntent.onNext(conversations) }
+            .setPositiveButton(R.string.button_archive) { _, _ -> confirmArchiveIntent.tryEmit(conversations) }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
     }
@@ -575,7 +577,7 @@ class MainActivity : QkThemedActivity(), MainView {
 
         AlertDialog.Builder(this)
             .setTitle(R.string.main_menu_move_to)
-            .setItems(labels) { _, which -> moveToIntent.onNext(categories[which].name) }
+            .setItems(labels) { _, which -> moveToIntent.tryEmit(categories[which].name) }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
     }
@@ -584,7 +586,7 @@ class MainActivity : QkThemedActivity(), MainView {
         TextInputDialog(
             this,
             getString(R.string.info_name),
-            renameConversationIntent::onNext
+            { name -> renameConversationIntent.tryEmit(name) }
         )
             .setText(conversationName)
             .show()
@@ -603,7 +605,7 @@ class MainActivity : QkThemedActivity(), MainView {
             if (countConversationsArchived < 10) Snackbar.LENGTH_LONG
             else Snackbar.LENGTH_INDEFINITE
         ).let {
-            it.setAction(R.string.button_undo) { undoArchiveIntent.onNext(Unit) }
+            it.setAction(R.string.button_undo) { undoArchiveIntent.tryEmit(Unit) }
             it.setActionTextColor(colors.theme().theme)
             it.show()
         }
@@ -615,7 +617,7 @@ class MainActivity : QkThemedActivity(), MainView {
         } ?: false
 
     override fun onOptionsItemSelected(item: MenuItem) =
-        optionsItemIntent.onNext(item.itemId).let { true }
+        optionsItemIntent.tryEmit(item.itemId).let { true }
 
     override fun drawerToggled(opened: Boolean) {
         if (opened) {

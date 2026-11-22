@@ -18,20 +18,22 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
 import androidx.lifecycle.ViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoMap
 import dev.octoshrimpy.quik.injection.ViewModelKey
 import dev.octoshrimpy.quik.injection.scope.ActivityScope
-import io.reactivex.disposables.CompositeDisposable
 
 @Module
 class MainActivityModule {
 
+    // The activity's scope: MainActivity cancels it in onDestroy; the swipe callbacks run in it
     @Provides
     @ActivityScope
-    fun provideCompositeDiposableLifecycle(): CompositeDisposable = CompositeDisposable()
+    fun provideActivityScope(): CoroutineScope = MainScope()
 
     @Provides
     @IntoMap

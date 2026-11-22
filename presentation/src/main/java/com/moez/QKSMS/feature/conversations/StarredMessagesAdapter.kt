@@ -18,9 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.conversations
 
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Dispatchers
 import timber.log.Timber
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -53,14 +54,15 @@ class StarredMessagesAdapter @Inject constructor(
     private val contactCache = ContactCache()
 
     init {
-        Single.fromCallable { contactRepo.getContacts() }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ loaded ->
-                contacts = loaded
+        MainScope().launch {
+            try {
+                contacts = withContext(Dispatchers.IO) { contactRepo.getContacts() }
                 contactCache.clear()
                 notifyDataSetChanged()
-            }, Timber::w)
+            } catch (e: Exception) {
+                Timber.w(e)
+            }
+        }
     }
 
     override fun onCreateViewHolder(

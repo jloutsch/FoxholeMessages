@@ -60,6 +60,36 @@ class FlowScreenKitTest {
     }
 
     @Test
+    fun firstRenderWaitsUntilTheCallerFinishes() {
+        // Screens call bindView in onCreate before inflating every view render touches; RxJava's
+        // observeOn(mainThread) rendered after onCreate returned, so the kit must too, even when
+        // the view's scope is Main.immediate (an activity's lifecycleScope)
+        val immediate = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        val viewModel = CounterViewModel()
+        val view = CounterView(immediate)
+        viewModel.bindView(view)
+        assertEquals("rendered inside bindView", emptyList<Int>(), view.rendered)
+        idle()
+        assertEquals(listOf(0), view.rendered)
+        immediate.cancel()
+    }
+
+    private class CounterPresenter : QkFlowPresenter<CounterView, Int>(0)
+
+    @Test
+    fun presenterFirstRenderWaitsUntilTheCallerFinishes() {
+        val immediate = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        val presenter = CounterPresenter()
+        val view = CounterView(immediate)
+        presenter.bindIntents(view)
+        assertEquals("rendered inside bindIntents", emptyList<Int>(), view.rendered)
+        idle()
+        assertEquals(listOf(0), view.rendered)
+        immediate.cancel()
+        presenter.onCleared()
+    }
+
+    @Test
     fun renderStopsWhenBindScopeIsCancelled() {
         val viewModel = CounterViewModel()
         val viewScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
