@@ -18,43 +18,31 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.filters
 
-import io.reactivex.rxkotlin.plusAssign
-import dev.octoshrimpy.quik.common.util.extensions.asMainObservable
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
-import dev.octoshrimpy.quik.common.base.QkPresenter
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.base.QkFlowPresenter
 import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class MessageContentFiltersPresenter @Inject constructor(
     private val filterRepo: MessageContentFilterRepository,
-) : QkPresenter<MessageContentFiltersView, MessageContentFiltersState>(MessageContentFiltersState()) {
+) : QkFlowPresenter<MessageContentFiltersView, MessageContentFiltersState>(MessageContentFiltersState()) {
 
     init {
-        disposables += filterRepo.getMessageContentFilters().asMainObservable()
-            .subscribe { list -> newState { copy(filters = list) } }
+        filterRepo.getMessageContentFilters().collectIn(presenterScope) { list -> newState { copy(filters = list) } }
     }
 
     override fun bindIntents(view: MessageContentFiltersView) {
         super.bindIntents(view)
 
-        view.removeFilter()
-            .observeOn(Schedulers.io())
-            .doOnNext(filterRepo::removeFilter)
-            .subscribeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe()
+        view.removeFilter().collectIn(view.bindScope) { id -> withContext(Dispatchers.IO) { filterRepo.removeFilter(id) } }
 
-        view.addFilter()
-            .autoDisposable(view.scope())
-            .subscribe { view.showAddDialog() }
+        view.addFilter().collectIn(view.bindScope) { view.showAddDialog() }
 
-        view.saveFilter()
-            .observeOn(Schedulers.io())
-            .subscribeOn(Schedulers.io())
-            .autoDisposable(view.scope())
-            .subscribe { filterData -> filterRepo.createFilter(filterData) }
+        view.saveFilter().collectIn(view.bindScope) { filterData ->
+            withContext(Dispatchers.IO) { filterRepo.createFilter(filterData) }
+        }
     }
 
 }

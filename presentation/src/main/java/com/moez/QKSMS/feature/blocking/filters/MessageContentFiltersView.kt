@@ -18,15 +18,15 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.filters
 
-import dev.octoshrimpy.quik.common.base.QkViewContract
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import dev.octoshrimpy.quik.model.MessageContentFilterData
-import io.reactivex.Observable
 
-interface MessageContentFiltersView : QkViewContract<MessageContentFiltersState> {
+interface MessageContentFiltersView : QkFlowView<MessageContentFiltersState> {
 
-    fun removeFilter(): Observable<Long>
-    fun addFilter(): Observable<*>
-    fun saveFilter(): Observable<MessageContentFilterData>
+    fun removeFilter(): Flow<Long>
+    fun addFilter(): Flow<Unit>
+    fun saveFilter(): Flow<MessageContentFilterData>
 
     fun showAddDialog()
 
