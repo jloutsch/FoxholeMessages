@@ -27,7 +27,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModelProvider
 import androidx.work.WorkerFactory
-import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -114,11 +113,6 @@ class AppModule(private var application: Application) {
         return context.getSharedPreferences("${context.packageName}_preferences", Context.MODE_PRIVATE)
     }
 
-    @Provides
-    @Singleton
-    fun provideRxPreferences(preferences: SharedPreferences): RxSharedPreferences {
-        return RxSharedPreferences.create(preferences)
-    }
 
     @Provides
     @Singleton

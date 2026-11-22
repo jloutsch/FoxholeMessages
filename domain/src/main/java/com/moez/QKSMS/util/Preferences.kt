@@ -23,17 +23,17 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import com.f2prateek.rx.preferences2.Preference
-import com.f2prateek.rx.preferences2.RxSharedPreferences
 import dev.octoshrimpy.quik.common.util.extensions.versionCode
 import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.rx2.asObservable
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class Preferences @Inject constructor(
     context: Context,
-    private val rxPrefs: RxSharedPreferences,
+    private val store: PreferenceStore,
     private val sharedPrefs: SharedPreferences
 ) {
 
@@ -97,99 +97,99 @@ class Preferences @Inject constructor(
     }
 
     // Internal
-    val night = rxPrefs.getBoolean("night", false)
-    val canUseSubId = rxPrefs.getBoolean("canUseSubId", true)
-    val version = rxPrefs.getInteger("version", context.versionCode)
-    val changelogVersion = rxPrefs.getInteger("changelogVersion", context.versionCode)
-    val hasAskedForNotificationPermission = rxPrefs.getBoolean("hasAskedForNotificationPermission", false)
-    val backupDirectory = rxPrefs.getObject("backupDirectory", Uri.EMPTY, UriPreferenceConverter())
+    val night = store.getBoolean("night", false)
+    val canUseSubId = store.getBoolean("canUseSubId", true)
+    val version = store.getInteger("version", context.versionCode)
+    val changelogVersion = store.getInteger("changelogVersion", context.versionCode)
+    val hasAskedForNotificationPermission = store.getBoolean("hasAskedForNotificationPermission", false)
+    val backupDirectory = store.getObject("backupDirectory", Uri.EMPTY, UriPreferenceConverter())
     @Deprecated("This should only be accessed when migrating to @blockingManager")
-    val sia = rxPrefs.getBoolean("sia", false)
+    val sia = store.getBoolean("sia", false)
 
     // User configurable
-    val sendAsGroup = rxPrefs.getBoolean("sendAsGroup", true)
-    val nightMode = rxPrefs.getInteger("nightMode", when (Build.VERSION.SDK_INT >= 29) {
+    val sendAsGroup = store.getBoolean("sendAsGroup", true)
+    val nightMode = store.getInteger("nightMode", when (Build.VERSION.SDK_INT >= 29) {
         true -> NIGHT_MODE_SYSTEM
         false -> NIGHT_MODE_OFF
     })
-    val nightStart = rxPrefs.getString("nightStart", "18:00")
-    val nightEnd = rxPrefs.getString("nightEnd", "6:00")
-    val black = rxPrefs.getBoolean("black", false)
-    val autoColor = rxPrefs.getBoolean("autoColor", true)
+    val nightStart = store.getString("nightStart", "18:00")
+    val nightEnd = store.getString("nightEnd", "6:00")
+    val black = store.getBoolean("black", false)
+    val autoColor = store.getBoolean("autoColor", true)
     // Android 12+: use the wallpaper accent instead of the chosen theme colour (fork issue #42)
-    val systemColors = rxPrefs.getBoolean("fh_systemColors", false)
-    val systemFont = rxPrefs.getBoolean("systemFont", false)
-    val showStt = rxPrefs.getBoolean("showStt", true)
-    val showSttOffsetX = rxPrefs.getFloat("showSttOffsetX", Float.MIN_VALUE)
-    val showSttOffsetY = rxPrefs.getFloat("showSttOffsetY", Float.MIN_VALUE)
-    val textSize = rxPrefs.getInteger("textSize", TEXT_SIZE_NORMAL)
-    val pinchToZoom = rxPrefs.getBoolean("pinchToZoom", false)
-    val messageTextScale = rxPrefs.getFloat("messageTextScale", 1f)
-    val blockingManager = rxPrefs.getInteger("blockingManager", BLOCKING_MANAGER_QKSMS)
-    val drop = rxPrefs.getBoolean("drop", false)
-    val silentNotContact = rxPrefs.getBoolean("silentNotContact", false)
-    val notifAction1 = rxPrefs.getInteger("notifAction1", NOTIFICATION_ACTION_READ)
-    val notifAction2 = rxPrefs.getInteger("notifAction2", NOTIFICATION_ACTION_REPLY)
-    val notifAction3 = rxPrefs.getInteger("notifAction3", NOTIFICATION_ACTION_NONE)
-    val qkreply = rxPrefs.getBoolean("qkreply", Build.VERSION.SDK_INT < Build.VERSION_CODES.N)
-    val qkreplyTapDismiss = rxPrefs.getBoolean("qkreplyTapDismiss", true)
-    val sendDelay = rxPrefs.getInteger("sendDelay", SEND_DELAY_NONE)
-    val swipeRight = rxPrefs.getInteger("swipeRight", SWIPE_ACTION_ARCHIVE)
-    val swipeLeft = rxPrefs.getInteger("swipeLeft", SWIPE_ACTION_ARCHIVE)
+    val systemColors = store.getBoolean("fh_systemColors", false)
+    val systemFont = store.getBoolean("systemFont", false)
+    val showStt = store.getBoolean("showStt", true)
+    val showSttOffsetX = store.getFloat("showSttOffsetX", Float.MIN_VALUE)
+    val showSttOffsetY = store.getFloat("showSttOffsetY", Float.MIN_VALUE)
+    val textSize = store.getInteger("textSize", TEXT_SIZE_NORMAL)
+    val pinchToZoom = store.getBoolean("pinchToZoom", false)
+    val messageTextScale = store.getFloat("messageTextScale", 1f)
+    val blockingManager = store.getInteger("blockingManager", BLOCKING_MANAGER_QKSMS)
+    val drop = store.getBoolean("drop", false)
+    val silentNotContact = store.getBoolean("silentNotContact", false)
+    val notifAction1 = store.getInteger("notifAction1", NOTIFICATION_ACTION_READ)
+    val notifAction2 = store.getInteger("notifAction2", NOTIFICATION_ACTION_REPLY)
+    val notifAction3 = store.getInteger("notifAction3", NOTIFICATION_ACTION_NONE)
+    val qkreply = store.getBoolean("qkreply", Build.VERSION.SDK_INT < Build.VERSION_CODES.N)
+    val qkreplyTapDismiss = store.getBoolean("qkreplyTapDismiss", true)
+    val sendDelay = store.getInteger("sendDelay", SEND_DELAY_NONE)
+    val swipeRight = store.getInteger("swipeRight", SWIPE_ACTION_ARCHIVE)
+    val swipeLeft = store.getInteger("swipeLeft", SWIPE_ACTION_ARCHIVE)
     // Both swipe directions default to Archive, so a stray/accidental swipe archives a
     // conversation immediately with no prompt today - defaults to true (on) since this is
     // specifically meant to prevent that accident, not an opt-in convenience.
-    val confirmArchive = rxPrefs.getBoolean("confirmArchive", true)
-    val autoEmoji = rxPrefs.getBoolean("autoEmoji", true)
-    val delivery = rxPrefs.getBoolean("delivery", false)
-    val signature = rxPrefs.getString("signature", "")
-    val autoDelete = rxPrefs.getInteger("autoDelete", 0)
-    val longAsMms = rxPrefs.getBoolean("longAsMms", false)
-    val mmsSize = rxPrefs.getInteger("mmsSize", -1)
-    val messageLinkHandling = rxPrefs.getInteger("messageLinkHandling", MESSAGE_LINK_HANDLING_ASK)
-    val logging = rxPrefs.getBoolean("logging", false)
+    val confirmArchive = store.getBoolean("confirmArchive", true)
+    val autoEmoji = store.getBoolean("autoEmoji", true)
+    val delivery = store.getBoolean("delivery", false)
+    val signature = store.getString("signature", "")
+    val autoDelete = store.getInteger("autoDelete", 0)
+    val longAsMms = store.getBoolean("longAsMms", false)
+    val mmsSize = store.getInteger("mmsSize", -1)
+    val messageLinkHandling = store.getInteger("messageLinkHandling", MESSAGE_LINK_HANDLING_ASK)
+    val logging = store.getBoolean("logging", false)
     // Set by 2.8.0's one-time Realm → Room import (#44); the old Realm files are deleted once it's set
-    val roomImportVersion = rxPrefs.getInteger("fh_roomImportVersion", 0)
-    val unreadAtTop = rxPrefs.getBoolean("unreadAtTop", false)
+    val roomImportVersion = store.getInteger("fh_roomImportVersion", 0)
+    val unreadAtTop = store.getBoolean("unreadAtTop", false)
 
-    val autoDeduplicate = rxPrefs.getBoolean("autoDeduplicateMessages", false)
+    val autoDeduplicate = store.getBoolean("autoDeduplicateMessages", false)
 
-    val autoSortEnabled = rxPrefs.getBoolean("fh_autoSortEnabled", true)
+    val autoSortEnabled = store.getBoolean("fh_autoSortEnabled", true)
     // Which version of the sorting rules the stored categories were made with; see
     // MessageCategoryBackfill.CLASSIFIER_VERSION. 0 = before versioning existed.
-    val classifierVersion = rxPrefs.getInteger("fh_classifierVersion", 0)
+    val classifierVersion = store.getInteger("fh_classifierVersion", 0)
 
     // Bumping this constant re-runs the emoji reaction reparse once on the next launch, for when
     // reactions that should have been recognised are sitting in threads as plain "Liked ..." text.
     // A preference rather than a schema-migration trigger (which is how the original reparse was
     // driven) so that rolling back to an earlier build stays possible - a Realm schema bump would
     // make the database unopenable by the previous version.
-    val emojiReparseVersion = rxPrefs.getInteger("fh_emojiReparseVersion", 0)
-    val otpRetentionDays = rxPrefs.getInteger("fh_otpRetentionDays", OTP_RETENTION_NEVER)
+    val emojiReparseVersion = store.getInteger("fh_emojiReparseVersion", 0)
+    val otpRetentionDays = store.getInteger("fh_otpRetentionDays", OTP_RETENTION_NEVER)
     // How large a one-time code is drawn in its notification; Off keeps the normal notification
-    val otpNotificationSize = rxPrefs.getInteger("fh_otpNotificationSize", OTP_NOTIFICATION_LARGE)
+    val otpNotificationSize = store.getInteger("fh_otpNotificationSize", OTP_NOTIFICATION_LARGE)
     // The last code message copied to the clipboard on arrival, so a rebuilt notification doesn't
     // copy it again over something the user has copied since
-    val lastAutoCopiedCodeMessageId = rxPrefs.getLong("fh_lastAutoCopiedCodeMessageId", 0L)
+    val lastAutoCopiedCodeMessageId = store.getLong("fh_lastAutoCopiedCodeMessageId", 0L)
 
     /** Inbox tabs (category names, see InboxTab) whose conversations the home-screen widget lists. */
-    val widgetTabs = rxPrefs.getStringSet("fh_widgetTabs", setOf("PERSONAL", "TRANSACTIONAL", "PROMOTIONAL"))
+    val widgetTabs = store.getStringSet("fh_widgetTabs", setOf("PERSONAL", "TRANSACTIONAL", "PROMOTIONAL"))
 
     fun categoryNotifications(category: String): Preference<Boolean> =
-        rxPrefs.getBoolean("fh_notifications_$category", true)
+        store.getBoolean("fh_notifications_$category", true)
 
     fun categoryPreviews(category: String): Preference<Boolean> =
-        rxPrefs.getBoolean("fh_previews_$category", true)
+        store.getBoolean("fh_previews_$category", true)
 
     fun categoryVibration(category: String): Preference<Boolean> =
-        rxPrefs.getBoolean("fh_vibration_$category", false)
+        store.getBoolean("fh_vibration_$category", false)
 
     fun categoryRingtone(category: String): Preference<String> =
-        rxPrefs.getString("fh_ringtone_$category", Settings.System.DEFAULT_NOTIFICATION_URI.toString())
+        store.getString("fh_ringtone_$category", Settings.System.DEFAULT_NOTIFICATION_URI.toString())
 
     init {
         // Migrate from old night mode preference to new one, now that we support android Q night mode
-        val nightModeSummary = rxPrefs.getInteger("nightModeSummary")
+        val nightModeSummary = store.getInteger("nightModeSummary")
         if (nightModeSummary.isSet) {
             nightMode.set(when (nightModeSummary.get()) {
                 0 -> NIGHT_MODE_OFF
@@ -201,84 +201,73 @@ class Preferences @Inject constructor(
         }
     }
 
-    /**
-     * Returns a stream of preference keys for changing preferences
-     */
-    val keyChanges: Observable<String> = Observable.create<String> { emitter ->
-        // Making this a lambda would cause it to be GCd
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key != null)
-                emitter.onNext(key)
-        }
+    /** Keys of settings as they change (emitted on the main thread). */
+    val keyChanges: Flow<String> = sharedPrefs.keyChanges()
 
-        emitter.setCancellable {
-            sharedPrefs.unregisterOnSharedPreferenceChangeListener(listener)
-        }
-
-        sharedPrefs.registerOnSharedPreferenceChangeListener(listener)
-    }.share()
+    @Deprecated("Rx bridge for screens not yet on Flow; removed in #34 Task 29", ReplaceWith("keyChanges"))
+    val keyChangesObservable: Observable<String> = keyChanges.asObservable().share()
 
     fun theme(
         recipientId: Long = 0,
-        default: Int = rxPrefs.getInteger("theme", 0xFF0097A7.toInt()).get()
+        default: Int = store.getInteger("theme", 0xFF0097A7.toInt()).get()
     ): Preference<Int> {
         return when (recipientId) {
-            0L -> rxPrefs.getInteger("theme", 0xFF0097A7.toInt())
-            else -> rxPrefs.getInteger("theme_$recipientId", default)
+            0L -> store.getInteger("theme", 0xFF0097A7.toInt())
+            else -> store.getInteger("theme_$recipientId", default)
         }
     }
 
     fun notifications(threadId: Long = 0): Preference<Boolean> {
-        val default = rxPrefs.getBoolean("notifications", true)
+        val default = store.getBoolean("notifications", true)
 
         return when (threadId) {
             0L -> default
-            else -> rxPrefs.getBoolean("notifications_$threadId", default.get())
+            else -> store.getBoolean("notifications_$threadId", default.get())
         }
     }
 
     fun notificationPreviews(threadId: Long = 0): Preference<Int> {
-        val default = rxPrefs.getInteger("notification_previews", 0)
+        val default = store.getInteger("notification_previews", 0)
 
         return when (threadId) {
             0L -> default
-            else -> rxPrefs.getInteger("notification_previews_$threadId", default.get())
+            else -> store.getInteger("notification_previews_$threadId", default.get())
         }
     }
 
     fun wakeScreen(threadId: Long = 0): Preference<Boolean> {
-        val default = rxPrefs.getBoolean("wake", false)
+        val default = store.getBoolean("wake", false)
 
         return when (threadId) {
             0L -> default
-            else -> rxPrefs.getBoolean("wake_$threadId", default.get())
+            else -> store.getBoolean("wake_$threadId", default.get())
         }
     }
 
     fun vibration(threadId: Long = 0): Preference<Boolean> {
-        val default = rxPrefs.getBoolean("vibration", true)
+        val default = store.getBoolean("vibration", true)
 
         return when (threadId) {
             0L -> default
-            else -> rxPrefs.getBoolean("vibration$threadId", default.get())
+            else -> store.getBoolean("vibration$threadId", default.get())
         }
     }
 
     fun ringtone(threadId: Long = 0): Preference<String> {
-        val default = rxPrefs.getString("ringtone", Settings.System.DEFAULT_NOTIFICATION_URI.toString())
+        val default = store.getString("ringtone", Settings.System.DEFAULT_NOTIFICATION_URI.toString())
 
         return when (threadId) {
             0L -> default
-            else -> rxPrefs.getString("ringtone_$threadId", default.get())
+            else -> store.getString("ringtone_$threadId", default.get())
         }
     }
 
     fun backgroundUri(threadId: Long = 0): Preference<String> {
-        val default = rxPrefs.getString("backgroundUri", "")
+        val default = store.getString("backgroundUri", "")
 
         return when (threadId) {
             0L -> default
-            else -> rxPrefs.getString("backgroundUri_$threadId", default.get())
+            else -> store.getString("backgroundUri_$threadId", default.get())
         }
     }
 
@@ -287,5 +276,5 @@ class Preferences @Inject constructor(
      * keyed by the Tab enum's name. Empty means "use the built-in default title" - keyed by
      * name rather than the Tab type itself since Tab lives in the presentation module.
      */
-    fun tabTitle(tabName: String): Preference<String> = rxPrefs.getString("tabTitle_$tabName", "")
+    fun tabTitle(tabName: String): Preference<String> = store.getString("tabTitle_$tabName", "")
 }

@@ -1,9 +1,8 @@
 package dev.octoshrimpy.quik.util
 
 import android.net.Uri
-import com.f2prateek.rx.preferences2.Preference.Converter
 
-class UriPreferenceConverter : Converter<Uri> {
+class UriPreferenceConverter : Preference.Converter<Uri> {
 
     override fun deserialize(serialized: String): Uri {
         return Uri.parse(serialized)
