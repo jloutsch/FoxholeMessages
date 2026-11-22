@@ -18,9 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.scheduled
 
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Dispatchers
 import timber.log.Timber
 import android.content.Context
 import android.net.Uri
@@ -38,8 +39,6 @@ import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.ScheduledMessage
 import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 class ScheduledMessageAdapter @Inject constructor(
@@ -55,18 +54,17 @@ class ScheduledMessageAdapter @Inject constructor(
     private val contactCache = ContactCache()
 
     init {
-        Single.fromCallable { contactRepo.getContacts() }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ loaded ->
-                contacts = loaded
+        MainScope().launch {
+            try {
+                contacts = withContext(Dispatchers.IO) { contactRepo.getContacts() }
                 contactCache.clear()
                 notifyDataSetChanged()
-            }, Timber::w)
+            } catch (e: Exception) {
+                Timber.w(e)
+            }
+        }
     }
     private val imagesViewPool = RecyclerView.RecycledViewPool()
-
-    val clicks: Subject<Long> = PublishSubject.create()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<ScheduledMessageListItemBinding> {
         val binding = ScheduledMessageListItemBinding.inflate(
