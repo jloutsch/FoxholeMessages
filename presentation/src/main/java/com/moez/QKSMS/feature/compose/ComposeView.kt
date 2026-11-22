@@ -18,72 +18,72 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
+import dev.octoshrimpy.quik.common.base.QkFlowView
 import android.net.Uri
 import android.view.MenuItem
 import android.view.View
 import androidx.core.view.inputmethod.InputContentInfoCompat
 import com.moez.QKSMS.common.QkMediaPlayer
-import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.common.widget.MicInputCloudView
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.Recipient
-import io.reactivex.Observable
-import io.reactivex.subjects.Subject
 
-interface ComposeView : QkView<ComposeState> {
+interface ComposeView : QkFlowView<ComposeState> {
 
     companion object {
         const val CAMERA_DESTINATION_KEY = "camera_destination"
     }
 
-    val activityVisibleIntent: Observable<Boolean>
-    val chipsSelectedIntent: Subject<HashMap<String, String?>>
-    val chipDeletedIntent: Subject<Recipient>
-    val menuReadyIntent: Observable<Unit>
-    val optionsItemIntent: Observable<Int>
-    val contextItemIntent: Observable<MenuItem>
-    val sendAsGroupIntent: Observable<Unit>
-    val messagePartClickIntent: Subject<Long>
-    val messagePartSaveIntent: Subject<Long>
-    val messagePartContextMenuRegistrar: Subject<View>
-    val messagesSelectedIntent: Observable<List<Long>>
-    val cancelDelayedIntent: Subject<Long>
-    val sendDelayedNowIntent: Subject<Long>
-    val resendIntent: Subject<Long>
-    val attachmentDeletedIntent: Subject<Attachment>
-    val textChangedIntent: Observable<CharSequence>
-    val queryChangedIntent: Observable<CharSequence>
-    val attachIntent: Observable<Unit>
-    val cameraIntent: Observable<*>
-    val attachAnyFileIntent: Observable<*>
-    val attachImageFileIntent: Observable<*>
-    val scheduleIntent: Observable<*>
-    val scheduleAction: Observable<*>
-    val attachContactIntent: Observable<*>
-    val attachAnyFileSelectedIntent: Observable<Uri>
-    val contactSelectedIntent: Observable<Uri>
-    val inputContentIntent: Observable<InputContentInfoCompat>
-    val scheduleSelectedIntent: Observable<Long>
-    val scheduleCancelIntent: Observable<*>
-    val changeSimIntent: Observable<*>
-    val sendIntent: Observable<Unit>
-    val backPressedIntent: Observable<Unit>
-    val confirmDeleteIntent: Observable<List<Long>>
-    val clearCurrentMessageIntent: Subject<Boolean>
-    val messageLinkAskIntent: Observable<Uri>
-    val reactionClickIntent: Subject<Long>
-    val speechRecogniserIntent: Observable<*>
-    val shadeIntent: Observable<Unit>
-    val recordAudioStartStopRecording: Subject<Boolean>
-    val recordAnAudioMessage: Observable<Unit>
-    val recordAudioAbort: Observable<Unit>
-    val recordAudioAttach: Observable<Unit>
-    val recordAudioPlayerPlayPause: Observable<QkMediaPlayer.PlayingState>
-    val recordAudioPlayerConfigUI: Subject<QkMediaPlayer.PlayingState>
-    val recordAudioPlayerVisible: Subject<Boolean>
-    val recordAudioMsgRecordVisible: Subject<Boolean>
-    val recordAudioRecord: Subject<MicInputCloudView.ViewState>
-    val recordAudioChronometer: Subject<Boolean>
+    val activityVisibleIntent: Flow<Boolean>
+    val chipsSelectedIntent: MutableSharedFlow<HashMap<String, String?>>
+    val chipDeletedIntent: MutableSharedFlow<Recipient>
+    val menuReadyIntent: Flow<Unit>
+    val optionsItemIntent: Flow<Int>
+    val contextItemIntent: Flow<MenuItem>
+    val sendAsGroupIntent: Flow<Unit>
+    val messagePartClickIntent: MutableSharedFlow<Long>
+    val messagePartSaveIntent: MutableSharedFlow<Long>
+    val messagePartContextMenuRegistrar: MutableSharedFlow<View>
+    val messagesSelectedIntent: Flow<List<Long>>
+    val cancelDelayedIntent: MutableSharedFlow<Long>
+    val sendDelayedNowIntent: MutableSharedFlow<Long>
+    val resendIntent: MutableSharedFlow<Long>
+    val attachmentDeletedIntent: MutableSharedFlow<Attachment>
+    val textChangedIntent: Flow<CharSequence>
+    val queryChangedIntent: Flow<CharSequence>
+    val attachIntent: Flow<Unit>
+    val cameraIntent: Flow<Unit>
+    val attachAnyFileIntent: Flow<Unit>
+    val attachImageFileIntent: Flow<Unit>
+    val scheduleIntent: Flow<Unit>
+    val scheduleAction: Flow<Boolean>
+    val attachContactIntent: Flow<Unit>
+    val attachAnyFileSelectedIntent: Flow<Uri>
+    val contactSelectedIntent: Flow<Uri>
+    val inputContentIntent: Flow<InputContentInfoCompat>
+    val scheduleSelectedIntent: Flow<Long>
+    val scheduleCancelIntent: Flow<Unit>
+    val changeSimIntent: Flow<Unit>
+    val sendIntent: Flow<Unit>
+    val backPressedIntent: Flow<Unit>
+    val confirmDeleteIntent: Flow<List<Long>>
+    val clearCurrentMessageIntent: MutableSharedFlow<Boolean>
+    val messageLinkAskIntent: Flow<Uri>
+    val reactionClickIntent: MutableSharedFlow<Long>
+    val speechRecogniserIntent: Flow<Unit>
+    val shadeIntent: Flow<Unit>
+    val recordAudioStartStopRecording: MutableSharedFlow<Boolean>
+    val recordAnAudioMessage: Flow<Unit>
+    val recordAudioAbort: Flow<Unit>
+    val recordAudioAttach: Flow<Unit>
+    val recordAudioPlayerPlayPause: Flow<QkMediaPlayer.PlayingState>
+    val recordAudioPlayerConfigUI: MutableSharedFlow<QkMediaPlayer.PlayingState>
+    val recordAudioPlayerVisible: MutableSharedFlow<Boolean>
+    val recordAudioMsgRecordVisible: MutableSharedFlow<Boolean>
+    val recordAudioRecord: MutableSharedFlow<MicInputCloudView.ViewState>
+    val recordAudioChronometer: MutableSharedFlow<Boolean>
 
     fun clearSelection()
     fun toggleSelectAll()

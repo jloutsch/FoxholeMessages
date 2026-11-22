@@ -22,19 +22,19 @@ import dev.octoshrimpy.quik.common.base.QkViewHolder
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 
 abstract class PartBinder {
 
-    val clicks: Subject<Long> = PublishSubject.create()
+    // Callbacks rather than streams: a PartsAdapter (and its binders) is made on every bind, and
+    // forwarding a stream from each would leave a collector behind per bind
+    var onClick: (partId: Long) -> Unit = {}
 
     /**
      * Emitted when a part offers its own save affordance. The long-press context menu covers the
      * other part types, but the audio player fills its card with a seek bar and buttons that
      * swallow the long press, so there was no way to reach Save on a voice message at all.
      */
-    val saveClicks: Subject<Long> = PublishSubject.create()
+    var onSave: (partId: Long) -> Unit = {}
 
     abstract val partLayout: Int
 

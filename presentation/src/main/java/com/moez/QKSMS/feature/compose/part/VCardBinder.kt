@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.compose.part
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Dispatchers
 import android.content.Context
 import androidx.core.view.isVisible
 import dev.octoshrimpy.quik.R
@@ -29,15 +33,11 @@ import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.databinding.MmsVcardListItemBinding
 import dev.octoshrimpy.quik.extensions.isVCard
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.compose.BubbleUtils
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.util.tryOrNull
 import ezvcard.Ezvcard
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class VCardBinder @Inject constructor(colors: Colors, private val context: Context) : PartBinder() {
@@ -58,19 +58,21 @@ class VCardBinder @Inject constructor(colors: Colors, private val context: Conte
         BubbleUtils.getBubble(false, canGroupWithPrevious, canGroupWithNext, message.isMe())
                 .let(binding.vCardBackground::setBackgroundResource)
 
-        holder.itemView.setOnClickListener { clicks.onNext(part.id) }
+        holder.itemView.setOnClickListener { onClick(part.id) }
 
         tryOrNull(true) {
-            Observable.just(part.getUri())
-                .map(context.contentResolver::openInputStream)
-                .mapNotNull { inputStream -> inputStream.use { Ezvcard.parse(it).first() } }
-                .map { vcard -> vcard.getDisplayName() ?: "" }
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { displayName ->
-                    binding.name.text = displayName
-                    binding.name.isVisible = displayName.isNotEmpty()
-                }
+            val uri = part.getUri()
+            MainScope().launch {
+                val displayName = withContext(Dispatchers.Default) {
+                    tryOrNull(true) {
+                        context.contentResolver.openInputStream(uri)
+                            ?.use { inputStream -> Ezvcard.parse(inputStream).first() }
+                            ?.let { vcard -> vcard.getDisplayName() ?: "" }
+                    }
+                } ?: return@launch
+                binding.name.text = displayName
+                binding.name.isVisible = displayName.isNotEmpty()
+            }
         }
 
         if (!message.isMe()) {

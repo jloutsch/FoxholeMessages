@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose.editing
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -28,13 +29,12 @@ import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
 import dev.octoshrimpy.quik.common.util.extensions.dpToPx
 import dev.octoshrimpy.quik.databinding.ContactChipBinding
 import dev.octoshrimpy.quik.model.Recipient
-import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 class ChipsAdapter @Inject constructor() : QkAdapter<Recipient, QkBindingViewHolder<ContactChipBinding>>() {
 
     var view: RecyclerView? = null
-    val chipDeleted: PublishSubject<Recipient> = PublishSubject.create()
+    val chipDeleted = events<Recipient>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkBindingViewHolder<ContactChipBinding> {
         val binding = ContactChipBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -73,7 +73,7 @@ class ChipsAdapter @Inject constructor() : QkAdapter<Recipient, QkBindingViewHol
         detailedChipView.show()
 
         detailedChipView.setOnDeleteListener {
-            chipDeleted.onNext(recipient)
+            chipDeleted.tryEmit(recipient)
             detailedChipView.hide()
         }
     }

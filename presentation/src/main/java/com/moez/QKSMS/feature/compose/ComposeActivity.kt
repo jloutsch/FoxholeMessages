@@ -16,8 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with QKSMS.  If not, see <http://www.gnu.org/licenses/>.
  */
+@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class) // flatMapLatest: stable in practice
+
 package dev.octoshrimpy.quik.feature.compose
 
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import dev.octoshrimpy.quik.common.util.extensions.textChanges
+import dev.octoshrimpy.quik.common.util.extensions.events
+import dev.octoshrimpy.quik.common.util.extensions.collectIn
+import dev.octoshrimpy.quik.common.util.extensions.clicks
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import android.Manifest
 import android.animation.LayoutTransition
@@ -56,12 +72,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.flexbox.FlexboxLayoutManager
-import com.jakewharton.rxbinding2.view.clicks
-import com.jakewharton.rxbinding2.widget.textChanges
 import com.moez.QKSMS.common.QkMediaPlayer
-import com.uber.autodispose.ObservableSubscribeProxy
-import com.uber.autodispose.android.lifecycle.scope
-import com.uber.autodispose.autoDisposable
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
@@ -79,25 +90,17 @@ import dev.octoshrimpy.quik.common.util.extensions.showKeyboard
 import dev.octoshrimpy.quik.common.widget.MicInputCloudView
 import dev.octoshrimpy.quik.common.widget.QkContextMenuRecyclerView
 import dev.octoshrimpy.quik.extensions.isAudio
-import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.feature.compose.editing.ChipsAdapter
 import dev.octoshrimpy.quik.feature.contacts.ContactsActivity
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.util.tryOrNull
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
 import dev.octoshrimpy.quik.databinding.ComposeActivityBinding
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import androidx.core.content.IntentCompat
 import androidx.core.os.BundleCompat
@@ -114,60 +117,64 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
     private lateinit var binding: ComposeActivityBinding
 
-    override val activityVisibleIntent: Subject<Boolean> = PublishSubject.create()
-    override val chipsSelectedIntent: Subject<HashMap<String, String?>> = PublishSubject.create()
-    override val chipDeletedIntent: Subject<Recipient> by lazy { chipsAdapter.chipDeleted }
-    override val menuReadyIntent: Observable<Unit> = menu.map { }
-    override val optionsItemIntent: Subject<Int> = PublishSubject.create()
-    override val contextItemIntent: Subject<MenuItem> = PublishSubject.create()
-    override val scheduleAction: Subject<Boolean> = PublishSubject.create()
+    override val bindScope get() = lifecycleScope
+
+    override val activityVisibleIntent = events<Boolean>()
+    override val chipsSelectedIntent = events<HashMap<String, String?>>()
+    override val chipDeletedIntent by lazy { chipsAdapter.chipDeleted }
+    // QkActivity's menu is still RxJava: bridged until Task 29
+    override val menuReadyIntent: Flow<Unit> = menu.asFlow().map { }
+    override val optionsItemIntent = events<Int>()
+    override val contextItemIntent = events<MenuItem>()
+    override val scheduleAction = events<Boolean>()
     override val sendAsGroupIntent by lazy { binding.sendAsGroupSwitch.clicks() }
-    override val messagePartClickIntent: Subject<Long> by lazy { messageAdapter.partClicks }
-    override val messagePartSaveIntent: Subject<Long> by lazy { messageAdapter.partSaveClicks }
-    override val messagePartContextMenuRegistrar: Subject<View> by lazy { messageAdapter.partContextMenuRegistrar }
-    override val messagesSelectedIntent by lazy { messageAdapter.selectionChanges }
-    override val cancelDelayedIntent: Subject<Long> by lazy { messageAdapter.cancelSendingClicks }
-    override val sendDelayedNowIntent: Subject<Long> by lazy { messageAdapter.sendNowClicks }
-    override val resendIntent: Subject<Long> by lazy { messageAdapter.resendClicks }
-    override val attachmentDeletedIntent: Subject<Attachment> by lazy { composeAttachmentAdapter.attachmentDeleted }
+    override val messagePartClickIntent by lazy { messageAdapter.partClicks }
+    override val messagePartSaveIntent by lazy { messageAdapter.partSaveClicks }
+    override val messagePartContextMenuRegistrar by lazy { messageAdapter.partContextMenuRegistrar }
+    // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
+    override val messagesSelectedIntent by lazy { messageAdapter.selectionChanges.asFlow() }
+    override val cancelDelayedIntent by lazy { messageAdapter.cancelSendingClicks }
+    override val sendDelayedNowIntent by lazy { messageAdapter.sendNowClicks }
+    override val resendIntent by lazy { messageAdapter.resendClicks }
+    override val attachmentDeletedIntent by lazy { composeAttachmentAdapter.attachmentDeleted }
     override val textChangedIntent by lazy { binding.message.textChanges() }
-    override val attachIntent: Observable<Unit> by lazy { Observable.merge(binding.attach.clicks(), binding.shadeBackground.clicks()) }
-    override val cameraIntent: Observable<Unit> by lazy { Observable.merge(binding.camera.clicks(), binding.cameraLabel.clicks()) }
-    override val attachImageFileIntent: Observable<Unit> by lazy { Observable.merge(binding.gallery.clicks(), binding.galleryLabel.clicks()) }
-    override val attachAnyFileIntent: Observable<Unit> by lazy { Observable.merge(binding.attachAFileIcon.clicks(), binding.attachAFileLabel.clicks()) }
-    override val scheduleIntent: Observable<Unit> by lazy { Observable.merge(binding.schedule.clicks(), binding.scheduleLabel.clicks()) }
-    override val attachContactIntent: Observable<Unit> by lazy { Observable.merge(binding.contact.clicks(), binding.contactLabel.clicks()) }
-    override val attachAnyFileSelectedIntent: Subject<Uri> = PublishSubject.create()
-    override val contactSelectedIntent: Subject<Uri> = PublishSubject.create()
+    override val attachIntent: Flow<Unit> by lazy { merge(binding.attach.clicks(), binding.shadeBackground.clicks()) }
+    override val cameraIntent: Flow<Unit> by lazy { merge(binding.camera.clicks(), binding.cameraLabel.clicks()) }
+    override val attachImageFileIntent: Flow<Unit> by lazy { merge(binding.gallery.clicks(), binding.galleryLabel.clicks()) }
+    override val attachAnyFileIntent: Flow<Unit> by lazy { merge(binding.attachAFileIcon.clicks(), binding.attachAFileLabel.clicks()) }
+    override val scheduleIntent: Flow<Unit> by lazy { merge(binding.schedule.clicks(), binding.scheduleLabel.clicks()) }
+    override val attachContactIntent: Flow<Unit> by lazy { merge(binding.contact.clicks(), binding.contactLabel.clicks()) }
+    override val attachAnyFileSelectedIntent = events<Uri>()
+    override val contactSelectedIntent = events<Uri>()
     override val inputContentIntent by lazy { binding.message.inputContentSelected }
-    override val scheduleSelectedIntent: Subject<Long> = PublishSubject.create()
+    override val scheduleSelectedIntent = events<Long>()
     override val changeSimIntent by lazy { binding.sim.clicks() }
     override val scheduleCancelIntent by lazy { binding.scheduledCancel.clicks() }
-    override val sendIntent by lazy {  Observable.merge(binding.send.clicks(), binding.scheduledSend.clicks()) }
-    override val backPressedIntent: Subject<Unit> = PublishSubject.create()
-    override val confirmDeleteIntent: Subject<List<Long>> = PublishSubject.create()
-    override val clearCurrentMessageIntent: Subject<Boolean> = PublishSubject.create()
-    override val messageLinkAskIntent: Subject<Uri> by lazy { messageAdapter.messageLinkClicks }
-    override val reactionClickIntent: Subject<Long> by lazy { messageAdapter.reactionClicks }
+    override val sendIntent by lazy { merge(binding.send.clicks(), binding.scheduledSend.clicks()) }
+    override val backPressedIntent = events<Unit>()
+    override val confirmDeleteIntent = events<List<Long>>()
+    override val clearCurrentMessageIntent = events<Boolean>()
+    override val messageLinkAskIntent by lazy { messageAdapter.messageLinkClicks }
+    override val reactionClickIntent by lazy { messageAdapter.reactionClicks }
     override val queryChangedIntent by lazy { binding.toolbarSearch.textChanges() }
     override val speechRecogniserIntent by lazy { binding.speechToTextIcon.clicks() }
     override val shadeIntent by lazy { binding.shadeBackground.clicks() }
-    override val recordAudioStartStopRecording: Subject<Boolean> = PublishSubject.create()
-    override val recordAnAudioMessage: Observable<Unit> by lazy {
-        Observable.merge(binding.recordAudioMsg.clicks(),
+    override val recordAudioStartStopRecording = events<Boolean>()
+    override val recordAnAudioMessage: Flow<Unit> by lazy {
+        merge(binding.recordAudioMsg.clicks(),
             binding.attachAnAudioMessageIcon.clicks(),
             binding.attachAnAudioMessageLabel.clicks())
     }
     override val recordAudioAbort by lazy { binding.audioMsgAbort.clicks() }
     override val recordAudioAttach by lazy { binding.audioMsgAttach.clicks() }
-    override val recordAudioPlayerPlayPause: Subject<QkMediaPlayer.PlayingState> = PublishSubject.create()
-    override val recordAudioPlayerConfigUI: Subject<QkMediaPlayer.PlayingState> = PublishSubject.create()
-    override val recordAudioPlayerVisible: Subject<Boolean> = PublishSubject.create()
-    override val recordAudioMsgRecordVisible: Subject<Boolean> = PublishSubject.create()
-    override val recordAudioChronometer: Subject<Boolean> = PublishSubject.create()
-    override val recordAudioRecord: Subject<MicInputCloudView.ViewState> = PublishSubject.create()
+    override val recordAudioPlayerPlayPause = events<QkMediaPlayer.PlayingState>()
+    override val recordAudioPlayerConfigUI = events<QkMediaPlayer.PlayingState>()
+    override val recordAudioPlayerVisible = events<Boolean>()
+    override val recordAudioMsgRecordVisible = events<Boolean>()
+    override val recordAudioChronometer = events<Boolean>()
+    override val recordAudioRecord = events<MicInputCloudView.ViewState>()
 
-    private var seekBarUpdater: Disposable? = null
+    private var seekBarUpdater: Job? = null
 
     private val viewModel by lazy { ViewModelProvider(this, viewModelFactory)[ComposeViewModel::class.java] }
 
@@ -177,23 +184,23 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         @Suppress("UNCHECKED_CAST")
         val chips = data?.let { IntentCompat.getSerializableExtra(it, ContactsActivity.CHIPS_KEY, HashMap::class.java) }
                 as? HashMap<String, String?>
-        chipsSelectedIntent.onNext(chips ?: hashMapOf())
+        chipsSelectedIntent.tryEmit(chips ?: hashMapOf())
     }
 
     private val takePhotoLauncher = launcherForResult {
-        cameraDestination?.let(attachAnyFileSelectedIntent::onNext)
+        cameraDestination?.let { attachAnyFileSelectedIntent.tryEmit(it) }
     }
 
     private val attachFileLauncher = launcherForResult { data ->
         data?.clipData?.itemCount
             ?.let { count -> 0 until count }
             ?.mapNotNull { i -> data.clipData?.getItemAt(i)?.uri }
-            ?.forEach(attachAnyFileSelectedIntent::onNext)
-            ?: data?.data?.let(attachAnyFileSelectedIntent::onNext)
+            ?.forEach { attachAnyFileSelectedIntent.tryEmit(it) }
+            ?: data?.data?.let { attachAnyFileSelectedIntent.tryEmit(it) }
     }
 
     private val attachContactLauncher = launcherForResult { data ->
-        data?.data?.let(contactSelectedIntent::onNext)
+        data?.data?.let { contactSelectedIntent.tryEmit(it) }
     }
 
     private val speechLauncher = launcherForResult { data ->
@@ -212,11 +219,12 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     private var searchBarVisible = false
     private var preSearchScrollPosition: Int? = null
 
-    private fun getSeekBarUpdater(): ObservableSubscribeProxy<Long> {
-        return Observable.interval(500, TimeUnit.MILLISECONDS)
-            .subscribeOn(Schedulers.single())
-            .observeOn(AndroidSchedulers.mainThread())
-            .autoDisposable(scope())
+    /** Runs [tick] every 500ms on the main thread until cancelled or the activity is destroyed */
+    private fun startSeekBarUpdater(tick: () -> Unit): Job = lifecycleScope.launch {
+        while (true) {
+            delay(500)
+            tick()
+        }
     }
 
     private fun isSpeechRecognitionAvailable(): Boolean {
@@ -228,7 +236,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         super.onCreate(savedInstanceState)
         binding = ComposeActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        onBack { backPressedIntent.onNext(Unit) }
+        onBack { backPressedIntent.tryEmit(Unit) }
         showBackButton(true)
         viewModel.bindView(this)
 
@@ -274,8 +282,8 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
             binding.message.supportsInputContent = true
 
-            theme
-                .doOnNext {
+            // QkThemedActivity's theme is still RxJava: bridged until Task 29
+            theme.asFlow().collectIn(lifecycleScope) {
                     binding.loading.setTint(it.theme)
 
                     // entire attach menu
@@ -308,23 +316,16 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
                     }
 
                     messageAdapter.theme = it
-                }
-                .autoDisposable(scope())
-                .subscribe()
+            }
 
             // Show the conversation's custom background image, if one has been set
-            threadId
+            threadId.asFlow()
                 .distinctUntilChanged()
-                .switchMap { threadId -> prefs.backgroundUri(threadId).asObservable() }
-                .observeOn(AndroidSchedulers.mainThread())
-                .autoDisposable(scope())
-                .subscribe { backgroundUri -> setBackgroundImage(backgroundUri) }
+                .flatMapLatest { threadId -> prefs.backgroundUri(threadId).asFlow() }
+                .collectIn(lifecycleScope) { backgroundUri -> setBackgroundImage(backgroundUri) }
 
             // context menu registration for message parts
-            messagePartContextMenuRegistrar
-                .mapNotNull { it }
-                .autoDisposable(scope())
-                .subscribe { registerForContextMenu(it) }
+            messagePartContextMenuRegistrar.collectIn(lifecycleScope) { registerForContextMenu(it) }
 
             // drag drop handlers for speech-to-text icon
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -355,14 +356,12 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
             // start/stop audio message recording
             binding.audioMsgRecord.setOnClickListener {
-                recordAudioRecord.onNext(binding.audioMsgRecord.getState())
+                recordAudioRecord.tryEmit(binding.audioMsgRecord.getState())
             }
 
             recordAudioChronometer
-                .subscribeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .autoDisposable(scope())
-                .subscribe {
+                .collectIn(lifecycleScope) {
                     if (it) {
                         binding.audioMsgDuration.base = SystemClock.elapsedRealtime()
                         binding.audioMsgDuration.start()
@@ -373,16 +372,14 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
             // audio record playback play/pause button
             binding.audioMsgPlayerPlayPause.setOnClickListener {
-                recordAudioPlayerPlayPause.onNext(
+                recordAudioPlayerPlayPause.tryEmit(
                     binding.audioMsgPlayerPlayPause.tag as QkMediaPlayer.PlayingState
                 )
             }
 
             recordAudioMsgRecordVisible
-                .subscribeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .autoDisposable(scope())
-                .subscribe {
+                .collectIn(lifecycleScope) {
                     binding.audioMsgRecord.isVisible = it
                     binding.audioMsgDuration.isVisible =
                         it   // chronometer follows record button visibility
@@ -390,25 +387,22 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
                 }
 
             recordAudioPlayerVisible
-                .subscribeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .autoDisposable(scope())
-                .subscribe {
+                .collectIn(lifecycleScope) {
                     binding.audioMsgPlayerBackground.isVisible = it
-                    recordAudioPlayerConfigUI.onNext(QkMediaPlayer.PlayingState.Stopped)
+                    recordAudioPlayerConfigUI.tryEmit(QkMediaPlayer.PlayingState.Stopped)
                 }
 
             recordAudioPlayerConfigUI
-                .subscribeOn(AndroidSchedulers.mainThread())
                 .distinctUntilChanged()
-                .autoDisposable(scope())
-                .subscribe {
+                .collectIn(lifecycleScope) {
                     when (it) {
                         QkMediaPlayer.PlayingState.Playing -> {
                             binding.audioMsgPlayerPlayPause.tag = QkMediaPlayer.PlayingState.Playing
                             QkMediaPlayer.start()
                             binding.audioMsgPlayerPlayPause.setImageResource(R.drawable.exo_icon_pause)
-                            seekBarUpdater = getSeekBarUpdater().subscribe {
+                            seekBarUpdater?.cancel()
+                            seekBarUpdater = startSeekBarUpdater {
                                 binding.audioMsgPlayerSeekBar.progress = QkMediaPlayer.currentPosition
                                 binding.audioMsgPlayerSeekBar.max = QkMediaPlayer.duration
                             }
@@ -419,14 +413,14 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
                             binding.audioMsgPlayerPlayPause.tag = QkMediaPlayer.PlayingState.Paused
                             QkMediaPlayer.pause()
                             binding.audioMsgPlayerPlayPause.setImageResource(R.drawable.exo_icon_play)
-                            seekBarUpdater?.dispose()
+                            seekBarUpdater?.cancel()
                         }
 
                         else -> {
                             binding.audioMsgPlayerPlayPause.tag = QkMediaPlayer.PlayingState.Stopped
                             QkMediaPlayer.reset()
                             binding.audioMsgPlayerPlayPause.setImageResource(R.drawable.exo_icon_play)
-                            seekBarUpdater?.dispose()
+                            seekBarUpdater?.cancel()
                             binding.audioMsgPlayerSeekBar.progress = 0
                             binding.audioMsgPlayerSeekBar.isEnabled = false
                         }
@@ -450,7 +444,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
     override fun onStart() {
         super.onStart()
-        activityVisibleIntent.onNext(true)
+        activityVisibleIntent.tryEmit(true)
 
         // if first time stt icon is shown (since setting reset), pop up an instruction toast
         if (prefs.showStt.get() &&
@@ -465,7 +459,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
     override fun onPause() {
         super.onPause()
-        activityVisibleIntent.onNext(false)
+        activityVisibleIntent.tryEmit(false)
     }
 
     override fun onDestroy() {
@@ -474,7 +468,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         // stop any playing audio
         QkMediaPlayer.reset()
 
-        seekBarUpdater?.dispose()
+        seekBarUpdater?.cancel()
         // The voice-message players in the thread have their own timer, owned by the adapter.
         messageAdapter.releaseAudio()
     }
@@ -629,7 +623,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
         // if scheduling mode is set, show schedule dialog
         if (state.scheduling)
-            scheduleAction.onNext(true)
+            scheduleAction.tryEmit(true)
 
         // if stt is available and preference is set to show stt button
         if (isSpeechRecognitionAvailable() && prefs.showStt.get()) {
@@ -704,7 +698,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
                 calendar.set(Calendar.DAY_OF_MONTH, day)
                 calendar.set(Calendar.HOUR_OF_DAY, hour)
                 calendar.set(Calendar.MINUTE, minute)
-                scheduleSelectedIntent.onNext(calendar.timeInMillis)
+                scheduleSelectedIntent.tryEmit(calendar.timeInMillis)
             }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), DateFormat.is24HourFormat(this))
                 .show()
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
@@ -808,7 +802,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
         AlertDialog.Builder(this)
             .setTitle(R.string.dialog_delete_title)
             .setMessage(resources.getQuantityString(R.plurals.dialog_delete_chat, count, count))
-            .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteIntent.onNext(messages) }
+            .setPositiveButton(R.string.button_delete) { _, _ -> confirmDeleteIntent.tryEmit(messages) }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
     }
@@ -818,7 +812,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             .setTitle(R.string.dialog_clear_compose_title)
             .setMessage(R.string.dialog_clear_compose)
             .setPositiveButton(R.string.button_clear) { _, _ ->
-                clearCurrentMessageIntent.onNext(true)
+                clearCurrentMessageIntent.tryEmit(true)
             }
             .setNegativeButton(R.string.button_cancel, null)
             .show()
@@ -837,7 +831,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        optionsItemIntent.onNext(item.itemId)
+        optionsItemIntent.tryEmit(item.itemId)
         return true
     }
 
@@ -864,7 +858,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
     override fun onContextItemSelected(item: MenuItem): Boolean {
         super.onContextItemSelected(item)
-        contextItemIntent.onNext(item)
+        contextItemIntent.tryEmit(item)
         return true
     }
 

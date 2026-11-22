@@ -32,7 +32,6 @@ import dev.octoshrimpy.quik.feature.compose.BubbleUtils.canGroup
 import dev.octoshrimpy.quik.feature.compose.MessagesAdapter
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
-import io.reactivex.Observable
 import javax.inject.Inject
 
 
@@ -52,9 +51,13 @@ class PartsAdapter @Inject constructor(
             partBinders.forEach { binder -> binder.theme = value }
         }
 
-    val clicks: Observable<Long> = Observable.merge(partBinders.map { it.clicks })
-
-    val saveClicks: Observable<Long> = Observable.merge(partBinders.map { it.saveClicks })
+    /** Where taps on a part, and on a part's own save button, are reported */
+    fun setPartListeners(onClick: (partId: Long) -> Unit, onSave: (partId: Long) -> Unit) {
+        partBinders.forEach { binder ->
+            binder.onClick = onClick
+            binder.onSave = onSave
+        }
+    }
 
     private lateinit var message: Message
     private var previous: Message? = null

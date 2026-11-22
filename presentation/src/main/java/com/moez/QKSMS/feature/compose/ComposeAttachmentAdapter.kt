@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.feature.compose
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -34,8 +35,6 @@ import dev.octoshrimpy.quik.feature.extensions.LoadBestIconIntoImageView
 import dev.octoshrimpy.quik.feature.extensions.loadBestIconIntoImageView
 import dev.octoshrimpy.quik.model.Attachment
 import ezvcard.Ezvcard
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 
@@ -48,7 +47,7 @@ class ComposeAttachmentAdapter @Inject constructor(
         private const val VIEW_TYPE_CONTACT = 1
     }
 
-    val attachmentDeleted: Subject<Attachment> = PublishSubject.create()
+    val attachmentDeleted = events<Attachment>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QkViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -62,7 +61,7 @@ class ComposeAttachmentAdapter @Inject constructor(
         return QkViewHolder(view).apply {
             view.setOnClickListener {
                 val attachment = getItem(bindingAdapterPosition)
-                attachmentDeleted.onNext(attachment)
+                attachmentDeleted.tryEmit(attachment)
             }
         }
     }

@@ -18,6 +18,7 @@
  */
 package dev.octoshrimpy.quik.common.widget
 
+import dev.octoshrimpy.quik.common.util.extensions.events
 import android.content.Context
 import android.os.Build
 import android.util.AttributeSet
@@ -33,8 +34,6 @@ import com.google.android.mms.ContentType
 import dev.octoshrimpy.quik.common.util.TextViewStyler
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.util.tryOrNull
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 
 
@@ -49,8 +48,8 @@ class QkEditText @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
     @Inject lateinit var textViewStyler: TextViewStyler
 
-    val backspaces: Subject<Unit> = PublishSubject.create()
-    val inputContentSelected: Subject<InputContentInfoCompat> = PublishSubject.create()
+    val backspaces = events<Unit>()
+    val inputContentSelected = events<InputContentInfoCompat>()
     var supportsInputContent: Boolean = false
 
     init {
@@ -67,7 +66,7 @@ class QkEditText @JvmOverloads constructor(context: Context, attrs: AttributeSet
         val inputConnection = object : InputConnectionWrapper(super.onCreateInputConnection(editorInfo), true) {
             override fun sendKeyEvent(event: KeyEvent): Boolean {
                 if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_DEL) {
-                    backspaces.onNext(Unit)
+                    backspaces.tryEmit(Unit)
                 }
                 return super.sendKeyEvent(event)
             }
@@ -75,7 +74,7 @@ class QkEditText @JvmOverloads constructor(context: Context, attrs: AttributeSet
 
             override fun deleteSurroundingText(beforeLength: Int, afterLength: Int): Boolean {
                 if (beforeLength == 1 && afterLength == 0) {
-                    backspaces.onNext(Unit)
+                    backspaces.tryEmit(Unit)
                 }
                 return super.deleteSurroundingText(beforeLength, afterLength)
             }
@@ -95,7 +94,7 @@ class QkEditText @JvmOverloads constructor(context: Context, attrs: AttributeSet
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 && grantReadPermission) {
                 return@OnCommitContentListener tryOrNull {
                     inputContentInfo.requestPermission()
-                    inputContentSelected.onNext(inputContentInfo)
+                    inputContentSelected.tryEmit(inputContentInfo)
                     true
                 } ?: false
 
