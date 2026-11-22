@@ -24,6 +24,9 @@ import timber.log.Timber
  */
 internal object ContentFilterMatcher {
 
+    // shortcut: regex filters see the first 5,000 characters, far past any texted message; raise if a filter must see more
+    private const val MAX_REGEX_INPUT = 5_000
+
     fun matches(
         value: String,
         caseSensitive: Boolean,
@@ -43,10 +46,16 @@ internal object ContentFilterMatcher {
             // message, so a filter written that way on purpose keeps its meaning.
             // An invalid saved pattern must not throw: this runs on the receive path, and an
             // exception stops the incoming message from being processed.
+            // A pattern can also fail on a crafted message (an error, not an exception, when the
+            // regex engine runs out of stack), and scanning very long text can take a long time:
+            // only the start of the message is checked.
             return try {
-                Regex(value, setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)).containsMatchIn(body)
+                Regex(value, setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)).containsMatchIn(body.take(MAX_REGEX_INPUT))
             } catch (e: IllegalArgumentException) {
                 Timber.w(e, "Skipping invalid regex content filter")
+                false
+            } catch (e: StackOverflowError) {
+                Timber.w("Regex content filter ran out of stack; skipped")
                 false
             }
         }

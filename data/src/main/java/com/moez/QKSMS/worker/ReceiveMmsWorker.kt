@@ -265,6 +265,9 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
             Timber.e("io exception: ${e.message}")
         } catch (e: Exception) {
             Timber.e("mms receive worker exception: ${e.message}")
+        } catch (e: Error) {
+            // e.g. a crafted message running the parser out of memory: logged, not lost silently
+            Timber.e("mms receive worker error: $e")
         } finally {
             downloadFile.delete()
             // 400/404 means the carrier no longer has the message (handleHttpError removes the

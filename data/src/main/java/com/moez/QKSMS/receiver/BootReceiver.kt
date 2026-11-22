@@ -30,6 +30,8 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var updateScheduledMessageAlarms: UpdateScheduledMessageAlarms
 
     override fun onReceive(context: Context, intent: Intent?) {
+        // Exported for the boot broadcast, so any app could send it otherwise
+        if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
         AndroidInjection.inject(this, context)
 
         val result = goAsync()

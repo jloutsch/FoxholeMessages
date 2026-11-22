@@ -109,6 +109,7 @@ import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.extensions.getResourceBytes
 import dev.octoshrimpy.quik.util.Constants.Companion.DELAY_CANCELLED_CACHED_ATTACHMENTS_FILE_PREFIX
+import dev.octoshrimpy.quik.util.Constants.Companion.SAVED_MESSAGE_TEXT_DIR
 import dev.octoshrimpy.quik.util.Constants.Companion.SAVED_MESSAGE_TEXT_FILE_PREFIX
 import dev.octoshrimpy.quik.util.tryOrNull
 import timber.log.Timber
@@ -435,7 +436,7 @@ class ComposeViewModel @Inject constructor(
         // share the message text contents
         view.optionsItemIntent.filter { it == R.id.share }.collectIn(view.bindScope) {
             val messageIds = selectedMessages ?: return@collectIn
-            val filename = "$SAVED_MESSAGE_TEXT_FILE_PREFIX${
+            val filename = "$SAVED_MESSAGE_TEXT_DIR/$SAVED_MESSAGE_TEXT_FILE_PREFIX${
                 SimpleDateFormat(
                     "yyyy-MM-dd-HH-mm-ss",
                     Locale.getDefault()

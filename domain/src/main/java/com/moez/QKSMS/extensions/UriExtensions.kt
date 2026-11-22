@@ -44,10 +44,19 @@ fun Uri.isEmpty() = this == Uri.EMPTY
  */
 fun Uri.isSafeToAttachFromOtherApp(context: Context): Boolean {
     if (scheme != ContentResolver.SCHEME_CONTENT) return false
-    val authority = authority ?: return false
+    // "0@authority" opens the same provider for user 0, but the owner lookup doesn't recognise it
+    val authority = authority?.substringAfterLast('@') ?: return false
+    // Every provider of this app is named "<application id>.<name>"
+    if (authority == context.packageName || authority.startsWith("${context.packageName}.")) return false
+    // Other conversations' messages and pictures: readable with READ_SMS, which this app holds and
+    // the sending app needn't. Android doesn't check the sender when the receiver can already read.
+    if (authority in TELEPHONY_AUTHORITIES) return false
     val owner = context.packageManager.resolveContentProvider(authority, 0)?.packageName
-    return owner != context.packageName
+    return owner != context.packageName && owner != TELEPHONY_PACKAGE
 }
+
+private val TELEPHONY_AUTHORITIES = setOf("mms", "sms", "mms-sms")
+private const val TELEPHONY_PACKAGE = "com.android.providers.telephony"
 
 fun Uri.isVCard(context: Context): Boolean = getType(context) == "text/x-vcard"
 

@@ -91,4 +91,11 @@ class ContentFilterMatcherTest {
         assertTrue(blocks("lottery", "lottery", fromContact = true, includeContacts = true))
         assertTrue(blocks("lottery", "lottery", fromContact = false, includeContacts = true))
     }
+
+    @Test
+    fun aRegexThatRecursesTooDeeplyOnALongMessageDoesNotThrow() {
+        // Runs on the receive path: an error here stopped the message's processing. A repeated
+        // group recurses once per character in Java's regex engine.
+        assertFalse(blocks("(x|y)*z", "x".repeat(200_000), regex = true))
+    }
 }
