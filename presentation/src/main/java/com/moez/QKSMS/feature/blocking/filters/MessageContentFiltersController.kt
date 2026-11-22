@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.blocking.filters
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AlertDialog
@@ -37,7 +37,7 @@ import dev.octoshrimpy.quik.databinding.MessageContentFiltersControllerBinding
 import dev.octoshrimpy.quik.databinding.MessageContentFiltersAddDialogBinding
 import javax.inject.Inject
 
-class MessageContentFiltersController : QkFlowController<MessageContentFiltersControllerBinding, MessageContentFiltersView, MessageContentFiltersState,
+class MessageContentFiltersController : QkController<MessageContentFiltersControllerBinding, MessageContentFiltersView, MessageContentFiltersState,
         MessageContentFiltersPresenter>(), MessageContentFiltersView {
 
     @Inject override lateinit var presenter: MessageContentFiltersPresenter

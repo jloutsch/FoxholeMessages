@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Dispatchers
 import androidx.lifecycle.viewModelScope
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.common.util.OverlayPermission
 import android.widget.Toast
@@ -44,7 +44,7 @@ class NotificationPrefsViewModel @Inject constructor(
     private val conversationRepo: ConversationRepository,
     private val externalNavigator: ExternalNavigator,
     private val prefs: Preferences
-) : QkFlowViewModel<NotificationPrefsView, NotificationPrefsState>(NotificationPrefsState(threadId = threadId)) {
+) : QkViewModel<NotificationPrefsView, NotificationPrefsState>(NotificationPrefsState(threadId = threadId)) {
 
     private val notifications = prefs.notifications(threadId)
     private val previews = prefs.notificationPreviews(threadId)

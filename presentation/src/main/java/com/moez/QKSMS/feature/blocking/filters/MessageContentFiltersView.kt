@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.blocking.filters
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.model.MessageContentFilterData
 
-interface MessageContentFiltersView : QkFlowView<MessageContentFiltersState> {
+interface MessageContentFiltersView : QkView<MessageContentFiltersState> {
 
     fun removeFilter(): Flow<Long>
     fun addFilter(): Flow<Unit>

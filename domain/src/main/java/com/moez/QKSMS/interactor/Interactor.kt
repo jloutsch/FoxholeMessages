@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.interactor
 
-import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +36,7 @@ import timber.log.Timber
  * A background action. Subclasses implement [perform] (#34); [execute] runs it for callers that
  * want callbacks rather than a coroutine.
  */
-abstract class Interactor<in Params> : Disposable {
+abstract class Interactor<in Params> {
 
     /** Where [execute] runs [perform]; replaced in tests. */
     internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
@@ -71,8 +70,8 @@ abstract class Interactor<in Params> : Disposable {
     }
 
     /** Cancels running work; [execute] calls made afterwards only call their onTerminate. */
-    override fun dispose() = scope.cancel()
+    fun dispose() = scope.cancel()
 
-    override fun isDisposed(): Boolean = !scope.isActive
+    fun isDisposed(): Boolean = !scope.isActive
 
 }

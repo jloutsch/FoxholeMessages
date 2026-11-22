@@ -22,8 +22,6 @@ import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.SearchResult
-import io.reactivex.Completable
-import io.reactivex.Observable
 
 interface ConversationRepository {
 
@@ -33,7 +31,8 @@ interface ConversationRepository {
 
     fun getTopConversations(): List<Conversation>
 
-    fun setConversationName(id: Long, name: String): Completable
+    /** Blocking: call off the main thread */
+    fun setConversationName(id: Long, name: String)
 
     fun searchConversations(query: CharSequence): List<SearchResult>
 
@@ -53,11 +52,11 @@ interface ConversationRepository {
 
     fun getConversations(vararg threadIds: Long): List<Conversation>
 
-    fun getUnmanagedConversations(): Observable<List<Conversation>>
+    fun getUnmanagedConversations(): Flow<List<Conversation>>
 
     fun getRecipients(): List<Recipient>
 
-    fun getUnmanagedRecipients(): Observable<List<Recipient>>
+    fun getUnmanagedRecipients(): Flow<List<Recipient>>
 
     fun getRecipient(recipientId: Long): Recipient?
 

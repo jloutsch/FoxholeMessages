@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.scheduled
 
-import kotlinx.coroutines.rx2.asFlow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
 import androidx.lifecycle.lifecycleScope
@@ -48,7 +47,7 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
 
     override val composeIntent by lazy { binding.compose.clicks() }
     // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
-    override val messagesSelectedIntent by lazy { scheduledMessageAdapter.selectionChanges.asFlow() }
+    override val messagesSelectedIntent by lazy { scheduledMessageAdapter.selectionChanges }
     override val optionsItemIntent = events<Int>()
     override val deleteScheduledMessages = events<List<Long>>()
     override val sendScheduledMessages = events<List<Long>>()

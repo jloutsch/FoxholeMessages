@@ -18,9 +18,8 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.messages
 
-import kotlinx.coroutines.rx2.asFlow
 import dev.octoshrimpy.quik.common.util.extensions.events
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.Menu
@@ -37,7 +36,7 @@ import dev.octoshrimpy.quik.feature.blocking.BlockingDialog
 import dev.octoshrimpy.quik.injection.appComponent
 import javax.inject.Inject
 
-class BlockedMessagesController : QkFlowController<BlockedMessagesControllerBinding, BlockedMessagesView, BlockedMessagesState, BlockedMessagesPresenter>(),
+class BlockedMessagesController : QkController<BlockedMessagesControllerBinding, BlockedMessagesView, BlockedMessagesState, BlockedMessagesPresenter>(),
     BlockedMessagesView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): BlockedMessagesControllerBinding =
@@ -47,7 +46,7 @@ class BlockedMessagesController : QkFlowController<BlockedMessagesControllerBind
     override val optionsItemIntent = events<Int>()
     override val conversationClicks by lazy { blockedMessagesAdapter.clicks }
     // The shared list adapter's selection is still RxJava: bridged until QkListAdapter converts
-    override val selectionChanges by lazy { blockedMessagesAdapter.selectionChanges.asFlow() }
+    override val selectionChanges by lazy { blockedMessagesAdapter.selectionChanges }
     override val confirmDeleteIntent = events<List<Long>>()
     override val backClicked = events<Unit>()
 

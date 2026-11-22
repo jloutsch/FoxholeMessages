@@ -34,12 +34,7 @@ import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.SearchResult
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.tryOrNull
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.rx2.asObservable
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -75,9 +70,8 @@ class ConversationRepositoryImpl @Inject constructor(
             .thenByDescending { recentCounts[it.id] })
     }
 
-    override fun setConversationName(id: Long, name: String): Completable =
-        Completable.fromAction { editConversations(longArrayOf(id)) { this.name = name } }
-            .subscribeOn(Schedulers.io()) // Ensure the operation is performed on a background thread
+    override fun setConversationName(id: Long, name: String) =
+        editConversations(longArrayOf(id)) { this.name = name }
 
     override fun searchConversations(query: CharSequence): List<SearchResult> {
         val searchQuery = query.toString()
@@ -126,15 +120,13 @@ class ConversationRepositoryImpl @Inject constructor(
     override fun getConversations(vararg threadIds: Long): List<Conversation> =
         relations.conversations(threadIds.toList().chunked(900).flatMap(conversationDao::get))
 
-    override fun getUnmanagedConversations(): Observable<List<Conversation>> =
-        observeConversations { conversationDao.recent() }.asObservable()
-            .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
+    override fun getUnmanagedConversations(): Flow<List<Conversation>> =
+        observeConversations { conversationDao.recent() }
 
     override fun getRecipients(): List<Recipient> = relations.recipients(database.recipientDao().all())
 
-    override fun getUnmanagedRecipients(): Observable<List<Recipient>> =
-        database.observe(Tables.RECIPIENTS) { relations.recipients(database.recipientDao().withContact()) }.asObservable()
-            .observeOn(AndroidSchedulers.mainThread()) // screens expect Realm's main-thread updates
+    override fun getUnmanagedRecipients(): Flow<List<Recipient>> =
+        database.observe(Tables.RECIPIENTS) { relations.recipients(database.recipientDao().withContact()) }
 
     override fun getRecipient(recipientId: Long): Recipient? =
         database.recipientDao().get(recipientId)?.let { relations.recipients(listOf(it)).first() }

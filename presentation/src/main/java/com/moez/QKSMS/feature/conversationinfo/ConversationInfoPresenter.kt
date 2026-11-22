@@ -19,14 +19,13 @@
 package dev.octoshrimpy.quik.feature.conversationinfo
 
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.rx2.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import kotlinx.coroutines.flow.map
 import android.content.Context
 import dev.octoshrimpy.quik.R
@@ -65,7 +64,7 @@ class ConversationInfoPresenter @Inject constructor(
     private val navigator: Navigator,
     private val externalNavigator: ExternalNavigator,
     private val permissionManager: PermissionManager
-): QkFlowPresenter<ConversationInfoView, ConversationInfoState>(
+): QkPresenter<ConversationInfoView, ConversationInfoState>(
         ConversationInfoState(threadId = threadId)
 ) {
 
@@ -142,7 +141,7 @@ class ConversationInfoPresenter @Inject constructor(
         // Set the conversation title
         view.nameChanges().collectIn(view.bindScope) { name ->
             val conversation = conversation.value ?: return@collectIn
-            withContext(Dispatchers.IO) { conversationRepo.setConversationName(conversation.id, name).await() }
+            withContext(Dispatchers.IO) { conversationRepo.setConversationName(conversation.id, name) }
         }
 
         // Show the notifications settings for the conversation

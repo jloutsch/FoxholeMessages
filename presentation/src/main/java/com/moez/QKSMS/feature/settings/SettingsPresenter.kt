@@ -18,13 +18,12 @@
  */
 package dev.octoshrimpy.quik.feature.settings
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.FlowPreview
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import android.content.Context
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
@@ -48,13 +47,13 @@ class SettingsPresenter @Inject constructor(
     private val nightModeManager: NightModeManager,
     private val prefs: Preferences,
     private val syncMessages: SyncMessages
-) : QkFlowPresenter<SettingsView, SettingsState>(SettingsState(
+) : QkPresenter<SettingsView, SettingsState>(SettingsState(
         nightModeId = prefs.nightMode.get()
 )) {
 
     init {
         // Colors is still RxJava (other screens read it): bridged until Task 29
-        colors.themeObservable().asFlow()
+        colors.themeChanges()
                 .collectIn(presenterScope) { theme -> newState { copy(theme = theme.theme) } }
 
         val nightModeLabels = context.resources.getStringArray(R.array.night_modes)
@@ -129,7 +128,7 @@ class SettingsPresenter @Inject constructor(
 
         // The repository is still RxJava (the sync worker and Main read it too): bridged
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
-        syncRepo.syncProgress.asFlow()
+        syncRepo.syncProgress
                 .sample(16)
                 .distinctUntilChanged()
                 .collectIn(presenterScope) { syncProgress -> newState { copy(syncProgress = syncProgress) } }

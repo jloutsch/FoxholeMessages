@@ -68,9 +68,6 @@ import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.VideoUtils
 import dev.octoshrimpy.quik.util.sha256
 import dev.octoshrimpy.quik.util.tryOrNull
-import io.reactivex.Flowable
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -916,8 +913,8 @@ open class MessageRepositoryImpl @Inject constructor(
             }
     }
 
-    override fun deduplicateMessages(): Flowable<MessageRepository.DeduplicationResult> =
-        Flowable.fromCallable {
+    override fun deduplicateMessages(): MessageRepository.DeduplicationResult =
+        try {
             val duplicates = findDuplicateMessages()
             if (duplicates.isEmpty()) {
                 MessageRepository.DeduplicationResult.NoDuplicates
@@ -928,9 +925,9 @@ open class MessageRepositoryImpl @Inject constructor(
                 trashMessages(duplicates.keys)
                 MessageRepository.DeduplicationResult.Success(duplicates.size, duplicates.values.toSet())
             }
-        }
-        .onErrorReturn { MessageRepository.DeduplicationResult.Failure(it) }
-        .doFinally {
+        } catch (e: Exception) {
+            MessageRepository.DeduplicationResult.Failure(e)
+        } finally {
             deduplicationProgress.tryEmit(MessageRepository.DeduplicationProgress.Idle)
         }
 

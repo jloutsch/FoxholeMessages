@@ -21,7 +21,6 @@
 package dev.octoshrimpy.quik.feature.compose
 
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.scan
@@ -49,7 +48,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.map
 import android.annotation.SuppressLint
@@ -103,7 +102,7 @@ import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
-import dev.octoshrimpy.quik.util.ActiveSubscriptionObservable
+import dev.octoshrimpy.quik.util.activeSubscriptions
 import dev.octoshrimpy.quik.util.FileUtils
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.Preferences
@@ -150,7 +149,7 @@ class ComposeViewModel @Inject constructor(
     private val sendNewMessage: SendNewMessage,
     private val subscriptionManager: SubscriptionManagerCompat,
     private val saveImage: SaveImage,
-) : QkFlowViewModel<ComposeView, ComposeState>(ComposeState(
+) : QkViewModel<ComposeView, ComposeState>(ComposeState(
         editingMode = threadId == 0L && addresses.isEmpty(),
         threadId = threadId,
         query = query)
@@ -314,7 +313,7 @@ class ComposeViewModel @Inject constructor(
                 .distinctUntilChanged()
 
         // ActiveSubscriptionObservable is still RxJava (QRF Reply reads it too): bridged until Task 29
-        val subscriptions = ActiveSubscriptionObservable(subscriptionManager).asFlow()
+        val subscriptions = activeSubscriptions(subscriptionManager)
         combine(latestSubId, subscriptions) { subId, subs ->
             if (subs.size > 1) subs.firstOrNull { it.subscriptionId == subId } ?: subs[0] else null
         }.collectIn(viewModelScope) { sub -> newState { copy(subscription = sub) } }

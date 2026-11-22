@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.main
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
@@ -124,7 +123,7 @@ class MainActivity : QkThemedActivity(), MainView {
     override val rateIntent by lazy { binding.drawer.rateOkay.clicks() }
     // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
     override val conversationsSelectedIntent by lazy {
-        allConversationsAdapters.map { it.selectionChanges.asFlow() }.merge()
+        allConversationsAdapters.map { it.selectionChanges }.merge()
     }
     override val confirmDeleteIntent = events<List<Long>>()
     override val confirmArchiveIntent = events<List<Long>>()
@@ -193,8 +192,8 @@ class MainActivity : QkThemedActivity(), MainView {
         }
 
         syncingBinding = MainSyncingBinding.bind(binding.syncing.inflate()).also {
-            it.syncingProgress.progressTintList = ColorStateList.valueOf(theme.blockingFirst().theme)
-            it.syncingProgress.indeterminateTintList = ColorStateList.valueOf(theme.blockingFirst().theme)
+            it.syncingProgress.progressTintList = ColorStateList.valueOf(colors.theme().theme)
+            it.syncingProgress.indeterminateTintList = ColorStateList.valueOf(colors.theme().theme)
         }
 
         toggle.syncState()
@@ -219,7 +218,7 @@ class MainActivity : QkThemedActivity(), MainView {
 
         // Set the theme color tint to the recyclerView, progressbar, and FAB
         // QkThemedActivity's theme is still RxJava: bridged until Task 29
-        theme.asFlow().collectIn(lifecycleScope) { theme ->
+        theme.collectIn(lifecycleScope) { theme ->
                     // Set the color for the drawer icons
                     val states = arrayOf(
                             intArrayOf(android.R.attr.state_activated),

@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.compose.editing
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.MainScope
@@ -191,7 +190,7 @@ class ComposeItemAdapter @Inject constructor(
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         // The repository is still RxJava (main-thread updates): bridged until Task 29
         recipientsJob = MainScope().launch {
-            conversationRepo.getUnmanagedRecipients().asFlow()
+            conversationRepo.getUnmanagedRecipients()
                     .map { recipients -> recipients.associateByNotNull { recipient -> recipient.contact?.lookupKey } }
                     .collect { recipients -> this@ComposeItemAdapter.recipients = recipients }
         }

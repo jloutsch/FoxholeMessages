@@ -20,11 +20,11 @@ package dev.octoshrimpy.quik.feature.contacts
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.feature.compose.editing.ComposeItem
 import dev.octoshrimpy.quik.feature.compose.editing.PhoneNumberAction
 
-interface ContactsContract : QkFlowView<ContactsState> {
+interface ContactsContract : QkView<ContactsState> {
 
     val queryChangedIntent: Flow<CharSequence>
     val queryClearedIntent: Flow<Unit>

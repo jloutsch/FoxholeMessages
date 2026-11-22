@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.settings
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 
-interface SettingsView : QkFlowView<SettingsState> {
+interface SettingsView : QkView<SettingsState> {
     fun preferenceClicks(): Flow<PreferenceView>
     fun aboutLongClicks(): Flow<Unit>
     fun nightModeSelected(): Flow<Int>

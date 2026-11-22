@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -47,9 +49,6 @@ import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.tryOrNull
-import io.reactivex.Observable
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 import dev.octoshrimpy.quik.db.FoxholeDatabase
 import dev.octoshrimpy.quik.db.Relations
 import okio.buffer
@@ -126,11 +125,9 @@ class BackupRepositoryImpl @Inject constructor(
         val data: String?
     )
 
-    // Subjects to emit our progress events to
-    private val backupProgress: Subject<BackupRepository.Progress> =
-            BehaviorSubject.createDefault(BackupRepository.Progress.Idle())
-    private val restoreProgress: Subject<BackupRepository.Progress> =
-            BehaviorSubject.createDefault(BackupRepository.Progress.Idle())
+    // Where progress is reported. Progress classes aren't data classes, so each new value is distinct
+    private val backupProgress = MutableStateFlow<BackupRepository.Progress>(BackupRepository.Progress.Idle())
+    private val restoreProgress = MutableStateFlow<BackupRepository.Progress>(BackupRepository.Progress.Idle())
 
     @Volatile private var stopFlag: Boolean = false
 
@@ -187,7 +184,7 @@ class BackupRepositoryImpl @Inject constructor(
                     // Lazy, so each message (and its attachments) is converted only as it's written
                     // and can be freed before the next one is read.
                     val backupMessages = messages.asSequence().mapIndexed { index, message ->
-                        backupProgress.onNext(BackupRepository.Progress.Running(messageCount, index))
+                        backupProgress.tryEmit(BackupRepository.Progress.Running(messageCount, index))
                         // Parts are loaded one message at a time, as the message is written
                         if (message.isMms()) message.parts = database.mmsPartDao().forMessage(message.contentId)
                         messageToBackupMessage(message, conversationRecipients[message.threadId] ?: listOf())
@@ -197,7 +194,7 @@ class BackupRepositoryImpl @Inject constructor(
                 }
 
                 // Indeterminate while the last of the file is flushed out
-                backupProgress.onNext(BackupRepository.Progress.Saving())
+                backupProgress.tryEmit(BackupRepository.Progress.Saving())
             }
         } catch (e: Exception) {
             Timber.w(e)
@@ -207,8 +204,8 @@ class BackupRepositoryImpl @Inject constructor(
         }
 
         // Show the outcome, then go back to Idle. A failure stays up longer so it isn't missed.
-        backupProgress.onNext(if (failed) BackupRepository.Progress.Failed() else BackupRepository.Progress.Finished())
-        Timer().schedule(if (failed) 4000L else 1000L) { backupProgress.onNext(BackupRepository.Progress.Idle()) }
+        backupProgress.tryEmit(if (failed) BackupRepository.Progress.Failed() else BackupRepository.Progress.Finished())
+        Timer().schedule(if (failed) 4000L else 1000L) { backupProgress.tryEmit(BackupRepository.Progress.Idle()) }
     }
 
     private fun messageToBackupMessage(message: Message, recipients: List<String>): BackupMessage = BackupMessage(
@@ -255,7 +252,7 @@ class BackupRepositoryImpl @Inject constructor(
         )
     }
 
-    override fun getBackupProgress(): Observable<BackupRepository.Progress> = backupProgress
+    override fun getBackupProgress(): StateFlow<BackupRepository.Progress> = backupProgress
 
     @SuppressLint("Recycle") // InputStream is closed by Okio BufferedSource
     override fun parseBackup(uri: Uri): BackupFile {
@@ -277,7 +274,7 @@ class BackupRepositoryImpl @Inject constructor(
         // If a backupFile or restore is already running, don't do anything
         if (isBackupOrRestoreRunning()) return
 
-        restoreProgress.onNext(BackupRepository.Progress.Parsing())
+        restoreProgress.tryEmit(BackupRepository.Progress.Parsing())
 
         var messageCount = 0
         var errorCount = 0
@@ -306,7 +303,7 @@ class BackupRepositoryImpl @Inject constructor(
                             }
 
                             messageCount = index + 1
-                            restoreProgress.onNext(BackupRepository.Progress.Running(
+                            restoreProgress.tryEmit(BackupRepository.Progress.Running(
                                     maxOf(declaredCount, messageCount), index))
 
                             try {
@@ -328,7 +325,7 @@ class BackupRepositoryImpl @Inject constructor(
         }
 
         if (stopped) {
-            restoreProgress.onNext(BackupRepository.Progress.Idle())
+            restoreProgress.tryEmit(BackupRepository.Progress.Idle())
             return
         }
 
@@ -339,12 +336,12 @@ class BackupRepositoryImpl @Inject constructor(
         }
 
         // Sync the messages
-        restoreProgress.onNext(BackupRepository.Progress.Syncing())
+        restoreProgress.tryEmit(BackupRepository.Progress.Syncing())
         syncRepo.syncMessages()
 
         // Mark the task finished, and set it as Idle a second later
-        restoreProgress.onNext(BackupRepository.Progress.Finished())
-        Timer().schedule(1000) { restoreProgress.onNext(BackupRepository.Progress.Idle()) }
+        restoreProgress.tryEmit(BackupRepository.Progress.Finished())
+        Timer().schedule(1000) { restoreProgress.tryEmit(BackupRepository.Progress.Idle()) }
     }
 
     private fun restoreMessage(message: BackupMessage) {
@@ -452,14 +449,14 @@ class BackupRepositoryImpl @Inject constructor(
         return body
     }
 
-    override fun getRestoreProgress(): Observable<BackupRepository.Progress> = restoreProgress
+    override fun getRestoreProgress(): StateFlow<BackupRepository.Progress> = restoreProgress
 
     override fun stopRestore() {
         stopFlag = true
     }
 
     private fun isBackupOrRestoreRunning(): Boolean {
-        return backupProgress.blockingFirst().running || restoreProgress.blockingFirst().running
+        return backupProgress.value.running || restoreProgress.value.running
     }
 
 }

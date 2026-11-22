@@ -18,7 +18,10 @@
  */
 package dev.octoshrimpy.quik.receiver
 
-import kotlinx.coroutines.rx2.rxCompletable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -28,7 +31,6 @@ import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.interactor.MarkBlocked
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -50,18 +52,17 @@ class BlockThreadReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         val threadId = intent.getLongExtra("threadId", 0)
 
-        blockingClient
-            .block(
-                conversationRepo.getConversation(threadId)
-                    ?.recipients
-                    ?.map { it.address }
-                    ?: listOf()
-            )
-            .subscribeOn(Schedulers.io())
-            .andThen(rxCompletable {
+        @OptIn(DelicateCoroutinesApi::class) // a receiver has no scope; goAsync() keeps it alive until finish()
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val addresses = conversationRepo.getConversation(threadId)?.recipients?.map { it.address } ?: listOf()
+                blockingClient.block(addresses)
                 markBlocked.perform(MarkBlocked.Params(listOf(threadId), prefs.blockingManager.get(), null))
-            })
-            .doFinally { pendingResult.finish() }
-            .subscribe({}, { error -> Timber.e(error, "blocking failed") })
+            } catch (e: Exception) {
+                Timber.e(e, "blocking failed")
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 }

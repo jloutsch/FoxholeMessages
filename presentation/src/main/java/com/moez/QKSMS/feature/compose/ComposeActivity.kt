@@ -20,7 +20,6 @@
 
 package dev.octoshrimpy.quik.feature.compose
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flatMapLatest
@@ -123,7 +122,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     override val chipsSelectedIntent = events<HashMap<String, String?>>()
     override val chipDeletedIntent by lazy { chipsAdapter.chipDeleted }
     // QkActivity's menu is still RxJava: bridged until Task 29
-    override val menuReadyIntent: Flow<Unit> = menu.asFlow().map { }
+    override val menuReadyIntent: Flow<Unit> = menu.map { }
     override val optionsItemIntent = events<Int>()
     override val contextItemIntent = events<MenuItem>()
     override val scheduleAction = events<Boolean>()
@@ -132,7 +131,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     override val messagePartSaveIntent by lazy { messageAdapter.partSaveClicks }
     override val messagePartContextMenuRegistrar by lazy { messageAdapter.partContextMenuRegistrar }
     // QkListAdapter is shared with screens still on RxJava: bridged until Task 29
-    override val messagesSelectedIntent by lazy { messageAdapter.selectionChanges.asFlow() }
+    override val messagesSelectedIntent by lazy { messageAdapter.selectionChanges }
     override val cancelDelayedIntent by lazy { messageAdapter.cancelSendingClicks }
     override val sendDelayedNowIntent by lazy { messageAdapter.sendNowClicks }
     override val resendIntent by lazy { messageAdapter.resendClicks }
@@ -283,7 +282,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             binding.message.supportsInputContent = true
 
             // QkThemedActivity's theme is still RxJava: bridged until Task 29
-            theme.asFlow().collectIn(lifecycleScope) {
+            theme.collectIn(lifecycleScope) {
                     binding.loading.setTint(it.theme)
 
                     // entire attach menu
@@ -319,8 +318,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             }
 
             // Show the conversation's custom background image, if one has been set
-            threadId.asFlow()
-                .distinctUntilChanged()
+            threadId // a StateFlow: already skips repeats
                 .flatMapLatest { threadId -> prefs.backgroundUri(threadId).asFlow() }
                 .collectIn(lifecycleScope) { backgroundUri -> setBackgroundImage(backgroundUri) }
 
@@ -480,7 +478,7 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             return
         }
 
-        threadId.onNext(state.threadId)
+        threadId.value = state.threadId
 
         title = when {
             state.selectedMessages > 0 -> getString(R.string.compose_title_selected, state.selectedMessages)

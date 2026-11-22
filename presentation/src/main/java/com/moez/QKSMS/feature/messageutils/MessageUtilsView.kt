@@ -1,9 +1,9 @@
 package dev.octoshrimpy.quik.feature.messageutils
 
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import kotlinx.coroutines.flow.Flow
 
-interface MessageUtilsView: QkFlowView<MessageUtilsState> {
+interface MessageUtilsView: QkView<MessageUtilsState> {
     val autoDeduplicateClickIntent: Flow<Unit>
     val deduplicateClickIntent: Flow<Unit>
     val autoDeleteClickIntent: Flow<Unit>

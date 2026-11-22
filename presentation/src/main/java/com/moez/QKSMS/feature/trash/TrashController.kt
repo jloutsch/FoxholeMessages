@@ -19,7 +19,7 @@
 package dev.octoshrimpy.quik.feature.trash
 
 import dev.octoshrimpy.quik.common.util.extensions.events
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -32,7 +32,7 @@ import dev.octoshrimpy.quik.databinding.TrashControllerBinding
 import dev.octoshrimpy.quik.injection.appComponent
 import javax.inject.Inject
 
-class TrashController : QkFlowController<TrashControllerBinding, TrashView, TrashState, TrashPresenter>(),
+class TrashController : QkController<TrashControllerBinding, TrashView, TrashState, TrashPresenter>(),
     TrashView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): TrashControllerBinding =

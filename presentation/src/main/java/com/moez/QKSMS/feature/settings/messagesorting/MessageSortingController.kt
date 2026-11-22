@@ -18,13 +18,12 @@
  */
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import androidx.core.view.isVisible
 import java.text.NumberFormat
 import dev.octoshrimpy.quik.worker.ClassifyExistingMessagesWorker.SortStatus
@@ -44,7 +43,7 @@ import dev.octoshrimpy.quik.injection.appComponent
 import javax.inject.Inject
 
 class MessageSortingController :
-    QkFlowController<MessageSortingControllerBinding, MessageSortingView, MessageSortingState, MessageSortingPresenter>(),
+    QkController<MessageSortingControllerBinding, MessageSortingView, MessageSortingState, MessageSortingPresenter>(),
     MessageSortingView {
 
     @Inject override lateinit var presenter: MessageSortingPresenter
@@ -112,11 +111,11 @@ class MessageSortingController :
     override fun confirmSortExistingIntent(): Flow<Unit> = confirmSortExistingEvents
 
     // QkDialog is shared with screens still on RxJava: bridged until its last user converts
-    override fun otpRetentionSelected(): Flow<Int> = otpRetentionDialog.adapter.menuItemClicks.asFlow()
+    override fun otpRetentionSelected(): Flow<Int> = otpRetentionDialog.adapter.menuItemClicks
 
     override fun showOtpRetentionPicker() = otpRetentionDialog.show(activity!!)
 
-    override fun otpNotificationSizeSelected(): Flow<Int> = otpNotificationSizeDialog.adapter.menuItemClicks.asFlow()
+    override fun otpNotificationSizeSelected(): Flow<Int> = otpNotificationSizeDialog.adapter.menuItemClicks
 
     override fun showOtpNotificationSizePicker() = otpNotificationSizeDialog.show(activity!!)
 

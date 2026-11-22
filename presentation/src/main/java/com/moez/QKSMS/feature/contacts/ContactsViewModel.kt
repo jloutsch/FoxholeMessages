@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.contacts
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.map
@@ -31,7 +30,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import android.view.inputmethod.EditorInfo
 import dev.octoshrimpy.quik.extensions.removeAccents
 import dev.octoshrimpy.quik.feature.compose.editing.ComposeItem
@@ -58,15 +57,15 @@ class ContactsViewModel @Inject constructor(
     private val conversationRepo: ConversationRepository,
     private val phoneNumberUtils: PhoneNumberUtils,
     private val setDefaultPhoneNumber: SetDefaultPhoneNumber
-) : QkFlowViewModel<ContactsContract, ContactsState>(ContactsState()) {
+) : QkViewModel<ContactsContract, ContactsState>(ContactsState()) {
 
     // The repositories are still RxJava (other screens read them): bridged until Task 29
-    private val contactGroups: Flow<List<ContactGroup>> by lazy { contactsRepo.getUnmanagedContactGroups().asFlow() }
-    private val contacts: Flow<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts().asFlow() }
+    private val contactGroups: Flow<List<ContactGroup>> by lazy { contactsRepo.getUnmanagedContactGroups() }
+    private val contacts: Flow<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts() }
     private val recents: Flow<List<Conversation>> by lazy {
-        if (sharing) conversationRepo.getUnmanagedConversations().asFlow() else flowOf(listOf())
+        if (sharing) conversationRepo.getUnmanagedConversations() else flowOf(listOf())
     }
-    private val starredContacts: Flow<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts(true).asFlow() }
+    private val starredContacts: Flow<List<Contact>> by lazy { contactsRepo.getUnmanagedContacts(true) }
 
     private val selectedChips: Flow<List<Recipient>> = flow {
         emit(serializedChips.map { (address, lookupKey) ->

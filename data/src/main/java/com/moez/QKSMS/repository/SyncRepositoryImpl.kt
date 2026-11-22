@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineScope
@@ -49,11 +51,6 @@ import dev.octoshrimpy.quik.model.SyncLog
 import dev.octoshrimpy.quik.interactor.DeduplicateMessages
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.tryOrNull
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
-import io.reactivex.Completable
-import io.reactivex.schedulers.Schedulers
 import dev.octoshrimpy.quik.db.FoxholeDatabase
 import dev.octoshrimpy.quik.db.Relations
 import dev.octoshrimpy.quik.db.entity.ContactGroupMember
@@ -84,30 +81,35 @@ class SyncRepositoryImpl @Inject constructor(
     private val relations: Relations,
 ) : SyncRepository {
 
-    override val syncProgress: Subject<SyncRepository.SyncProgress> =
-            BehaviorSubject.createDefault(SyncRepository.SyncProgress.Idle)
+    override val syncProgress = MutableStateFlow<SyncRepository.SyncProgress>(SyncRepository.SyncProgress.Idle)
+
+    // Lives as long as the app (a singleton); the background sync runs in it
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val messageDao get() = database.messageDao()
     private val conversationDao get() = database.conversationDao()
     private val contactDao get() = database.contactDao()
 
     // Fire and forget: runs once in the background for the app's lifetime, nothing to cancel
-    @Suppress("CheckResult")
     override fun syncMessages() {
         // If the sync is already running, don't try to do another one
-        if (syncProgress.blockingFirst() is SyncRepository.SyncProgress.Running) return
+        if (syncProgress.value is SyncRepository.SyncProgress.Running) return
 
-        Completable.fromAction { syncMessagesNow() }
-            .subscribeOn(Schedulers.io())
-            .subscribe({}, { error -> Timber.e(error, "syncMessages Failed") })
+        scope.launch {
+            try {
+                syncMessagesNow()
+            } catch (e: Exception) {
+                Timber.e(e, "syncMessages Failed")
+            }
+        }
     }
 
     /** The full sync, on the calling thread (not the main thread); throws if it fails. */
-    @Suppress("CheckResult") // the dedupe below is fire and forget, like the sync itself
+    // the dedupe below is fire and forget, like the sync itself
     private fun syncMessagesNow() {
         val oldBlockedSenders = rxPrefs.getStringSet("pref_key_blocked_senders")
 
-        syncProgress.onNext(SyncRepository.SyncProgress.Running(0, 0, true))
+        syncProgress.tryEmit(SyncRepository.SyncProgress.Running(0, 0, true))
         try {
             database.runInTransaction { rebuildFromProvider(oldBlockedSenders.get()) }
         } catch (e: Exception) {
@@ -116,7 +118,7 @@ class SyncRepositoryImpl @Inject constructor(
             keys.forget()
             throw e
         } finally {
-            syncProgress.onNext(SyncRepository.SyncProgress.Idle)
+            syncProgress.tryEmit(SyncRepository.SyncProgress.Idle)
         }
         oldBlockedSenders.delete()
 
@@ -202,7 +204,7 @@ class SyncRepositoryImpl @Inject constructor(
             val batch = ArrayList<Message>(BATCH)
             messageCursor.forEach { cursor ->
                 tryOrNull {
-                    syncProgress.onNext(SyncRepository.SyncProgress.Running(max, ++progress, false))
+                    syncProgress.tryEmit(SyncRepository.SyncProgress.Running(max, ++progress, false))
                     batch += cursorToMessage.map(Pair(cursor, messageColumns)).apply {
                         persistedMessages[AppOnlyMessageFields.key(this)]?.applyTo(this)
                     }
@@ -224,7 +226,7 @@ class SyncRepositoryImpl @Inject constructor(
         conversationCursor?.use {
             conversationCursor.forEach { cursor ->
                 tryOrNull {
-                    syncProgress.onNext(SyncRepository.SyncProgress.Running(max, ++progress, false))
+                    syncProgress.tryEmit(SyncRepository.SyncProgress.Running(max, ++progress, false))
                     val conversation = cursorToConversation.map(cursor).apply {
                         persistedConversations[id]?.applyTo(this)
                         // Trashed messages are kept above, so skip them here: otherwise a
@@ -241,7 +243,7 @@ class SyncRepositoryImpl @Inject constructor(
         recipientCursor?.use {
             recipientCursor.forEach { cursor ->
                 tryOrNull {
-                    syncProgress.onNext(SyncRepository.SyncProgress.Running(max, ++progress, false))
+                    syncProgress.tryEmit(SyncRepository.SyncProgress.Running(max, ++progress, false))
                     val rec = cursorToRecipient.map(cursor).apply {
                         contact = contacts.firstOrNull { c ->
                             c.numbers.any { num -> phoneNumberUtils.compare(address, num.address) }
@@ -252,10 +254,10 @@ class SyncRepositoryImpl @Inject constructor(
             }
         }
 
-        syncProgress.onNext(SyncRepository.SyncProgress.ParsingEmojis(0, 0, true))
+        syncProgress.tryEmit(SyncRepository.SyncProgress.ParsingEmojis(0, 0, true))
 
         // Now that we have all the messages, we can scan for emoji reactions
-        reactions.deleteAndReparseAllEmojiReactions(onProgress = syncProgress::onNext)
+        reactions.deleteAndReparseAllEmojiReactions(onProgress = { syncProgress.value = it })
 
         database.syncLogDao().insert(SyncLog())
     }

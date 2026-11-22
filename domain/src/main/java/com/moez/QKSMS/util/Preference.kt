@@ -1,14 +1,12 @@
 package dev.octoshrimpy.quik.util
 
 import android.content.SharedPreferences
-import io.reactivex.Observable
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.rx2.asObservable
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -44,9 +42,6 @@ class Preference<T : Any> internal constructor(
 
     /** The current value, then the value after each change (the default after [delete]). */
     fun asFlow(): Flow<T> = prefs.keyChanges().filter { it == key }.map { get() }.onStart { emit(get()) }
-
-    @Deprecated("Rx bridge for screens not yet on Flow; removed in #34 Task 29", ReplaceWith("asFlow()"))
-    fun asObservable(): Observable<T> = asFlow().asObservable()
 }
 
 /** Keys of settings as they change. Android calls the listener on the main thread. */

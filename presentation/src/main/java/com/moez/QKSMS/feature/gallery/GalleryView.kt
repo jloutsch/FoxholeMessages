@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.gallery
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.model.MmsPart
 
-interface GalleryView : QkFlowView<GalleryState> {
+interface GalleryView : QkView<GalleryState> {
 
     fun optionsItemSelected(): Flow<Int>
     fun screenTouched(): Flow<Unit>

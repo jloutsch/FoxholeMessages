@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,7 +37,7 @@ import dev.octoshrimpy.quik.model.TrustedSender
 import javax.inject.Inject
 
 class TrustedSendersController :
-    QkFlowController<TrustedSendersControllerBinding, TrustedSendersView, TrustedSendersState, TrustedSendersPresenter>(),
+    QkController<TrustedSendersControllerBinding, TrustedSendersView, TrustedSendersState, TrustedSendersPresenter>(),
     TrustedSendersView {
 
     @Inject override lateinit var presenter: TrustedSendersPresenter

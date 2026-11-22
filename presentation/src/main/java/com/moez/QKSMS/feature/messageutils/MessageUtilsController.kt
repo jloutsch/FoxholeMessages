@@ -3,7 +3,7 @@ package dev.octoshrimpy.quik.feature.messageutils
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.animation.ObjectAnimator
 import android.app.AlertDialog
 import android.content.Context
@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
-class MessageUtilsController : QkFlowController<MessageUtilsControllerBinding, MessageUtilsView, MessageUtilsState, MessageUtilsPresenter>(), MessageUtilsView {
+class MessageUtilsController : QkController<MessageUtilsControllerBinding, MessageUtilsView, MessageUtilsState, MessageUtilsPresenter>(), MessageUtilsView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): MessageUtilsControllerBinding =
         MessageUtilsControllerBinding.inflate(inflater, container, false)

@@ -18,6 +18,8 @@
  */
 package dev.octoshrimpy.quik.common.base
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.Menu
@@ -32,8 +34,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.util.Preferences
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 import javax.inject.Inject
 import android.content.Intent
 import androidx.activity.OnBackPressedCallback
@@ -44,7 +44,8 @@ import com.bluelinelabs.conductor.Router
 abstract class QkActivity : AppCompatActivity() {
     @Inject lateinit var prefs: Preferences
 
-    protected val menu: Subject<Menu> = BehaviorSubject.create()
+    // Re-emits the same Menu object after invalidateOptionsMenu(), which a StateFlow would skip
+    protected val menu = MutableSharedFlow<Menu>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     protected val toolbar: Toolbar? get() = findViewById(R.id.toolbar)
     protected val toolbarTitle: TextView? get() = findViewById(R.id.toolbarTitle)
@@ -149,7 +150,7 @@ abstract class QkActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val result = super.onCreateOptionsMenu(menu)
         if (menu != null) {
-            this.menu.onNext(menu)
+            this.menu.tryEmit(menu)
         }
         return result
     }

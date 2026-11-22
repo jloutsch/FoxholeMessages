@@ -20,13 +20,13 @@ package dev.octoshrimpy.quik.feature.settings.about
 
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import javax.inject.Inject
 
 class AboutPresenter @Inject constructor(
     private val externalNavigator: ExternalNavigator
-) : QkFlowPresenter<AboutView, Unit>(Unit) {
+) : QkPresenter<AboutView, Unit>(Unit) {
 
     override fun bindIntents(view: AboutView) {
         super.bindIntents(view)

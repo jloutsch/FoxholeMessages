@@ -4,7 +4,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import dev.octoshrimpy.quik.R
@@ -23,7 +23,7 @@ class ScheduledViewModel @Inject constructor(
     private val scheduledMessageRepo: ScheduledMessageRepository,
     private val sendScheduledMessageInteractor: SendScheduledMessage,
     private val deleteScheduledMessagesInteractor: DeleteScheduledMessages,
-) : QkFlowViewModel<ScheduledView, ScheduledState>(ScheduledState(
+) : QkViewModel<ScheduledView, ScheduledState>(ScheduledState(
     conversationId = conversationId
 )) {
 

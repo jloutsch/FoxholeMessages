@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowViewModel
+import dev.octoshrimpy.quik.common.base.QkViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import com.moez.QKSMS.contentproviders.MmsPartProvider
@@ -45,7 +45,7 @@ class GalleryViewModel @Inject constructor(
     private val navigator: Navigator,
     private val saveImage: SaveImage,
     private val permissions: PermissionManager
-) : QkFlowViewModel<GalleryView, GalleryState>(GalleryState()) {
+) : QkViewModel<GalleryView, GalleryState>(GalleryState()) {
     init {
         // Paged over the tapped message's own attachments, not the whole thread's - swiping should
         // run to the end of this message and stop, rather than continuing into unrelated messages.

@@ -18,6 +18,13 @@
  */
 package dev.octoshrimpy.quik.manager
 
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.FlowPreview
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
@@ -25,16 +32,13 @@ import android.content.Intent
 import com.klinker.android.send_message.BroadcastUtils
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.CODE_PACKAGE
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
 class WidgetManagerImpl @Inject constructor(private val context: Context, prefs: Preferences)
     : WidgetManager {
     companion object {
-        private var staticUnreadAtTopPrefsDisposable = AtomicReference<Disposable>(null)
+        private var staticUnreadAtTopPrefsJob = AtomicReference<Job>(null)
 
         fun sendDatasetChanged(context: Context) {
             BroadcastUtils.sendExplicitBroadcast(context, Intent(), "${context.packageName}.${WidgetManager.ACTION_NOTIFY_DATASET_CHANGED}")
@@ -44,13 +48,13 @@ class WidgetManagerImpl @Inject constructor(private val context: Context, prefs:
     init {
         // this class is always instantiated by it's factory with the application context so we can capture that context value below
         // when unreadAtTop preference changes, send broadcast to widgets to update themselves
-        if (staticUnreadAtTopPrefsDisposable.get() === null)
-            staticUnreadAtTopPrefsDisposable.set(prefs.unreadAtTop.asObservable()
-                .skip(1)
-                .debounce(400, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext { sendDatasetChanged(context) }
-                .subscribe())
+        if (staticUnreadAtTopPrefsJob.get() === null)
+            @OptIn(FlowPreview::class) // debounce is stable in practice; still marked preview
+            staticUnreadAtTopPrefsJob.set(prefs.unreadAtTop.asFlow()
+                .drop(1)
+                .debounce(400)
+                .onEach { sendDatasetChanged(context) }
+                .launchIn(MainScope()))
     }
 
     override fun sendDatasetChanged() {

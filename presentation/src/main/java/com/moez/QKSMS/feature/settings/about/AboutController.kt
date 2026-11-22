@@ -23,7 +23,7 @@ import android.view.View
 import android.view.ViewGroup
 import dev.octoshrimpy.quik.BuildConfig
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import dev.octoshrimpy.quik.common.util.extensions.clicks
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 import dev.octoshrimpy.quik.databinding.AboutControllerBinding
@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import javax.inject.Inject
 
-class AboutController : QkFlowController<AboutControllerBinding, AboutView, Unit, AboutPresenter>(), AboutView {
+class AboutController : QkController<AboutControllerBinding, AboutView, Unit, AboutPresenter>(), AboutView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): AboutControllerBinding =
         AboutControllerBinding.inflate(inflater, container, false)

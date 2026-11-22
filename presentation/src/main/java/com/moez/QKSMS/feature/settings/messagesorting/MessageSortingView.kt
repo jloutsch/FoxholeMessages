@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.settings.messagesorting
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 
-interface MessageSortingView : QkFlowView<MessageSortingState> {
+interface MessageSortingView : QkView<MessageSortingState> {
 
     fun preferenceClicks(): Flow<PreferenceView>
     fun confirmSortExistingIntent(): Flow<Unit>

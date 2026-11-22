@@ -18,6 +18,10 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
 import android.content.Context
 import com.squareup.moshi.Moshi
@@ -27,8 +31,6 @@ import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.util.EmojiPatternStrings
 import dev.octoshrimpy.quik.db.FoxholeDatabase
 import dev.octoshrimpy.quik.db.Relations
-import io.reactivex.Completable
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -278,22 +280,31 @@ class EmojiReactionRepositoryImpl @Inject constructor(
     }
 
     // Fire and forget: runs once in the background for the app's lifetime, nothing to cancel
-    @Suppress("CheckResult")
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override fun reparseIfFlagged() {
-        Completable.fromAction {
-            if (database.emojiSyncNeededDao().count() > 0) {
-                deleteAndReparseAllEmojiReactions { /* No progress UI here */ }
-                database.emojiSyncNeededDao().clear()
+        scope.launch {
+            try {
+                if (database.emojiSyncNeededDao().count() > 0) {
+                    deleteAndReparseAllEmojiReactions { /* No progress UI here */ }
+                    database.emojiSyncNeededDao().clear()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Emoji reparse failed")
             }
-        }.subscribeOn(Schedulers.io()).subscribe({}, { error -> Timber.e(error, "Emoji reparse failed") })
+        }
     }
 
-    // Fire and forget: runs once in the background for the app's lifetime, nothing to cancel
-    @Suppress("CheckResult")
     override fun reparseAll(onDone: () -> Unit, onError: (Throwable) -> Unit) {
-        Completable.fromAction { deleteAndReparseAllEmojiReactions { /* No progress UI here */ } }
-            .subscribeOn(Schedulers.io())
-            .subscribe({ onDone() }, { error -> onError(error) })
+        scope.launch {
+            try {
+                deleteAndReparseAllEmojiReactions { /* No progress UI here */ }
+            } catch (e: Exception) {
+                onError(e)
+                return@launch
+            }
+            onDone()
+        }
     }
 
 }

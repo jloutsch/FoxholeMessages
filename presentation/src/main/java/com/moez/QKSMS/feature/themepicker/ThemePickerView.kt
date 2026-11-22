@@ -18,10 +18,10 @@
  */
 package dev.octoshrimpy.quik.feature.themepicker
 
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import kotlinx.coroutines.flow.Flow
 
-interface ThemePickerView : QkFlowView<ThemePickerState> {
+interface ThemePickerView : QkView<ThemePickerState> {
 
     fun themeSelected(): Flow<Int>
     fun hsvThemeSelected(): Flow<Int>

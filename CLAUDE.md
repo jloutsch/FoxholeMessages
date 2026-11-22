@@ -33,11 +33,9 @@ Finalizing v1.0 (`versionCode 2239`, `versionName '1.0.0'`, bumped in
    dependency), with its own built-in in-memory LRU cache (size 100)
    keyed by URL — no separate Realm/Room cache layer was needed.
    `LinkPreviewRepository` (`common/util/LinkPreviewRepository.kt`)
-   wraps it as `Maybe<LinkPreview>` (empty = no preview, never throws)
-   via `Maybe.defer { ... }.subscribeOn(Schedulers.io())` (plain
-   RxJava2, not coroutines — `Maybe.fromCallable` doesn't work here
-   since Kotlin infers a nullable type argument from a nullable
-   lambda body, which doesn't unify with `Maybe`'s invariant generics).
+   wraps it as `suspend fun unfurl(url): LinkPreview?` on `Dispatchers.IO`
+   (null = no preview; a failure throws, and `MessagesAdapter` logs it).
+   It was an RxJava `Maybe` until #34.
    `MessagesAdapter` extracts the first URL per message with
    `Linkify`, fetches/binds/cancels per-ViewHolder (tag-based
    staleness guard + `onViewRecycled` disposal), and renders a card
@@ -247,9 +245,7 @@ this was turned on are recorded in `presentation/lint-baseline.xml` and `android
 (`common`/`domain`/`data` had warnings only). After fixing baselined findings, regenerate with
 `./gradlew :presentation:updateLintBaseline`. `MissingTranslation` is disabled: translations lag English
 on purpose. Real findings still in the baseline worth fixing some day: `MissingPermission` in
-`RestoreBackupService` and in the vendored `getLine1Number` calls. The `AutoDispose` check is disabled:
-version 1.3.0's detector crashes under AGP 8 lint. Before that it flagged three undisposed subscriptions
-(`BlockingController` lines 105 and 123, `CategoryNotificationActivity` line 69).
+`RestoreBackupService` and in the vendored `getLine1Number` calls.
 
 On-device tests (`data/src/androidTest`) need a phone and aren't run by CI: phone-number matching
 (`PhoneNumberUtilsTest`) and search case-folding on the phone's own SQLite, including accented letters
@@ -1195,15 +1191,16 @@ advice still applies.
   DAO methods: Room only refreshes when a table named in the SQL changes, which misses relations
   (a renamed contact on the inbox).
 - **Screens get database updates on the main thread.** Room's live lists send updates from a
-  background thread; Realm used the main thread, and screens assume it. Convert a database Flow for
-  a screen with `asMainObservable()` (presentation `FlowExtensions.kt`), never `asObservable()`.
-  `MainThreadDatabaseUpdatesTest` enforces it. Missing this crashed group threads in 2.8.0–2.9.1.
+  background thread; Realm used the main thread, and screens assume it. Collect a database Flow in a
+  main-thread scope (`presenterScope`, `viewModelScope`, a view's `bindScope`), never in an IO scope;
+  put only the blocking work in `withContext(Dispatchers.IO)`. `MainThreadDatabaseUpdatesTest`
+  enforces it. Missing this crashed group threads in 2.8.0–2.9.1.
 - **Main-thread reads (#71, closed 2026-11-21):** debug builds don't call `allowMainThreadQueries()`,
   so Room throws on any database read on the main thread during testing. Release builds keep it **on
   purpose**: the Note 10 isn't used for daily messaging, so a read the sweep missed would first show
   up on Justin's phone, where allowing it costs about 1 ms and flipping it would crash. Don't remove
-  it from release without a way to catch misses first. Read in the background (`observeOn(Schedulers.io())`, then back to the main
-  thread for the screen). `newState {}`'s block runs on the main thread: read first, then pass the
+  it from release without a way to catch misses first. Read in the background (`withContext(Dispatchers.IO)`,
+  then back on the main thread for the screen). `newState {}`'s block runs on the main thread: read first, then pass the
   result in. Conversations carry `unreadCount`, filled by `Relations.conversations`.
 - **App-only fields:** the full sync keeps `AppOnlyMessageFields` and `AppOnlyConversationFields`
   (`SyncRepositoryImpl.kt`); `SortingAndSyncDataTest` fails if a new field on either isn't classified.
@@ -1216,6 +1213,33 @@ advice still applies.
   Room can't work it out), commit the new `data/schemas/.../N.json`, and add a case to `MigrationTest`
   (version 2, #84, is the first). The first test run after a schema change can fail with "Missing
   file N.json", because the tests copied the schema folder before the compiler wrote it. Run it again.
+
+### Kotlin Flow, not RxJava (#34)
+
+RxJava, RxBinding, AutoDispose and RxDogTag were removed in #34; `NoRxJavaTest` fails if any app
+source imports them again. The conventions that replaced them:
+
+- **Screens:** `QkViewModel` (activities) and `QkPresenter` (Conductor controllers) hold a `StateFlow`
+  state; `newState {}` reducers are applied on the main thread, in call order. The bases post each
+  render to the main thread (`launch(Dispatchers.Main)`), so a screen can bind in `onCreate` before
+  every view `render` touches exists. Views implement `QkView`, whose `bindScope` is an activity's
+  `lifecycleScope` or a controller's attach scope (attach to detach, `AttachScope`). Collect intents with
+  `collectIn(view.bindScope)`; work that must outlive a detach (opening Contacts, saving a draft on
+  pause) goes in `presenterScope`/`viewModelScope`.
+- **View events:** `common/util/extensions/ViewFlows.kt` (`clicks`, `longClicks`, `textChanges`,
+  `editorActions`, `drawerOpens`). `clicks()` sets the view's single click listener, as RxBinding did:
+  two collectors on one view means the last one wins.
+- **Subjects:** `events<T>()` (a `MutableSharedFlow` with an unlimited buffer) for one-off events;
+  `MutableStateFlow` for a current value; a replay-1 `MutableSharedFlow` where equal values must still
+  re-emit (selection lists, Compose's conversation stream, `QkActivity.menu`). `withLatestFrom` became a
+  local variable or `state.value`.
+- **Repositories** return `Flow`/`StateFlow` or plain blocking functions (call them with
+  `withContext(Dispatchers.IO)`). Settings: `Preference.asFlow()`, `Preferences.keyChanges`.
+- **Interactors:** `suspend fun perform`; `execute(params, onComplete, onTerminate)` runs it on IO and
+  calls back on the main thread. `dispose()` cancels; screens call it from `onCleared()` where RxJava
+  had `disposables += interactor`.
+- **Receivers** that need background work use `goAsync()` plus `GlobalScope.launch(Dispatchers.IO)`,
+  calling `finish()` in `finally`.
 
 ### Realm performance rule for anything batch-shaped
 

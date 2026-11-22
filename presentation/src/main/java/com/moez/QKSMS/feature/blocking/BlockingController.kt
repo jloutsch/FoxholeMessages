@@ -25,7 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.DelicateCoroutinesApi
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,7 +49,7 @@ import androidx.appcompat.app.AlertDialog
 import timber.log.Timber
 import javax.inject.Inject
 
-class BlockingController : QkFlowController<BlockingControllerBinding, BlockingView, BlockingState, BlockingPresenter>(), BlockingView {
+class BlockingController : QkController<BlockingControllerBinding, BlockingView, BlockingState, BlockingPresenter>(), BlockingView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): BlockingControllerBinding =
         BlockingControllerBinding.inflate(inflater, container, false)

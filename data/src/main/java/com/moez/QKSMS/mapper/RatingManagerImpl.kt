@@ -18,9 +18,9 @@
  */
 package dev.octoshrimpy.quik.mapper
 
+import kotlinx.coroutines.flow.combine
 import dev.octoshrimpy.quik.util.PreferenceStore
 import dev.octoshrimpy.quik.manager.RatingManager
-import io.reactivex.rxkotlin.Observables
 import javax.inject.Inject
 
 class RatingManagerImpl @Inject constructor(
@@ -35,10 +35,10 @@ class RatingManagerImpl @Inject constructor(
     private val rated = rxPrefs.getBoolean("rated", false)
     private val dismissed = rxPrefs.getBoolean("dismissed", false)
 
-    override val shouldShowRating = Observables.combineLatest(
-            sessions.asObservable(),
-            rated.asObservable(),
-            dismissed.asObservable()
+    override val shouldShowRating = combine(
+            sessions.asFlow(),
+            rated.asFlow(),
+            dismissed.asFlow()
     ) { sessions, rated, dismissed ->
         sessions > RATING_THRESHOLD && !rated && !dismissed
     }

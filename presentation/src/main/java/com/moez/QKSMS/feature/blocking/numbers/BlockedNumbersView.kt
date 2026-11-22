@@ -19,9 +19,9 @@
 package dev.octoshrimpy.quik.feature.blocking.numbers
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 
-interface BlockedNumbersView : QkFlowView<BlockedNumbersState> {
+interface BlockedNumbersView : QkView<BlockedNumbersState> {
 
     fun unblockAddress(): Flow<Long>
     fun addAddress(): Flow<Unit>

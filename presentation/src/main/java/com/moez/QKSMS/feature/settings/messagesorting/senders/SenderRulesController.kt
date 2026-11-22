@@ -20,7 +20,7 @@ package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.content.Context
 import android.content.DialogInterface
 import android.view.View
@@ -35,7 +35,7 @@ import dev.octoshrimpy.quik.model.SenderCategoryRule
 import javax.inject.Inject
 
 class SenderRulesController :
-    QkFlowController<SenderRulesControllerBinding, SenderRulesView, SenderRulesState, SenderRulesPresenter>(),
+    QkController<SenderRulesControllerBinding, SenderRulesView, SenderRulesState, SenderRulesPresenter>(),
     SenderRulesView {
 
     @Inject override lateinit var presenter: SenderRulesPresenter

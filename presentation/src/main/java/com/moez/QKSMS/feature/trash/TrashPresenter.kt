@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.trash
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.interactor.EmptyTrash
 import dev.octoshrimpy.quik.interactor.RestoreMessages
 import dev.octoshrimpy.quik.repository.MessageRepository
@@ -31,7 +31,7 @@ class TrashPresenter @Inject constructor(
     private val messageRepo: MessageRepository,
     private val restoreMessages: RestoreMessages,
     private val emptyTrash: EmptyTrash
-) : QkFlowPresenter<TrashView, TrashState>(TrashState()) {
+) : QkPresenter<TrashView, TrashState>(TrashState()) {
 
     init {
         // Collected on the main thread (presenterScope); the query itself runs in the background

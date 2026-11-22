@@ -16,6 +16,10 @@
  */
 package dev.octoshrimpy.quik.receiver
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -29,8 +33,6 @@ import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.worker.ReceiveSmsWorker
 import dev.octoshrimpy.quik.worker.ReceiveSmsWorker.Companion.INPUT_DATA_KEY_MESSAGE_ID
-import io.reactivex.Single
-import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -59,21 +61,19 @@ class DebugInjectSmsReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
 
         val rawRegexFilter = intent.getStringExtra("rawRegexFilter")
-        if (rawRegexFilter != null) {
-            Single.fromCallable { filterRepo.createFilter(MessageContentFilterData(rawRegexFilter, false, true, false)) }
-                .subscribeOn(Schedulers.io())
-                .doFinally { pendingResult.finish() }
-                .subscribe({ Timber.i("debug: saved unvalidated regex filter") }, { Timber.e(it, "debug: filter insert failed") })
-            return
-        }
-
         val address = intent.getStringExtra("address") ?: "5550100199"
         val body = intent.getStringExtra("body") ?: "Debug test message"
 
-        Single.fromCallable { messageRepo.insertReceivedSms(-1, address, body, System.currentTimeMillis()).id }
-            .subscribeOn(Schedulers.io())
-            .doFinally { pendingResult.finish() }
-            .subscribe({ messageId ->
+        @OptIn(DelicateCoroutinesApi::class) // a receiver has no scope; goAsync() keeps it alive until finish()
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                if (rawRegexFilter != null) {
+                    filterRepo.createFilter(MessageContentFilterData(rawRegexFilter, false, true, false))
+                    Timber.i("debug: saved unvalidated regex filter")
+                    return@launch
+                }
+
+                val messageId = messageRepo.insertReceivedSms(-1, address, body, System.currentTimeMillis()).id
                 Timber.i("debug: injected sms messageId=$messageId")
                 WorkManager.getInstance(context).enqueue(
                     OneTimeWorkRequestBuilder<ReceiveSmsWorker>()
@@ -81,6 +81,11 @@ class DebugInjectSmsReceiver : BroadcastReceiver() {
                         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                         .build()
                 )
-            }, { Timber.e(it, "debug: sms inject failed") })
+            } catch (e: Exception) {
+                Timber.e(e, "debug: inject failed")
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 }

@@ -19,9 +19,9 @@
 package dev.octoshrimpy.quik.feature.qkreply
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 
-interface QkReplyView : QkFlowView<QkReplyState> {
+interface QkReplyView : QkView<QkReplyState> {
 
     val menuItemIntent: Flow<Int>
     val textChangedIntent: Flow<CharSequence>

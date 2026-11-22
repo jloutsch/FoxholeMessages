@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.conversations
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.flowOn
@@ -68,12 +67,12 @@ class ConversationItemTouchCallback @Inject constructor(
     init {
         // Colors is still RxJava (other screens read it): bridged until Task 29. Both run until the
         // activity's scope ends, as the activity's CompositeDisposable did
-        colors.themeObservable().asFlow()
+        colors.themeChanges()
                 .onEach { theme -> backgroundPaint.color = theme.theme }
                 .flowOn(Dispatchers.IO)
                 .launchIn(scope)
 
-        combine(prefs.swipeRight.asFlow(), prefs.swipeLeft.asFlow(), colors.themeObservable().asFlow()
+        combine(prefs.swipeRight.asFlow(), prefs.swipeLeft.asFlow(), colors.themeChanges()
                 ) { right, left, theme ->
                     rightAction = right
                     swipeRightIcon = iconForAction(right, theme.textPrimary)

@@ -19,9 +19,9 @@
 package dev.octoshrimpy.quik.feature.scheduled
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 
-interface ScheduledView : QkFlowView<ScheduledState> {
+interface ScheduledView : QkView<ScheduledState> {
 
     val composeIntent: Flow<Unit>
     val messagesSelectedIntent: Flow<List<Long>>

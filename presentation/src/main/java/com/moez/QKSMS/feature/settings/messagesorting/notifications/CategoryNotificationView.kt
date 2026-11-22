@@ -19,11 +19,11 @@
 package dev.octoshrimpy.quik.feature.settings.messagesorting.notifications
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import android.net.Uri
 import dev.octoshrimpy.quik.common.widget.PreferenceView
 
-interface CategoryNotificationView : QkFlowView<CategoryNotificationState> {
+interface CategoryNotificationView : QkView<CategoryNotificationState> {
 
     val preferenceClickIntent: Flow<PreferenceView>
     val ringtoneSelectedIntent: Flow<String>

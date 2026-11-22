@@ -18,10 +18,11 @@
  */
 package dev.octoshrimpy.quik.listener
 
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
 
 interface ContactAddedListener {
 
-    fun listen(): Observable<*>
+    /** Emits once at start, then on every change to the phone's contacts */
+    fun listen(): Flow<Unit>
 
 }

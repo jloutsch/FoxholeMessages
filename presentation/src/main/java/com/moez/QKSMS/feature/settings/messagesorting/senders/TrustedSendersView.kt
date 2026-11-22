@@ -19,10 +19,10 @@
 package dev.octoshrimpy.quik.feature.settings.messagesorting.senders
 
 import kotlinx.coroutines.flow.Flow
-import dev.octoshrimpy.quik.common.base.QkFlowView
+import dev.octoshrimpy.quik.common.base.QkView
 import dev.octoshrimpy.quik.model.TrustedSender
 
-interface TrustedSendersView : QkFlowView<TrustedSendersState> {
+interface TrustedSendersView : QkView<TrustedSendersState> {
 
     fun removeSender(): Flow<TrustedSender>
     fun confirmRemoveLocked(): Flow<TrustedSender>

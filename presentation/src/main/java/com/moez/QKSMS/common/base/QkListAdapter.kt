@@ -1,11 +1,11 @@
 package dev.octoshrimpy.quik.common.base
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
 import android.view.View
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.Subject
 import timber.log.Timber
 
 /**
@@ -40,7 +40,8 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
             value?.setVisible(data?.isEmpty() == true)
         }
 
-    val selectionChanges: Subject<List<Long>> = BehaviorSubject.create()
+    // The current selection (a BehaviorSubject under RxJava): replays the latest to new collectors
+    val selectionChanges = MutableSharedFlow<List<Long>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private var selection = mutableListOf<Long>()
 
@@ -78,7 +79,7 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
             true -> selection -= id
             false -> selection += id
         }
-        selectionChanges.onNext(selection)
+        selectionChanges.tryEmit(selection)
         return true
     }
 
@@ -86,7 +87,7 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
 
     fun clearSelection() {
         selection.clear()
-        selectionChanges.onNext(selection)
+        selectionChanges.tryEmit(selection)
         notifyDataSetChanged()
     }
 
@@ -96,7 +97,7 @@ abstract class QkListAdapter<T : Any, VH : QkViewHolder>(
         if (needToSelectAll) {
             for (position in 0 until itemCount) selection += getItemId(position)
         }
-        selectionChanges.onNext(selection)
+        selectionChanges.tryEmit(selection)
         notifyDataSetChanged()
     }
 }

@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.settings.swipe
 import android.content.Context
 import androidx.annotation.DrawableRes
 import dev.octoshrimpy.quik.R
-import dev.octoshrimpy.quik.common.base.QkFlowPresenter
+import dev.octoshrimpy.quik.common.base.QkPresenter
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import dev.octoshrimpy.quik.util.Preferences
 import javax.inject.Inject
@@ -29,7 +29,7 @@ import javax.inject.Inject
 class SwipeActionsPresenter @Inject constructor(
     context: Context,
     private val prefs: Preferences
-) : QkFlowPresenter<SwipeActionsView, SwipeActionsState>(SwipeActionsState()) {
+) : QkPresenter<SwipeActionsView, SwipeActionsState>(SwipeActionsState()) {
 
     init {
         val actionLabels = context.resources.getStringArray(R.array.settings_swipe_actions)

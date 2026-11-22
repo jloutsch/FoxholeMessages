@@ -18,7 +18,6 @@
  */
 package dev.octoshrimpy.quik.feature.settings
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.drop
@@ -29,7 +28,7 @@ import dev.octoshrimpy.quik.common.util.extensions.longClicks
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.animation.ObjectAnimator
 import android.app.TimePickerDialog
 import android.content.Context
@@ -61,7 +60,7 @@ import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.Preferences
 import javax.inject.Inject
 
-class SettingsController : QkFlowController<SettingsControllerBinding, SettingsView, SettingsState, SettingsPresenter>(), SettingsView {
+class SettingsController : QkController<SettingsControllerBinding, SettingsView, SettingsState, SettingsPresenter>(), SettingsView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): SettingsControllerBinding =
         SettingsControllerBinding.inflate(inflater, container, false)
@@ -95,7 +94,7 @@ class SettingsController : QkFlowController<SettingsControllerBinding, SettingsV
 
         // Redraw everything in the new colors when the theme changes. drop(1): the first value is
         // the current theme (under RxJava it arrived during init, when activity was still null)
-        colors.themeObservable().asFlow()
+        colors.themeChanges()
                 .drop(1)
                 .collectIn(controllerScope) { activity?.recreate() }
     }
@@ -133,21 +132,21 @@ class SettingsController : QkFlowController<SettingsControllerBinding, SettingsV
     override fun aboutLongClicks(): Flow<Unit> = binding.about.longClicks()
 
 
-    override fun nightModeSelected(): Flow<Int> = nightModeDialog.adapter.menuItemClicks.asFlow()
+    override fun nightModeSelected(): Flow<Int> = nightModeDialog.adapter.menuItemClicks
 
     override fun nightStartSelected(): Flow<Pair<Int, Int>> = startTimeSelectedEvents
 
     override fun nightEndSelected(): Flow<Pair<Int, Int>> = endTimeSelectedEvents
 
-    override fun textSizeSelected(): Flow<Int> = textSizeDialog.adapter.menuItemClicks.asFlow()
+    override fun textSizeSelected(): Flow<Int> = textSizeDialog.adapter.menuItemClicks
 
-    override fun sendDelaySelected(): Flow<Int> = sendDelayDialog.adapter.menuItemClicks.asFlow()
+    override fun sendDelaySelected(): Flow<Int> = sendDelayDialog.adapter.menuItemClicks
 
     override fun signatureChanged(): Flow<String> = signatureEvents
 
-    override fun mmsSizeSelected(): Flow<Int> = mmsSizeDialog.adapter.menuItemClicks.asFlow()
+    override fun mmsSizeSelected(): Flow<Int> = mmsSizeDialog.adapter.menuItemClicks
 
-    override fun messageLinkHandlingSelected(): Flow<Int> = messageLinkHandlingDialog.adapter.menuItemClicks.asFlow()
+    override fun messageLinkHandlingSelected(): Flow<Int> = messageLinkHandlingDialog.adapter.menuItemClicks
 
     override fun render(state: SettingsState) {
         binding.theme.findViewById<View>(R.id.themePreview)?.setBackgroundTint(state.theme)

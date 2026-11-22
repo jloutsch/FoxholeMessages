@@ -18,10 +18,9 @@
  */
 package dev.octoshrimpy.quik.feature.settings.swipe
 
-import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,7 +35,7 @@ import dev.octoshrimpy.quik.databinding.SwipeActionsControllerBinding
 import dev.octoshrimpy.quik.injection.appComponent
 import javax.inject.Inject
 
-class SwipeActionsController : QkFlowController<SwipeActionsControllerBinding, SwipeActionsView, SwipeActionsState, SwipeActionsPresenter>(), SwipeActionsView {
+class SwipeActionsController : QkController<SwipeActionsControllerBinding, SwipeActionsView, SwipeActionsState, SwipeActionsPresenter>(), SwipeActionsView {
 
     override fun inflateBinding(inflater: LayoutInflater, container: ViewGroup): SwipeActionsControllerBinding =
         SwipeActionsControllerBinding.inflate(inflater, container, false)
@@ -79,7 +78,7 @@ class SwipeActionsController : QkFlowController<SwipeActionsControllerBinding, S
     override fun actionClicks(): Flow<SwipeActionsView.Action> = actionClicks
 
     // QkDialog is shared with screens still on RxJava: bridged until its last user converts
-    override fun actionSelected(): Flow<Int> = actionsDialog.adapter.menuItemClicks.asFlow()
+    override fun actionSelected(): Flow<Int> = actionsDialog.adapter.menuItemClicks
 
     override fun showSwipeActions(selected: Int) {
         actionsDialog.adapter.selectedItem = selected

@@ -1,7 +1,4 @@
 
-# autodispose
--dontwarn com.uber.autodispose.**
-
 # ez-vcard
 -dontwarn ezvcard.**
 -dontwarn org.apache.log.**

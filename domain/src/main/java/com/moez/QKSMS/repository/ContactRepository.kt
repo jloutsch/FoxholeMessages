@@ -18,9 +18,9 @@
  */
 package dev.octoshrimpy.quik.repository
 
+import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.ContactGroup
-import io.reactivex.Observable
 
 interface ContactRepository {
 
@@ -30,9 +30,9 @@ interface ContactRepository {
 
     fun getUnmanagedAllContacts(): List<Contact>
 
-    fun getUnmanagedContacts(starred: Boolean = false): Observable<List<Contact>>
+    fun getUnmanagedContacts(starred: Boolean = false): Flow<List<Contact>>
 
-    fun getUnmanagedContactGroups(): Observable<List<ContactGroup>>
+    fun getUnmanagedContactGroups(): Flow<List<ContactGroup>>
 
     fun setDefaultPhoneNumber(lookupKey: String, phoneNumberId: Long)
 

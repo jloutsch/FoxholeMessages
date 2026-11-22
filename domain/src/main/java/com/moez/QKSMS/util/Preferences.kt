@@ -24,9 +24,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import dev.octoshrimpy.quik.common.util.extensions.versionCode
-import io.reactivex.Observable
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.rx2.asObservable
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -203,9 +201,6 @@ class Preferences @Inject constructor(
 
     /** Keys of settings as they change (emitted on the main thread). */
     val keyChanges: Flow<String> = sharedPrefs.keyChanges()
-
-    @Deprecated("Rx bridge for screens not yet on Flow; removed in #34 Task 29", ReplaceWith("keyChanges"))
-    val keyChangesObservable: Observable<String> = keyChanges.asObservable().share()
 
     fun theme(
         recipientId: Long = 0,

@@ -21,7 +21,7 @@ package dev.octoshrimpy.quik.feature.blocking.numbers
 import kotlinx.coroutines.flow.Flow
 import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
-import dev.octoshrimpy.quik.common.base.QkFlowController
+import dev.octoshrimpy.quik.common.base.QkController
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,7 +37,7 @@ import dev.octoshrimpy.quik.databinding.BlockedNumbersControllerBinding
 import dev.octoshrimpy.quik.databinding.BlockedNumbersAddDialogBinding
 import javax.inject.Inject
 
-class BlockedNumbersController : QkFlowController<BlockedNumbersControllerBinding, BlockedNumbersView, BlockedNumbersState, BlockedNumbersPresenter>(),
+class BlockedNumbersController : QkController<BlockedNumbersControllerBinding, BlockedNumbersView, BlockedNumbersState, BlockedNumbersPresenter>(),
     BlockedNumbersView {
 
     @Inject override lateinit var presenter: BlockedNumbersPresenter
