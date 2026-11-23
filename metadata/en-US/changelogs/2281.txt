@@ -1,0 +1,2 @@
+What's new in 2.9.12:
+- Improved: in a conversation, the three-dot menu is now the right-most button at the top, with search next to the call button.
