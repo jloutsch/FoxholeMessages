@@ -66,12 +66,6 @@
         android:title="@string/compose_menu_delete"
         android:visible="false"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/info"
-        android:icon="@drawable/ic_more_vert_black_24dp"
-        android:title="@string/menu_info"
-        android:visible="false"
-        app:showAsAction="always" />
 
     <item
         android:id="@+id/copy"
@@ -126,6 +120,13 @@
         android:id="@+id/clear"
         android:icon="@drawable/ic_clear_black_24dp"
         android:title="@string/compose_menu_clear"
+        android:visible="false"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/info"
+        android:icon="@drawable/ic_more_vert_black_24dp"
+        android:title="@string/menu_info"
         android:visible="false"
         app:showAsAction="always" />
 
