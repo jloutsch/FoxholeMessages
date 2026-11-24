@@ -46,6 +46,8 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import androidx.core.view.iterator
+import com.google.android.material.color.DynamicColors
+import com.google.android.material.color.DynamicColorsOptions
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeBoolean
@@ -107,11 +109,13 @@ abstract class QkThemedActivity : QkActivity() {
 
     @SuppressLint("InlinedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(getActivityThemeRes(prefs.black.get()))
+        setTheme(getActivityThemeRes())
+        applyPalette()
         super.onCreate(savedInstanceState)
 
         // When certain preferences change, we need to recreate the activity
-        val triggers = listOf(prefs.nightMode, prefs.night, prefs.black, prefs.textSize, prefs.systemFont)
+        val triggers = listOf(prefs.nightMode, prefs.night, prefs.black, prefs.textSize, prefs.systemFont,
+            prefs.theme(), prefs.systemColors)
         @OptIn(FlowPreview::class) // debounce is stable in practice; still marked preview
         triggers.map { it.asFlow().drop(1).map { } }.merge()
                 .debounce(400)
@@ -134,7 +138,7 @@ abstract class QkThemedActivity : QkActivity() {
         }
 
         // Set the color for the recent apps title
-        val toolbarColor = resolveThemeColor(R.attr.colorPrimary)
+        val toolbarColor = resolveThemeColor(R.attr.colorSurface)
         val taskDesc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityManager.TaskDescription.Builder()
                 .setLabel(getString(R.string.app_name))
@@ -174,9 +178,19 @@ abstract class QkThemedActivity : QkActivity() {
     /**
      * This can be overridden in case an activity does not want to use the default themes
      */
-    open fun getActivityThemeRes(black: Boolean) = when {
-        black -> R.style.AppTheme_Black
-        else -> R.style.AppTheme
+    open fun getActivityThemeRes() = R.style.AppTheme
+
+    /**
+     * Builds the Material 3 palette from the wallpaper if "Use system colors" is on, otherwise from
+     * the chosen theme colour. Below Android 12 this does nothing and the theme's own palette is used.
+     */
+    private fun applyPalette() {
+        val options = DynamicColorsOptions.Builder()
+        if (!prefs.systemColors.get()) options.setContentBasedSource(prefs.theme().get())
+        DynamicColors.applyToActivityIfAvailable(this, options.build())
+
+        // Last, because the palette sets the surface colours too
+        if (prefs.black.get()) super.getTheme().applyStyle(R.style.ThemeOverlay_Foxhole_Black, true)
     }
 
 }

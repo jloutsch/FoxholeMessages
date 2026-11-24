@@ -25,10 +25,7 @@
     <attr name="switchTrackEnabled" format="color" />
     <attr name="switchTrackDisabled" format="color" />
 
-    <style name="AppLaunchTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:navigationBarColor">@color/backgroundDark</item>
-        <item name="android:statusBarColor">@color/backgroundDark</item>
-        <item name="android:windowBackground">@color/backgroundDark</item>
+    <style name="AppLaunchTheme" parent="FoxholeTheme">
         <!-- API 35 forces edge-to-edge by default, which ignores the solid
              statusBarColor/navigationBarColor this app relies on everywhere
              and has no compensating inset handling for. Opt out via the
@@ -37,58 +34,87 @@
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
     </style>
 
-    <style name="AppTheme" parent="AppBaseTheme">
-        <item name="android:statusBarColor">@color/backgroundLight</item>
-        <item name="android:windowLightStatusBar">true</item>
+    <!-- Every colour comes from a Material 3 role, so replacing the palette at runtime
+         (QkThemedActivity) recolours everything. The roles below are only the fallback palette. -->
+    <style name="FoxholeTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/foxhole_primary</item>
+        <item name="colorOnPrimary">@color/foxhole_on_primary</item>
+        <item name="colorPrimaryContainer">@color/foxhole_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/foxhole_on_primary_container</item>
+        <item name="colorPrimaryInverse">@color/foxhole_primary_inverse</item>
+        <item name="colorSecondary">@color/foxhole_secondary</item>
+        <item name="colorOnSecondary">@color/foxhole_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/foxhole_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/foxhole_on_secondary_container</item>
+        <item name="colorTertiary">@color/foxhole_tertiary</item>
+        <item name="colorOnTertiary">@color/foxhole_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/foxhole_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/foxhole_on_tertiary_container</item>
+        <item name="android:colorBackground">@color/foxhole_surface</item>
+        <item name="colorOnBackground">@color/foxhole_on_surface</item>
+        <item name="colorSurface">@color/foxhole_surface</item>
+        <item name="colorOnSurface">@color/foxhole_on_surface</item>
+        <item name="colorSurfaceVariant">@color/foxhole_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/foxhole_on_surface_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/foxhole_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/foxhole_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/foxhole_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/foxhole_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/foxhole_surface_container_highest</item>
+        <item name="colorSurfaceInverse">@color/foxhole_surface_inverse</item>
+        <item name="colorOnSurfaceInverse">@color/foxhole_on_surface_inverse</item>
+        <item name="colorOutline">@color/foxhole_outline</item>
+        <item name="colorOutlineVariant">@color/foxhole_outline_variant</item>
+
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
     </style>
 
-    <style name="AppBaseTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="AppTheme" parent="AppBaseTheme" />
+
+    <style name="AppBaseTheme" parent="FoxholeTheme">
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
-        <item name="android:divider">@color/separatorLight</item>
-        <item name="android:queryBackground">@color/bubbleLight</item>
-        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:divider">?attr/colorOutlineVariant</item>
+        <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:queryBackground">?attr/colorSurfaceContainerHigh</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
         <item name="android:textColorTertiary">@color/text_tertiary</item>
-        <item name="android:windowBackground">@color/backgroundLight</item>
         <item name="android:windowContentTransitions">true</item>
         <item name="actionBarPopupTheme">@style/PopupTheme</item>
-        <item name="bubbleColor">@color/bubbleLight</item>
-        <item name="colorPrimary">@color/backgroundLight</item>
-        <item name="colorPrimaryDark">@color/backgroundLight</item>
-        <item name="selectableItemBackground">@drawable/ripple</item>
-        <item name="switchThumbEnabled">@color/switchThumbEnabledLight</item>
-        <item name="switchThumbDisabled">@color/switchThumbDisabledLight</item>
-        <item name="switchTrackEnabled">@color/switchTrackEnabledLight</item>
-        <item name="switchTrackDisabled">@color/switchTrackDisabledLight</item>
+        <item name="bubbleColor">?attr/colorSurfaceContainerHigh</item>
+        <item name="selectableItemBackground">@drawable/ripple_themed</item>
+        <item name="switchThumbEnabled">?attr/colorOutline</item>
+        <item name="switchThumbDisabled">?attr/colorOutlineVariant</item>
+        <item name="switchTrackEnabled">?attr/colorSurfaceContainerHighest</item>
+        <item name="switchTrackDisabled">?attr/colorSurfaceContainerHigh</item>
         <item name="windowActionBar">false</item>
     </style>
 
-    <style name="AppThemeDialog" parent="Theme.AppCompat.Light.Dialog">
-        <item name="android:textColorPrimary">@color/text_primary</item>
-        <item name="android:textColorSecondary">@color/text_secondary</item>
-        <item name="android:textColorTertiary">@color/text_tertiary</item>
-        <item name="android:windowBackground">@color/backgroundLight</item>
-        <item name="actionBarPopupTheme">@style/PopupTheme</item>
-        <item name="bubbleColor">@color/bubbleLight</item>
-        <item name="colorPrimary">@color/backgroundLight</item>
-        <item name="colorPrimaryDark">@color/backgroundLight</item>
-        <item name="selectableItemBackground">@drawable/ripple</item>
-        <item name="windowActionBar">false</item>
+    <style name="AppThemeDialog" parent="AppBaseTheme">
+        <!-- The window settings of AppCompat's Dialog theme, so this keeps the palette above -->
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="windowNoTitle">false</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="android:windowAnimationStyle">@style/Animation.AppCompat.Dialog</item>
+        <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
+        <item name="android:windowContentTransitions">false</item>
     </style>
 
-    <style name="PopupTheme" parent="ThemeOverlay.AppCompat.Light">
-        <item name="android:colorBackground">@color/backgroundLight</item>
-        <item name="android:textColor">@color/textPrimary</item>
+    <style name="PopupTheme" parent="">
+        <item name="android:colorBackground">?attr/colorSurfaceContainer</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
 
-    <style name="AppTheme.Gallery" parent="Theme.AppCompat.NoActionBar">
+    <style name="AppTheme.Gallery" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:background">@color/black</item>
     </style>
 
-    <!-- Black mode. No changes needed when not in night theme -->
-    <style name="AppTheme.Black" />
-    <style name="AppThemeDialog.Black" />
-    <style name="PopupTheme.Black" />
+    <!-- Black mode, applied over the palette. No changes needed when not in night theme -->
+    <style name="ThemeOverlay.Foxhole.Black" parent="" />
 
 </resources>

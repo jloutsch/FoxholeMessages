@@ -92,6 +92,9 @@ android {
         disable 'MissingTranslation'
     }
     namespace 'dev.octoshrimpy.quik'
+    // MaterialThemeTest reads the real themes
+    testOptions.unitTests.includeAndroidResources = true
+
     buildFeatures {
         buildConfig true
         viewBinding true
