@@ -30,7 +30,7 @@
         android:layout_height="56dp"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:background="@drawable/circle_ripple"
+        android:background="@drawable/fab_ripple"
         android:contentDescription="@string/message_sorting_trusted_senders_add_cd"
         android:elevation="8dp"
         android:padding="16dp"

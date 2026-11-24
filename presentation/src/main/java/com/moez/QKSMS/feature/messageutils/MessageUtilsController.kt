@@ -5,7 +5,7 @@ import dev.octoshrimpy.quik.common.util.extensions.events
 import dev.octoshrimpy.quik.common.util.extensions.clicks
 import dev.octoshrimpy.quik.common.base.QkController
 import android.animation.ObjectAnimator
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -94,7 +94,7 @@ class MessageUtilsController : QkController<MessageUtilsControllerBinding, Messa
     }
 
     override suspend fun showDeduplicationConfirmationDialog(): Boolean = suspendCancellableCoroutine { cont ->
-        AlertDialog.Builder(activity)
+        AlertDialog.Builder(activity!!)
             .setTitle(R.string.deduplicate_messages_title)
             .setMessage(R.string.deduplicate_message_confirmation_dialog_message)
             .setPositiveButton(R.string.button_continue) { _, _ -> cont.resume(true) }
@@ -114,7 +114,7 @@ class MessageUtilsController : QkController<MessageUtilsControllerBinding, Messa
 
     override suspend fun showAutoDeleteWarningDialog(messages: Int): Boolean = withContext(Dispatchers.Main) {
         suspendCancellableCoroutine { cont ->
-            androidx.appcompat.app.AlertDialog.Builder(activity!!)
+            AlertDialog.Builder(activity!!)
                 .setTitle(R.string.settings_auto_delete_warning)
                 .setMessage(context.resources.getString(R.string.settings_auto_delete_warning_message, messages))
                 .setOnCancelListener { cont.resume(false) }
