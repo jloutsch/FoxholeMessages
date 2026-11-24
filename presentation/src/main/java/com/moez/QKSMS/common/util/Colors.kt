@@ -27,7 +27,10 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
 import android.graphics.Color
+import android.view.ContextThemeWrapper
 import androidx.core.content.res.getColorOrThrow
+import com.google.android.material.color.DynamicColors
+import com.google.android.material.color.DynamicColorsOptions
 import com.google.android.material.color.MaterialColors
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.extensions.getColorCompat
@@ -106,6 +109,26 @@ class Colors @Inject constructor(
             globalColor = prefs.theme().get(),
             systemColor = systemColor()
         ), light = !isNight(), colors = this)
+    }
+
+    /**
+     * How to build the Material 3 palette: from the wallpaper if "Use system colors" is on, otherwise
+     * from the chosen theme colour. Only has an effect on Android 12+.
+     */
+    fun paletteOptions(): DynamicColorsOptions = DynamicColorsOptions.Builder()
+        .apply { if (!prefs.systemColors.get()) setContentBasedSource(prefs.theme().get()) }
+        .build()
+
+    /** A context with the palette that screens have, for what's drawn outside one: the widget. */
+    fun screenContext(): Context {
+        val night = if (isNight()) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+        val configuration = Configuration(context.resources.configuration)
+        configuration.uiMode = configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv() or night
+
+        val themed = ContextThemeWrapper(context.createConfigurationContext(configuration), R.style.AppTheme)
+        return DynamicColors.wrapContextIfAvailable(themed, paletteOptions()).also { screen ->
+            if (prefs.black.get()) screen.theme.applyStyle(R.style.ThemeOverlay_Foxhole_Black, true)
+        }
     }
 
     // The app's own setting, not context's configuration: the application context doesn't follow it

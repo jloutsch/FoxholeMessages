@@ -265,7 +265,7 @@
     <string name="settings_night_start_title">Start time</string>
     <string name="settings_night_end_title">End time</string>
     <string name="settings_system_colors_title">Use system colors</string>
-    <string name="settings_system_colors_summary">Match your wallpaper instead of the theme color. Conversations with their own color keep it.</string>
+    <string name="settings_system_colors_summary">Build all of the app\'s colors from your wallpaper instead of the theme color. Conversations with their own color keep it.</string>
     <string name="settings_automatic_colors_title">Automatic contact colors</string>
     <string name="settings_text_size_title">Font size</string>
     <string name="settings_pinch_to_zoom_title">Pinch to zoom message text</string>

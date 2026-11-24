@@ -47,7 +47,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.core.view.iterator
 import com.google.android.material.color.DynamicColors
-import com.google.android.material.color.DynamicColorsOptions
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeBoolean
@@ -180,14 +179,9 @@ abstract class QkThemedActivity : QkActivity() {
      */
     open fun getActivityThemeRes() = R.style.AppTheme
 
-    /**
-     * Builds the Material 3 palette from the wallpaper if "Use system colors" is on, otherwise from
-     * the chosen theme colour. Below Android 12 this does nothing and the theme's own palette is used.
-     */
+    /** Below Android 12 only black mode has an effect, and the theme's own palette is used. */
     private fun applyPalette() {
-        val options = DynamicColorsOptions.Builder()
-        if (!prefs.systemColors.get()) options.setContentBasedSource(prefs.theme().get())
-        DynamicColors.applyToActivityIfAvailable(this, options.build())
+        DynamicColors.applyToActivityIfAvailable(this, colors.paletteOptions())
 
         // Last, because the palette sets the surface colours too
         if (prefs.black.get()) super.getTheme().applyStyle(R.style.ThemeOverlay_Foxhole_Black, true)
