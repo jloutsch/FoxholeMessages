@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Material 3 palette built from the default theme colour (#0097A7) with Material's own
+  SchemeContent. On Android 12+ QkThemedActivity replaces it with a palette built from the chosen
+  theme colour or the wallpaper; below that, and outside activities, this is the palette.
+  -->
+<resources>
+    <color name="foxhole_primary">#006671</color>
+    <color name="foxhole_on_primary">#FFFFFF</color>
+    <color name="foxhole_primary_container">#00818F</color>
+    <color name="foxhole_on_primary_container">#F7FEFF</color>
+    <color name="foxhole_primary_inverse">#66D6E7</color>
+    <color name="foxhole_secondary">#3F646A</color>
+    <color name="foxhole_on_secondary">#FFFFFF</color>
+    <color name="foxhole_secondary_container">#C1EAF1</color>
+    <color name="foxhole_on_secondary_container">#456A71</color>
+    <color name="foxhole_tertiary">#754A8E</color>
+    <color name="foxhole_on_tertiary">#FFFFFF</color>
+    <color name="foxhole_tertiary_container">#8F63A9</color>
+    <color name="foxhole_on_tertiary_container">#FFFBFF</color>
+    <color name="foxhole_surface">#F5FAFB</color>
+    <color name="foxhole_on_surface">#171C1D</color>
+    <color name="foxhole_surface_variant">#D8E5E7</color>
+    <color name="foxhole_on_surface_variant">#3D494B</color>
+    <color name="foxhole_surface_container_lowest">#FFFFFF</color>
+    <color name="foxhole_surface_container_low">#F0F4F5</color>
+    <color name="foxhole_surface_container">#EAEFF0</color>
+    <color name="foxhole_surface_container_high">#E4E9EA</color>
+    <color name="foxhole_surface_container_highest">#DEE3E4</color>
+    <color name="foxhole_surface_inverse">#2C3132</color>
+    <color name="foxhole_on_surface_inverse">#EDF2F2</color>
+    <color name="foxhole_outline">#6D797B</color>
+    <color name="foxhole_outline_variant">#BCC9CB</color>
+</resources>
