@@ -56,9 +56,9 @@ fun Recipient.getThemedIcon(context: Context, theme: Colors.Theme, width: Int, h
             val photoView = view.findViewById<ImageView>(R.id.photo)
 
             photoView.visibility = GONE
-            view.setBackgroundColor(theme.theme)
-            view.setBackgroundTint(theme.theme)
-            textView.setTextColor(theme.textPrimary)
+            view.setBackgroundColor(theme.container)
+            view.setBackgroundTint(theme.container)
+            textView.setTextColor(theme.onContainer)
             TextViewCompat.setAutoSizeTextTypeWithDefaults(textView, TextViewCompat.AUTO_SIZE_TEXT_TYPE_NONE)
             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, height * 0.5f)
             iconView.layoutParams = FrameLayout.LayoutParams((width * 0.5).toInt(), (height * 0.5).toInt(),
@@ -84,7 +84,7 @@ fun Recipient.getThemedIcon(context: Context, theme: Colors.Theme, width: Int, h
             else {
                 textView.visibility = GONE
                 iconView.visibility = VISIBLE
-                iconView.setTint(theme.textPrimary)
+                iconView.setTint(theme.onContainer)
             }
 
             container.apply {

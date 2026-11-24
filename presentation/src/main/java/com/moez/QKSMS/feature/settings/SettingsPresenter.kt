@@ -31,6 +31,7 @@ import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.interactor.SyncMessages
+import dev.octoshrimpy.quik.manager.WidgetManager
 import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.NightModeManager
 import dev.octoshrimpy.quik.util.Preferences
@@ -46,7 +47,8 @@ class SettingsPresenter @Inject constructor(
     private val externalNavigator: ExternalNavigator,
     private val nightModeManager: NightModeManager,
     private val prefs: Preferences,
-    private val syncMessages: SyncMessages
+    private val syncMessages: SyncMessages,
+    private val widgetManager: WidgetManager
 ) : QkPresenter<SettingsView, SettingsState>(SettingsState(
         nightModeId = prefs.nightMode.get()
 )) {
@@ -146,7 +148,10 @@ class SettingsPresenter @Inject constructor(
                     when (it.id) {
                         R.id.theme -> view.showThemePicker()
 
-                        R.id.systemColors -> prefs.systemColors.set(!prefs.systemColors.get())
+                        R.id.systemColors -> {
+                            prefs.systemColors.set(!prefs.systemColors.get())
+                            widgetManager.updateTheme()
+                        }
 
                         R.id.night -> view.showNightModeDialog()
 
@@ -160,7 +165,10 @@ class SettingsPresenter @Inject constructor(
                             view.showEndTimePicker(date.get(Calendar.HOUR_OF_DAY), date.get(Calendar.MINUTE))
                         }
 
-                        R.id.black -> prefs.black.set(!prefs.black.get())
+                        R.id.black -> {
+                            prefs.black.set(!prefs.black.get())
+                            widgetManager.updateTheme()
+                        }
 
                         R.id.autoEmoji -> prefs.autoEmoji.set(!prefs.autoEmoji.get())
 

@@ -1214,6 +1214,27 @@ advice still applies.
   (version 2, #84, is the first). The first test run after a schema change can fail with "Missing
   file N.json", because the tests copied the schema folder before the compiler wrote it. Run it again.
 
+### Material 3 colours (#152)
+
+- **Take colours from theme roles** (`?attr/colorSurface`, `?attr/colorOutline`, …), not `@color/…`.
+  On Android 12+ `QkThemedActivity` replaces the palette at runtime, built by `Colors.paletteOptions()`
+  from the theme colour or the wallpaper. Below 12 that call does nothing, and the palette is
+  `colors_material3.xml` (made from the default `#0097A7`, light and night), with picked colours
+  still used for accents.
+- **`colorPrimary` is the accent**, not the toolbar background (`colorSurface`). The window background
+  must stay equal to `colorSurface`, because edge-to-edge pads the bars with it (`MaterialThemeTest`).
+- **`Colors.Theme`**: `accent`/`onAccent` for icons, text and small fills; `container`/`onContainer`
+  for bubbles, avatars and buttons. `theme` is the colour exactly as picked; it doesn't contrast with
+  anything in particular, and is used for notifications and the Settings swatch.
+- **Outside an activity** use `Colors.screenContext()` (the widget does). Drawables and layouts shown
+  by the launcher can't use theme attributes, so `ripple.xml` stays fixed and `ripple_themed.xml` is
+  for the app's screens.
+- **Dialogs** get their look from `ThemeOverlay.Foxhole.Dialog`, so plain `AlertDialog.Builder`
+  (androidx, not `android.app`) is right. `AppThemeDialog` copies AppCompat's dialog window settings
+  for the QRF Reply popup.
+- Unit tests need JDK 17 (Robolectric can't read newer class files) and, in `presentation`, run with a
+  plain `Application` (`robolectric.properties`).
+
 ### Kotlin Flow, not RxJava (#34)
 
 RxJava, RxBinding, AutoDispose and RxDogTag were removed in #34; `NoRxJavaTest` fails if any app

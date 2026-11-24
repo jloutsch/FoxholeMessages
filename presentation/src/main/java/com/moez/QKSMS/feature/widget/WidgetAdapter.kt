@@ -34,7 +34,7 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.dpToPx
-import dev.octoshrimpy.quik.common.util.extensions.getColorCompat
+import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.model.Contact
 import dev.octoshrimpy.quik.model.Conversation
@@ -65,27 +65,30 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
     private var conversations: List<Conversation> = listOf()
     private val appWidgetManager by lazy { AppWidgetManager.getInstance(context) }
 
-    private val night get() = prefs.night.get()
-    private val black get() = prefs.black.get()
     private val theme get() = colors.theme()
-    private val background
-        get() = context.getColorCompat(when {
-            night && black -> R.color.black
-            night && !black -> R.color.backgroundDark
-            else -> R.color.white
-        })
-    private val textPrimary
-        get() = context.getColorCompat(if (night) R.color.textPrimaryDark else R.color.textPrimary)
-    private val textSecondary
-        get() = context.getColorCompat(if (night) R.color.textSecondaryDark else R.color.textSecondary)
-    private val textTertiary
-        get() = context.getColorCompat(if (night) R.color.textTertiaryDark else R.color.textTertiary)
+
+    // The same palette as the app's screens; rebuilt with the data, not for every row
+    private var background = 0
+    private var textPrimary = 0
+    private var textSecondary = 0
+    private var textTertiary = 0
 
     override fun onCreate() {
         appComponent.inject(this)
+        updateColors()
+    }
+
+    private fun updateColors() {
+        val screen = colors.screenContext()
+        background = screen.resolveThemeColor(R.attr.colorSurface)
+        textPrimary = screen.resolveThemeColor(android.R.attr.textColorPrimary)
+        textSecondary = screen.resolveThemeColor(android.R.attr.textColorSecondary)
+        textTertiary = screen.resolveThemeColor(android.R.attr.textColorTertiary)
     }
 
     override fun onDataSetChanged() {
+        updateColors()
+
         // Only the tabs chosen in Settings > Message Sorting > Widget shows (all by default)
         val tabs = prefs.widgetTabs.get()
         conversations = conversationRepo.getConversationsSnapshot(prefs.unreadAtTop.get())
@@ -119,9 +122,9 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
 
         // Avatar
         remoteViews.setViewVisibility(R.id.avatar, if (smallWidget) View.GONE else View.VISIBLE)
-        remoteViews.setInt(R.id.avatar, "setBackgroundColor", theme.theme)
-        remoteViews.setTextColor(R.id.initial, theme.textPrimary)
-        remoteViews.setInt(R.id.icon, "setColorFilter", theme.textPrimary)
+        remoteViews.setInt(R.id.avatar, "setBackgroundColor", theme.container)
+        remoteViews.setTextColor(R.id.initial, theme.onContainer)
+        remoteViews.setInt(R.id.icon, "setColorFilter", theme.onContainer)
         remoteViews.setInt(R.id.avatarMask, "setColorFilter", background)
 
         val contact = conversation.recipients.map { recipient ->
@@ -176,7 +179,9 @@ class WidgetAdapter(intent: Intent) : RemoteViewsService.RemoteViewsFactory {
             val recipient = conversation.recipients.find { recipient ->
                 lastMessage != null && phoneNumberUtils.compare(recipient.address, lastMessage.address)
             } ?: conversation.recipients.firstOrNull()
-            remoteViews.setInt(R.id.unreadBackground, "setColorFilter", colors.theme(recipient).theme)
+            val unreadTheme = colors.theme(recipient)
+            remoteViews.setInt(R.id.unreadBackground, "setColorFilter", unreadTheme.accent)
+            remoteViews.setTextColor(R.id.unreadCount, unreadTheme.onAccent)
             remoteViews.setTextViewText(R.id.unreadCount, conversation.unreadCount.toString())
         }
 
