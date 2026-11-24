@@ -211,12 +211,12 @@ class AudioBinder @Inject constructor(colors: Colors, private val context: Conte
         // tint colours
         val secondaryColor =
             if (!message.isMe())
-                theme.theme
+                theme.container
             else
                 holder.itemView.context.resolveThemeColor(R.attr.bubbleColor)
         val primaryColor =
             if (!message.isMe())
-                theme.textPrimary
+                theme.onContainer
             else
                 holder.itemView.context.resolveThemeColor(android.R.attr.textColorPrimary)
 

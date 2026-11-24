@@ -55,10 +55,10 @@ class SwipeActionsController : QkController<SwipeActionsControllerBinding, Swipe
 
     override fun onViewCreated() {
         colors.theme().let { theme ->
-            binding.rightIcon.setBackgroundTint(theme.theme)
-            binding.rightIcon.setTint(theme.textPrimary)
-            binding.leftIcon.setBackgroundTint(theme.theme)
-            binding.leftIcon.setTint(theme.textPrimary)
+            binding.rightIcon.setBackgroundTint(theme.container)
+            binding.rightIcon.setTint(theme.onContainer)
+            binding.leftIcon.setBackgroundTint(theme.container)
+            binding.leftIcon.setTint(theme.onContainer)
         }
 
         binding.right.postDelayed({ binding.right.animateLayoutChanges = true }, 100)

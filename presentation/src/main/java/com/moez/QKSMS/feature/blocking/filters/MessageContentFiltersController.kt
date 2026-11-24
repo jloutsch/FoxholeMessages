@@ -63,8 +63,8 @@ class MessageContentFiltersController : QkController<MessageContentFiltersContro
 
     override fun onViewCreated() {
         super.onViewCreated()
-        binding.add.setBackgroundTint(colors.theme().theme)
-        binding.add.setTint(colors.theme().textPrimary)
+        binding.add.setBackgroundTint(colors.theme().container)
+        binding.add.setTint(colors.theme().onContainer)
         adapter.emptyView = binding.empty
         binding.filters.adapter = adapter
     }

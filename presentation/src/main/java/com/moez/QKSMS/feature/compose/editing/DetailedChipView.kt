@@ -55,10 +55,10 @@ class DetailedChipView(context: Context) : RelativeLayout(context) {
         binding.info.text = recipient.address
 
         colors.theme(recipient).let { theme ->
-            binding.card.setBackgroundTint(theme.theme)
-            binding.name.setTextColor(theme.textPrimary)
-            binding.info.setTextColor(theme.textTertiary)
-            binding.delete.setTint(theme.textPrimary)
+            binding.card.setBackgroundTint(theme.container)
+            binding.name.setTextColor(theme.onContainer)
+            binding.info.setTextColor(theme.onContainer)
+            binding.delete.setTint(theme.onContainer)
         }
     }
 

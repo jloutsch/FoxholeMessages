@@ -109,7 +109,7 @@ class ConversationInfoAdapter @Inject constructor(
                 binding.add.setVisible(recipient.contact == null)
 
                 val theme = colors.theme(recipient)
-                binding.theme.setTint(theme.theme)
+                binding.theme.setTint(theme.accent)
             }
 
             is ConversationInfoSettings -> {

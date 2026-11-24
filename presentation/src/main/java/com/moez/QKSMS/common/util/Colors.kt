@@ -23,9 +23,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.Flow
 import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.Build
 import android.graphics.Color
 import androidx.core.content.res.getColorOrThrow
+import com.google.android.material.color.MaterialColors
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.extensions.getColorCompat
 import dev.octoshrimpy.quik.model.Recipient
@@ -41,7 +44,21 @@ class Colors @Inject constructor(
     private val prefs: Preferences
 ) {
 
-    data class Theme(val theme: Int, private val colors: Colors) {
+    /**
+     * [theme] is the colour as picked. On screens, use the Material 3 tones made from it instead:
+     * they always contrast with the page, and with each other.
+     */
+    data class Theme(val theme: Int, private val light: Boolean, private val colors: Colors) {
+        private val roles by lazy { MaterialColors.getColorRoles(theme, light) }
+
+        /** Text and icons on a page background, and small strong fills. */
+        val accent get() = roles.accent
+        val onAccent get() = roles.onAccent
+
+        /** Fills: bubbles, avatars, buttons. */
+        val container get() = roles.accentContainer
+        val onContainer get() = roles.onAccentContainer
+
         val highlight by lazy { colors.highlightColorForTheme(theme) }
         val textPrimary by lazy { colors.textPrimaryOnThemeForColor(theme) }
         val textSecondary by lazy { colors.textSecondaryOnThemeForColor(theme) }
@@ -88,8 +105,16 @@ class Colors @Inject constructor(
             autoColor = recipient?.takeIf { prefs.autoColor.get() }?.let(::generateColor),
             globalColor = prefs.theme().get(),
             systemColor = systemColor()
-        ), this)
+        ), light = !isNight(), colors = this)
     }
+
+    // The app's own setting, not context's configuration: the application context doesn't follow it
+    private fun isNight(): Boolean = isNight(
+        nightMode = prefs.nightMode.get(),
+        autoNight = prefs.night.get(),
+        systemNight = Resources.getSystem().configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    )
 
     /** Emits again whenever any setting that decides [theme] changes. */
     fun themeChanges(recipient: Recipient? = null): Flow<Theme> =
@@ -157,3 +182,11 @@ class Colors @Inject constructor(
  */
 internal fun pickThemeColor(conversationColor: Int?, autoColor: Int?, globalColor: Int, systemColor: Int?): Int =
     conversationColor ?: autoColor ?: systemColor ?: globalColor
+
+/** Whether screens are dark now, the same way NightModeManager decides it. */
+internal fun isNight(nightMode: Int, autoNight: Boolean, systemNight: Boolean): Boolean = when (nightMode) {
+    Preferences.NIGHT_MODE_SYSTEM -> systemNight
+    Preferences.NIGHT_MODE_ON -> true
+    Preferences.NIGHT_MODE_AUTO -> autoNight
+    else -> false
+}

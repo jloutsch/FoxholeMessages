@@ -63,7 +63,7 @@ class ComposeItemAdapter @Inject constructor(
         val layoutInflater = LayoutInflater.from(parent.context)
         val binding = ContactListItemBinding.inflate(layoutInflater, parent, false)
 
-        binding.icon.setTint(colors.theme().theme)
+        binding.icon.setTint(colors.theme().accent)
 
         binding.numbers.setRecycledViewPool(numbersViewPool)
         binding.numbers.adapter = PhoneNumberAdapter()

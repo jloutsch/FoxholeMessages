@@ -109,7 +109,7 @@ class PagerTitleView @JvmOverloads constructor(context: Context, attrs: Attribut
                 }
                 .map { theme ->
                     val textSecondary = context.resolveThemeColor(android.R.attr.textColorSecondary)
-                    ColorStateList(states, intArrayOf(theme.theme, textSecondary))
+                    ColorStateList(states, intArrayOf(theme.accent, textSecondary))
                 }
                 .onEach { colorStateList ->
                     childCount.forEach { index ->

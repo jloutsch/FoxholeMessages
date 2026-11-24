@@ -280,35 +280,30 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
             binding.message.supportsInputContent = true
 
             theme.collectIn(lifecycleScope) {
-                    binding.loading.setTint(it.theme)
+                    binding.loading.setTint(it.accent)
 
                     // entire attach menu
-                    binding.attach.setBackgroundTint(it.theme); binding.attach.setTint(it.textPrimary)
-                    binding.contact.setBackgroundTint(it.theme); binding.contact.setTint(it.textPrimary)
-                    binding.contactLabel.setBackgroundTint(it.theme); binding.contactLabel.setTint(it.textPrimary)
-                    binding.schedule.setBackgroundTint(it.theme); binding.schedule.setTint(it.textPrimary)
-                    binding.scheduleLabel.setBackgroundTint(it.theme); binding.scheduleLabel.setTint(it.textPrimary)
-                    binding.attachAFileIcon.setBackgroundTint(it.theme); binding.attachAFileIcon.setTint(it.textPrimary)
-                    binding.attachAFileLabel.setBackgroundTint(it.theme); binding.attachAFileLabel.setTint(it.textPrimary)
-                    binding.attachAnAudioMessageIcon.setBackgroundTint(it.theme); binding.attachAnAudioMessageIcon.setTint(it.textPrimary)
-                    binding.attachAnAudioMessageLabel.setBackgroundTint(it.theme); binding.attachAnAudioMessageLabel.setTint(it.textPrimary)
-                    binding.gallery.setBackgroundTint(it.theme); binding.gallery.setTint(it.textPrimary)
-                    binding.galleryLabel.setBackgroundTint(it.theme); binding.galleryLabel.setTint(it.textPrimary)
-                    binding.camera.setBackgroundTint(it.theme); binding.camera.setTint(it.textPrimary)
-                    binding.cameraLabel.setBackgroundTint(it.theme); binding.cameraLabel.setTint(it.textPrimary)
+                    listOf(
+                        binding.attach, binding.contact, binding.schedule, binding.attachAFileIcon,
+                        binding.attachAnAudioMessageIcon, binding.gallery, binding.camera
+                    ).forEach { icon -> icon.setBackgroundTint(it.container); icon.setTint(it.onContainer) }
+                    listOf(
+                        binding.contactLabel, binding.scheduleLabel, binding.attachAFileLabel,
+                        binding.attachAnAudioMessageLabel, binding.galleryLabel, binding.cameraLabel
+                    ).forEach { label -> label.setBackgroundTint(it.container); label.setTextColor(it.onContainer) }
 
                     // speech to text floating button
-                    binding.speechToTextIconBorder.setBackgroundTint(it.theme)
-                    binding.speechToTextIcon.setBackgroundTint(it.textPrimary)
-                    binding.speechToTextIcon.setTint(it.theme)
+                    binding.speechToTextIconBorder.setBackgroundTint(it.accent)
+                    binding.speechToTextIcon.setBackgroundTint(it.onAccent)
+                    binding.speechToTextIcon.setTint(it.accent)
 
                     // audio message recording
-                    binding.audioMsgRecord.setColor(it.theme)
-                    binding.audioMsgPlayerPlayPause.setTint(it.theme)
+                    binding.audioMsgRecord.setColor(it.accent)
+                    binding.audioMsgPlayerPlayPause.setTint(it.accent)
                     binding.audioMsgPlayerSeekBar.apply {
-                        thumbTintList = ColorStateList.valueOf(it.theme)
-                        progressBackgroundTintList = ColorStateList.valueOf(it.theme)
-                        progressTintList = ColorStateList.valueOf(it.theme)
+                        thumbTintList = ColorStateList.valueOf(it.accent)
+                        progressBackgroundTintList = ColorStateList.valueOf(it.accent)
+                        progressTintList = ColorStateList.valueOf(it.accent)
                     }
 
                     messageAdapter.theme = it

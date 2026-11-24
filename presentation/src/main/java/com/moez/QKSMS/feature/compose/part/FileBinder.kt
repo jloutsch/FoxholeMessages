@@ -74,10 +74,10 @@ class FileBinder @Inject constructor(colors: Colors, private val context: Contex
         }
 
         if (!message.isMe()) {
-            binding.fileBackground.setBackgroundTint(theme.theme)
-            binding.icon.setTint(theme.textPrimary)
-            binding.filename.setTextColor(theme.textPrimary)
-            binding.size.setTextColor(theme.textTertiary)
+            binding.fileBackground.setBackgroundTint(theme.container)
+            binding.icon.setTint(theme.onContainer)
+            binding.filename.setTextColor(theme.onContainer)
+            binding.size.setTextColor(theme.onContainer)
         } else {
             binding.fileBackground.setBackgroundTint(holder.itemView.context.resolveThemeColor(R.attr.bubbleColor))
             binding.icon.setTint(holder.itemView.context.resolveThemeColor(android.R.attr.textColorSecondary))

@@ -191,8 +191,8 @@ class MainActivity : QkThemedActivity(), MainView {
         }
 
         syncingBinding = MainSyncingBinding.bind(binding.syncing.inflate()).also {
-            it.syncingProgress.progressTintList = ColorStateList.valueOf(colors.theme().theme)
-            it.syncingProgress.indeterminateTintList = ColorStateList.valueOf(colors.theme().theme)
+            it.syncingProgress.progressTintList = ColorStateList.valueOf(colors.theme().accent)
+            it.syncingProgress.indeterminateTintList = ColorStateList.valueOf(colors.theme().accent)
         }
 
         toggle.syncState()
@@ -222,7 +222,7 @@ class MainActivity : QkThemedActivity(), MainView {
                             intArrayOf(android.R.attr.state_activated),
                             intArrayOf(-android.R.attr.state_activated))
 
-                    ColorStateList(states, intArrayOf(theme.theme,
+                    ColorStateList(states, intArrayOf(theme.accent,
                         resolveThemeColor(android.R.attr.textColorSecondary)
                     ))
                         .let { tintList ->
@@ -231,17 +231,17 @@ class MainActivity : QkThemedActivity(), MainView {
                         }
 
                     // Miscellaneous views
-                    syncingBinding.syncingProgress.progressTintList = ColorStateList.valueOf(theme.theme)
-                    syncingBinding.syncingProgress.indeterminateTintList = ColorStateList.valueOf(theme.theme)
-                    binding.drawer.rateIcon.setTint(theme.theme)
-                    binding.compose.setBackgroundTint(theme.theme)
-                    binding.tabStrip.setSelectedTabIndicatorColor(theme.theme)
+                    syncingBinding.syncingProgress.progressTintList = ColorStateList.valueOf(theme.accent)
+                    syncingBinding.syncingProgress.indeterminateTintList = ColorStateList.valueOf(theme.accent)
+                    binding.drawer.rateIcon.setTint(theme.accent)
+                    binding.compose.setBackgroundTint(theme.container)
+                    binding.tabStrip.setSelectedTabIndicatorColor(theme.accent)
                     binding.tabStrip.setTabTextColors(
-                        resolveThemeColor(android.R.attr.textColorSecondary), theme.theme
+                        resolveThemeColor(android.R.attr.textColorSecondary), theme.accent
                     )
 
                     // Set the FAB compose icon color
-                    binding.compose.setTint(theme.textPrimary)
+                    binding.compose.setTint(theme.onContainer)
         }
     }
 
@@ -603,7 +603,6 @@ class MainActivity : QkThemedActivity(), MainView {
             else Snackbar.LENGTH_INDEFINITE
         ).let {
             it.setAction(R.string.button_undo) { undoArchiveIntent.tryEmit(Unit) }
-            it.setActionTextColor(colors.theme().theme)
             it.show()
         }
 

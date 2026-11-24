@@ -66,7 +66,7 @@ class MenuItemAdapter @Inject constructor(private val context: Context, private 
                 intArrayOf(-android.R.attr.state_activated))
 
         val text = parent.context.resolveThemeColor(android.R.attr.textColorTertiary)
-        binding.check.imageTintList = ColorStateList(states, intArrayOf(colors.theme().theme, text))
+        binding.check.imageTintList = ColorStateList(states, intArrayOf(colors.theme().accent, text))
 
         return QkBindingViewHolder(binding).apply {
             binding.root.setOnClickListener {

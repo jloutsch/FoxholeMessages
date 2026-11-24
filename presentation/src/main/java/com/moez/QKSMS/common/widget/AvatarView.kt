@@ -83,9 +83,9 @@ class AvatarView @JvmOverloads constructor(
 
     private fun updateView() {
         // Apply theme
-        setBackgroundTint(theme.theme)
-        layout.initial.setTextColor(theme.textPrimary)
-        layout.icon.setTint(theme.textPrimary)
+        setBackgroundTint(theme.container)
+        layout.initial.setTextColor(theme.onContainer)
+        layout.icon.setTint(theme.onContainer)
 
         val initials = fullName
                 ?.substringBefore(',')
