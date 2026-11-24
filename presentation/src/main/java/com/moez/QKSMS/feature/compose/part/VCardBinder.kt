@@ -76,10 +76,10 @@ class VCardBinder @Inject constructor(colors: Colors, private val context: Conte
         }
 
         if (!message.isMe()) {
-            binding.vCardBackground.setBackgroundTint(theme.theme)
-            binding.vCardAvatar.setTint(theme.textPrimary)
-            binding.name.setTextColor(theme.textPrimary)
-            binding.label.setTextColor(theme.textTertiary)
+            binding.vCardBackground.setBackgroundTint(theme.container)
+            binding.vCardAvatar.setTint(theme.onContainer)
+            binding.name.setTextColor(theme.onContainer)
+            binding.label.setTextColor(theme.onContainer)
         } else {
             binding.vCardBackground.setBackgroundTint(holder.itemView.context.resolveThemeColor(R.attr.bubbleColor))
             binding.vCardAvatar.setTint(holder.itemView.context.resolveThemeColor(android.R.attr.textColorSecondary))

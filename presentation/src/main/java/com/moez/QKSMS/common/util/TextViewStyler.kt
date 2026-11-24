@@ -129,16 +129,16 @@ class TextViewStyler @Inject constructor(
         }
 
         when (colorAttr) {
-            COLOR_THEME -> textView.setTextColor(colors.theme().theme)
-            COLOR_PRIMARY_ON_THEME -> textView.setTextColor(colors.theme().textPrimary)
-            COLOR_SECONDARY_ON_THEME -> textView.setTextColor(colors.theme().textSecondary)
-            COLOR_TERTIARY_ON_THEME -> textView.setTextColor(colors.theme().textTertiary)
+            COLOR_THEME -> textView.setTextColor(colors.theme().accent)
+            COLOR_PRIMARY_ON_THEME,
+            COLOR_SECONDARY_ON_THEME,
+            COLOR_TERTIARY_ON_THEME -> textView.setTextColor(colors.theme().onContainer)
         }
 
         setTextSize(textView, textSizeAttr)
 
         if (textView is EditText) {
-            val drawable = ContextCompat.getDrawable(textView.context, R.drawable.cursor)!!.apply { setTint(colors.theme().theme) }
+            val drawable = ContextCompat.getDrawable(textView.context, R.drawable.cursor)!!.apply { setTint(colors.theme().accent) }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 textView.textCursorDrawable = drawable
             }

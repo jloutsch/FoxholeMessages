@@ -137,11 +137,11 @@ class BackupController : QkController<BackupControllerBinding, BackupView, Backu
         super.onViewCreated()
 
         themedActivity?.colors?.theme()?.let { theme ->
-            binding.progressBar.indeterminateTintList = ColorStateList.valueOf(theme.theme)
-            binding.progressBar.progressTintList = ColorStateList.valueOf(theme.theme)
-            binding.fab.setBackgroundTint(theme.theme)
-            binding.fabIcon.setTint(theme.textPrimary)
-            binding.fabLabel.setTextColor(theme.textPrimary)
+            binding.progressBar.indeterminateTintList = ColorStateList.valueOf(theme.accent)
+            binding.progressBar.progressTintList = ColorStateList.valueOf(theme.accent)
+            binding.fab.setBackgroundTint(theme.container)
+            binding.fabIcon.setTint(theme.onContainer)
+            binding.fabLabel.setTextColor(theme.onContainer)
         }
 
         // Make the list titles bold

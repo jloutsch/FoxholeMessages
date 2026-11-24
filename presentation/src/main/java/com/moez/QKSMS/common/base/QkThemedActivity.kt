@@ -162,7 +162,7 @@ abstract class QkThemedActivity : QkActivity() {
         combine(menu, theme) { menu, theme ->
             menu.iterator().forEach { menuItem ->
                 val tint = when (menuItem.itemId) {
-                    in getColoredMenuItems() -> theme.theme
+                    in getColoredMenuItems() -> theme.accent
                     else -> textSecondary
                 }
 

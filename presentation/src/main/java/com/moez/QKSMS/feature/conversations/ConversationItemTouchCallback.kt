@@ -67,16 +67,16 @@ class ConversationItemTouchCallback @Inject constructor(
     init {
         // Both run until the activity's scope ends
         colors.themeChanges()
-                .onEach { theme -> backgroundPaint.color = theme.theme }
+                .onEach { theme -> backgroundPaint.color = theme.container }
                 .flowOn(Dispatchers.IO)
                 .launchIn(scope)
 
         combine(prefs.swipeRight.asFlow(), prefs.swipeLeft.asFlow(), colors.themeChanges()
                 ) { right, left, theme ->
                     rightAction = right
-                    swipeRightIcon = iconForAction(right, theme.textPrimary)
+                    swipeRightIcon = iconForAction(right, theme.onContainer)
                     leftAction = left
-                    swipeLeftIcon = iconForAction(left, theme.textPrimary)
+                    swipeLeftIcon = iconForAction(left, theme.onContainer)
                     setDefaultSwipeDirs((if (right == Preferences.SWIPE_ACTION_NONE) 0 else ItemTouchHelper.RIGHT)
                             or (if (left == Preferences.SWIPE_ACTION_NONE) 0 else ItemTouchHelper.LEFT))
                 }

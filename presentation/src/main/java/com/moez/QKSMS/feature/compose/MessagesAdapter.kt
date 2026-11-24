@@ -171,10 +171,10 @@ class MessagesAdapter @Inject constructor(
             body = binding.body
             parts = binding.parts
             status = binding.status
-            binding.cancelIcon.setTint(theme.theme)
-            binding.cancel.setTint(theme.theme)
-            binding.sendNowIcon.setTint(theme.theme)
-            binding.resendIcon.setTint(theme.theme)
+            binding.cancelIcon.setTint(theme.accent)
+            binding.cancel.setTint(theme.accent)
+            binding.sendNowIcon.setTint(theme.accent)
+            binding.resendIcon.setTint(theme.accent)
         } else {
             val binding = MessageListItemInBinding.inflate(inflater, parent, false)
             view = binding.root
@@ -311,11 +311,11 @@ class MessagesAdapter @Inject constructor(
             }
 
             body.apply {
-                highlightColor = theme.theme.withAlpha(0x5d)
+                highlightColor = theme.accent.withAlpha(0x5d)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    textSelectHandle?.setTint(theme.theme.withAlpha(0xad))
-                    textSelectHandleLeft?.setTint(theme.theme.withAlpha(0xad))
-                    textSelectHandleRight?.setTint(theme.theme.withAlpha(0xad))
+                    textSelectHandle?.setTint(theme.accent.withAlpha(0xad))
+                    textSelectHandleLeft?.setTint(theme.accent.withAlpha(0xad))
+                    textSelectHandleRight?.setTint(theme.accent.withAlpha(0xad))
                 }
             }
         } else {
@@ -343,13 +343,13 @@ class MessagesAdapter @Inject constructor(
             }
 
             body.apply {
-                setTextColor(theme.textPrimary)
-                setBackgroundTint(theme.theme)
-                highlightColor = R.attr.bubbleColor.withAlpha(0x5d)
+                setTextColor(theme.onContainer)
+                setBackgroundTint(theme.container)
+                highlightColor = theme.onContainer.withAlpha(0x5d)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    textSelectHandle?.setTint(R.attr.bubbleColor.withAlpha(0x7d))
-                    textSelectHandleLeft?.setTint(R.attr.bubbleColor.withAlpha(0x7d))
-                    textSelectHandleRight?.setTint(R.attr.bubbleColor.withAlpha(0x7d))
+                    textSelectHandle?.setTint(theme.onContainer.withAlpha(0x7d))
+                    textSelectHandleLeft?.setTint(theme.onContainer.withAlpha(0x7d))
+                    textSelectHandleRight?.setTint(theme.onContainer.withAlpha(0x7d))
                 }
             }
         }

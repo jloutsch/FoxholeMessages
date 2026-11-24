@@ -105,7 +105,7 @@ class ConversationsAdapter @Inject constructor(
                 phoneNumberUtils.compare(recipient.address, lastMessage.address)
             }
         }
-        val theme = colors.theme(recipient).theme
+        val theme = colors.theme(recipient)
 
         holder.itemView.isActivated = isSelected(conversation.id)
 
@@ -139,7 +139,8 @@ class ConversationsAdapter @Inject constructor(
         // dot, so it needs the theme colour on its background drawable specifically - the
         // generic TextView.setTint() extension tints the foreground instead, which would be a
         // silent no-op here since this view has no foreground drawable set.
-        binding.unread.backgroundTintList = ColorStateList.valueOf(theme)
+        binding.unread.backgroundTintList = ColorStateList.valueOf(theme.accent)
+        binding.unread.setTextColor(theme.onAccent)
         if (conversation.unread) {
             binding.unread.text = conversation.unreadCount.toString()
         }

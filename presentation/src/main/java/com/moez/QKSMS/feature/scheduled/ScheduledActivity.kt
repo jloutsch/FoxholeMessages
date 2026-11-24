@@ -71,10 +71,10 @@ class ScheduledActivity : QkThemedActivity(), ScheduledView {
         binding.messages.adapter = scheduledMessageAdapter
 
         colors.theme().let { theme ->
-            binding.sampleMessage.setBackgroundTint(theme.theme)
-            binding.sampleMessage.setTextColor(theme.textPrimary)
-            binding.compose.setTint(theme.textPrimary)
-            binding.compose.setBackgroundTint(theme.theme)
+            binding.sampleMessage.setBackgroundTint(theme.container)
+            binding.sampleMessage.setTextColor(theme.onContainer)
+            binding.compose.setTint(theme.onContainer)
+            binding.compose.setBackgroundTint(theme.container)
         }
     }
 

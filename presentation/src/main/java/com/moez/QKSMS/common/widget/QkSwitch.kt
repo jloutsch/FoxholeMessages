@@ -52,12 +52,12 @@ class QkSwitch @JvmOverloads constructor(context: Context, attrs: AttributeSet? 
 
             thumbTintList = ColorStateList(states, intArrayOf(
                     context.resolveThemeColor(R.attr.switchThumbDisabled),
-                    colors.theme().theme,
+                    colors.theme().accent,
                     context.resolveThemeColor(R.attr.switchThumbEnabled)))
 
             trackTintList = ColorStateList(states, intArrayOf(
                     context.resolveThemeColor(R.attr.switchTrackDisabled),
-                    colors.theme().theme.withAlpha(0x4D),
+                    colors.theme().accent.withAlpha(0x4D),
                     context.resolveThemeColor(R.attr.switchTrackEnabled)))
         }
     }
