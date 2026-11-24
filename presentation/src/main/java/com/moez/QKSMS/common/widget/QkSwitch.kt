@@ -21,16 +21,15 @@ package dev.octoshrimpy.quik.common.widget
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import androidx.appcompat.widget.SwitchCompat
+import com.google.android.material.materialswitch.MaterialSwitch
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
-import dev.octoshrimpy.quik.common.util.extensions.withAlpha
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.util.Preferences
 import javax.inject.Inject
 
-class QkSwitch @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : SwitchCompat(context, attrs) {
+class QkSwitch @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : MaterialSwitch(context, attrs) {
 
     @Inject lateinit var colors: Colors
     @Inject lateinit var prefs: Preferences
@@ -51,14 +50,14 @@ class QkSwitch @JvmOverloads constructor(context: Context, attrs: AttributeSet? 
                     intArrayOf())
 
             thumbTintList = ColorStateList(states, intArrayOf(
-                    context.resolveThemeColor(R.attr.switchThumbDisabled),
-                    colors.theme().accent,
-                    context.resolveThemeColor(R.attr.switchThumbEnabled)))
+                    context.resolveThemeColor(R.attr.colorOutlineVariant),
+                    colors.theme().onAccent,
+                    context.resolveThemeColor(R.attr.colorOutline)))
 
             trackTintList = ColorStateList(states, intArrayOf(
-                    context.resolveThemeColor(R.attr.switchTrackDisabled),
-                    colors.theme().accent.withAlpha(0x4D),
-                    context.resolveThemeColor(R.attr.switchTrackEnabled)))
+                    context.resolveThemeColor(R.attr.colorSurfaceContainerHighest),
+                    colors.theme().accent,
+                    context.resolveThemeColor(R.attr.colorSurfaceContainerHighest)))
         }
     }
 }

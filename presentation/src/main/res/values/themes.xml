@@ -20,10 +20,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <attr name="bubbleColor" format="reference" />
-    <attr name="switchThumbEnabled" format="color" />
-    <attr name="switchThumbDisabled" format="color" />
-    <attr name="switchTrackEnabled" format="color" />
-    <attr name="switchTrackDisabled" format="color" />
 
     <style name="AppLaunchTheme" parent="FoxholeTheme">
         <!-- API 35 forces edge-to-edge by default, which ignores the solid
@@ -85,11 +81,13 @@
         <item name="actionBarPopupTheme">@style/PopupTheme</item>
         <item name="bubbleColor">?attr/colorSurfaceContainerHigh</item>
         <item name="selectableItemBackground">@drawable/ripple_themed</item>
-        <item name="switchThumbEnabled">?attr/colorOutline</item>
-        <item name="switchThumbDisabled">?attr/colorOutlineVariant</item>
-        <item name="switchTrackEnabled">?attr/colorSurfaceContainerHighest</item>
-        <item name="switchTrackDisabled">?attr/colorSurfaceContainerHigh</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Foxhole.Dialog</item>
         <item name="windowActionBar">false</item>
+    </style>
+
+    <!-- Every AlertDialog, including the app's own subclasses, which Material's builder can't make -->
+    <style name="ThemeOverlay.Foxhole.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
     </style>
 
     <style name="AppThemeDialog" parent="AppBaseTheme">
