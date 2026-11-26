@@ -37,6 +37,7 @@ import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import androidx.core.view.isVisible
 import com.bluelinelabs.conductor.RouterTransaction
 import dev.octoshrimpy.quik.BuildConfig
@@ -88,6 +89,10 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
 
     private val progressAnimator by lazy { ObjectAnimator.ofInt(binding.syncingProgress, "progress", 0, 0) }
 
+    // Holds back drawing until the settings are loaded. Changing the theme, night mode or pure black
+    // rebuilds this screen, which otherwise showed the layout's placeholder values for a frame.
+    private var holdDrawing: ViewTreeObserver.OnPreDrawListener? = null
+
     init {
         appComponent.inject(this)
         retainViewMode = RetainViewMode.RETAIN_DETACH
@@ -100,7 +105,9 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
     }
 
     override fun onViewCreated() {
-        binding.preferences.postDelayed({ binding.preferences.animateLayoutChanges = true }, 100)
+        holdDrawing = ViewTreeObserver.OnPreDrawListener { false }
+            .also { binding.root.viewTreeObserver.addOnPreDrawListener(it) }
+        binding.root.postDelayed(::showSettings, 500) // in case loading never finishes
 
         when (Build.VERSION.SDK_INT >= 29) {
             true -> nightModeDialog.adapter.setData(R.array.night_modes)
@@ -210,6 +217,18 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
                 binding.syncingProgress.isIndeterminate = state.syncProgress.indeterminate
             }
         }
+
+        if (state.loaded) showSettings()
+    }
+
+    private fun showSettings() {
+        val listener = holdDrawing ?: return
+        holdDrawing = null
+        val root = view ?: return
+        root.viewTreeObserver.removeOnPreDrawListener(listener)
+        root.jumpDrawablesToCurrentState() // switches take their saved positions without sliding
+        binding.preferences.animateLayoutChanges = true
+        root.invalidate()
     }
 
 

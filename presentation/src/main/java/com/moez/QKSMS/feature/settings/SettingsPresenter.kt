@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.launch
 import dev.octoshrimpy.quik.common.util.extensions.collectIn
 import dev.octoshrimpy.quik.common.base.QkPresenter
 import android.content.Context
@@ -50,6 +51,7 @@ class SettingsPresenter @Inject constructor(
     private val syncMessages: SyncMessages,
     private val widgetManager: WidgetManager
 ) : QkPresenter<SettingsView, SettingsState>(SettingsState(
+        theme = colors.theme().theme,
         nightModeId = prefs.nightMode.get()
 )) {
 
@@ -126,6 +128,10 @@ class SettingsPresenter @Inject constructor(
                     )
                 }
             }
+
+        // Each collector above was launched in order and sends its current value as soon as it starts,
+        // so this lands after all of them (the theme is in the initial state, as its first value comes later)
+        presenterScope.launch { newState { copy(loaded = true) } }
 
         @OptIn(FlowPreview::class) // sample() is stable in practice; still marked preview
         syncRepo.syncProgress
