@@ -22,6 +22,8 @@ import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.Preferences
 
 data class SettingsState(
+    /** False until every setting below holds its saved value; the screen isn't drawn before then. */
+    val loaded: Boolean = false,
     val theme: Int = 0,
     val nightModeSummary: String = "",
     val nightModeId: Int = Preferences.NIGHT_MODE_OFF,
